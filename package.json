@@ -1,0 +1,75 @@
+{
+  "name": "scrapex",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "module": "dist/scrapex.esm.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test"
+  },
+  "peerDependencies": {},
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
+  },
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "dependencies": {
+    "@types/sanitize-html": "^1.20.1",
+    "domino": "^2.1.3",
+    "lodash.get": "^4.4.2",
+    "metascraper": "^5.6.5",
+    "metascraper-audio": "^5.6.5",
+    "metascraper-author": "^5.6.5",
+    "metascraper-clearbit": "^5.6.5",
+    "metascraper-date": "^5.6.5",
+    "metascraper-description": "^5.6.5",
+    "metascraper-image": "^5.6.5",
+    "metascraper-lang": "^5.6.5",
+    "metascraper-logo": "^5.6.5",
+    "metascraper-logo-favicon": "^5.6.5",
+    "metascraper-media-provider": "^5.6.5",
+    "metascraper-publisher": "^5.6.5",
+    "metascraper-readability": "^5.6.5",
+    "metascraper-soundcloud": "^5.6.5",
+    "metascraper-title": "^5.6.5",
+    "metascraper-url": "^5.6.5",
+    "metascraper-video": "^5.6.5",
+    "metascraper-youtube": "^5.6.5",
+    "node-fetch": "^2.6.0",
+    "page-metadata-parser": "^1.1.4",
+    "readability-node": "^0.1.0",
+    "sanitize-html": "^1.20.1",
+    "unfluff": "^3.2.0",
+    "valid-url": "^1.0.9"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.17",
+    "@types/lodash.get": "^4.4.6",
+    "@types/node-fetch": "^2.5.0",
+    "@types/valid-url": "^1.0.2",
+    "husky": "^3.0.3",
+    "jest-extended": "^0.11.2",
+    "np": "^5.0.3",
+    "prettier": "^1.18.2",
+    "pretty-quick": "^1.11.1",
+    "tsdx": "^0.7.2",
+    "tslib": "^1.10.0",
+    "typescript": "^3.5.3"
+  },
+  "jest": {
+    "setupFilesAfterEnv": [
+      "jest-extended"
+    ]
+  }
+}
