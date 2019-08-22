@@ -10,7 +10,10 @@
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build",
-    "test": "tsdx test"
+    "test": "tsdx test",
+    "test:watch": "npm run test -- --watch",
+    "prepublish": "npm run build",
+    "release": "np"
   },
   "peerDependencies": {},
   "husky": {
