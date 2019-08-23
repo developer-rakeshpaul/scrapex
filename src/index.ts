@@ -13,7 +13,6 @@ import metascraperReadability from 'metascraper-readability';
 import metascraperTitle from 'metascraper-title';
 import metascraperUrl from 'metascraper-url';
 import metascraperVideo from 'metascraper-video';
-import metascraperYoutube from 'metascraper-youtube';
 import fetch from 'node-fetch';
 import extractor from 'unfluff';
 import { isUri } from 'valid-url';
@@ -21,7 +20,7 @@ import get from 'lodash.get';
 import { getMetadata } from 'page-metadata-parser';
 import { createWindow } from 'domino';
 import r from 'readability-node';
-import sanitize from 'sanitize-html'
+import sanitize from 'sanitize-html';
 
 export interface ILink {
   text?: String;
@@ -63,7 +62,6 @@ export const scrape = async (url: string): Promise<IMetadata | null> => {
       metascraperTitle(),
       metascraperUrl(),
       metascraperVideo(),
-      metascraperYoutube(),
     ]);
     const site = await fetch(url);
     const html = await site.text();
@@ -74,14 +72,14 @@ export const scrape = async (url: string): Promise<IMetadata | null> => {
     const article = new r.Readability(url, doc).parse();
 
     const content = sanitize(get(article, 'content'), {
-      allowedTags: sanitize.defaults.allowedTags.concat([ 'img' ])
-    })
+      allowedTags: sanitize.defaults.allowedTags.concat(['img']),
+    });
     const unfluff = extractor(html);
     const sanitized = extractor(content);
-  
+
     const links = get(sanitized, 'links', []).filter((link: ILink) => {
-      return isUri(link.href)
-    })
+      return isUri(link.href);
+    });
 
     return {
       audio: get(metadata, 'audio'),
