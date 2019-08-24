@@ -1,1 +1,3 @@
-{ "yarn": false, "contents": "dist" }
+{
+  "yarn": false
+}
