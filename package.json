@@ -15,6 +15,10 @@
     "prepublish": "npm run build",
     "release": "np"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/developer-rakeshpaul/scrapex"
+  },
   "peerDependencies": {},
   "husky": {
     "hooks": {
