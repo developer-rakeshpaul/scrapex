@@ -23,11 +23,11 @@ const { scrape } = require('scrapex');
 ```javascript
 // define a url
 const url = "https://appleinsider.com/articles/19/08/22/like-apple-music-spotify-now-offers-a-three-month-premium-trial"
-const data = await scrape(url, lazy=true)
+const data = await scrape(url)
 
 console.log(data)
 
-{ 
+{
     audio: null,
     author: 'AppleInsider',
     logo: 'https://logo.clearbit.com/appleinsider.com',
@@ -62,7 +62,7 @@ console.log(data)
         href: 'https://support.apple.com/en-ke/HT205928' },
         { text: 'about half the price of a standard subscription.',
         href:
-        'https://appleinsider.com/articles/16/05/06/apple-begins-offering-half-price-499-apple-music-subscriptions-for-students' } 
+        'https://appleinsider.com/articles/16/05/06/apple-begins-offering-half-price-499-apple-music-subscriptions-for-students' }
     ],
     content:
     '<div><div><div><div> <p>\n\t\t\tBy <a href="undefined/cdn-cgi/l/email-protection#d6b7bbb4b3a496b7a6a6bab3bfb8a5bfb2b3a4f8b5b9bb">Amber Neely</a>\t\t\t<br />\n\t\t\tThursday, August 22, 2019, 05:14 am PT (08:14 am ET)\n\t\t</p>Spotify has extended the free-trial period it offers for Spotify Premium from one month to three, the default length of Apple\'s free trial for Apple Music.<br /><p>\nStreaming giant Spotify is now offering three free months to anyone who has yet to try their service, according to <a href="https://newsroom.spotify.com/2019-08-22/5-ways-to-take-control-of-your-streaming-with-spotify-premium/">a news post on their site.</a></p><p>\n"Beginning August 22, eligible users will receive the first three months on us for free when they sign up for any Spotify Premium plan," says Spotify in a statement about the new trial. "You\'ll unlock a world of on-demand access to millions of hours of audio content—no matter when you sign up, winter, spring, summer, or fall."</p><p>\nThe trial period currently only extends to individual and student plans and will roll out across Duo and Family in the coming months. The trial doesn\'t extend to Headspace or anyone who is billed directly through their carrier, with the exception of those in Japan, Australia, China, and Germany. </p><p>\nApple has been offering free three-month trials to Apple Music since it\'s inception, though they may begin limiting their trial to <a href="https://appleinsider.com/articles/19/07/25/apple-begins-limiting-apple-music-free-trial-period-to-one-month">one month.</a> Apple had learned artists are wary of lengthy trial periods when <a href="https://appleinsider.com/articles/15/06/18/apple-music-to-miss-out-on-taylor-swifts-1989-album">Taylor Swift protested the three-month trial</a> by withholding her album <em>1989</em> from the service. The protest earned artists the ability to be paid for track and album streams through the free trial period.</p><p>\nStudents who sign up for Apple Music can get a free six-month trial <a href="https://support.apple.com/en-ke/HT205928">by visiting Apple\'s Support Page.</a> After the trial ends, students pay $4.99 a month to continue their subscription until graduation, which works out to be <a href="https://appleinsider.com/articles/16/05/06/apple-begins-offering-half-price-499-apple-music-subscriptions-for-students">about half the price of a standard subscription.</a></p><p>\nLike most other paid music subscriptions, Spotify Premium offers users the ability to listen ad-free, download music to their device, create playlists, skip tracks, and toggle between devices when listening. </p></div></div></div></div>'
