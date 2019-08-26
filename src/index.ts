@@ -23,26 +23,26 @@ import r from 'readability-node';
 import sanitize from 'sanitize-html';
 
 export interface ILink {
-  text?: String;
-  href?: String;
+  text?: string;
+  href?: string;
 }
 
 export interface IMetadata {
-  audio?: String;
-  author?: String;
-  logo?: String;
-  publisher?: String;
-  date?: String;
-  description?: String;
-  image?: String;
-  lang?: String;
-  title?: String;
-  url?: String;
-  text?: String;
-  favicon?: String;
-  tags?: String[];
+  audio?: string;
+  author?: string;
+  logo?: string;
+  publisher?: string;
+  date?: string;
+  description?: string;
+  image?: string;
+  lang?: string;
+  title?: string;
+  url?: string;
+  text?: string;
+  favicon?: string;
+  tags?: string[];
   links?: ILink[];
-  content?: String;
+  content?: string;
 }
 
 export const scrape = async (url: string): Promise<IMetadata | null> => {
