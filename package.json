@@ -1,6 +1,6 @@
 {
   "name": "scrapex",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "main": "dist/index.js",
   "module": "dist/scrapex.esm.js",
   "typings": "dist/index.d.ts",
@@ -25,6 +25,7 @@
       "pre-commit": "pretty-quick --staged"
     }
   },
+  "license": "MIT",
   "prettier": {
     "printWidth": 80,
     "semi": true,
