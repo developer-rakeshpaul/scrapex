@@ -43,6 +43,7 @@ export interface IMetadata {
   tags?: string[];
   links?: ILink[];
   content?: string;
+  html?: string;
 }
 
 export const scrape = async (url: string): Promise<IMetadata | null> => {
@@ -98,6 +99,7 @@ export const scrape = async (url: string): Promise<IMetadata | null> => {
       tags: get(unfluff, 'tags'),
       links,
       content,
+      html,
     };
   }
   return null;
