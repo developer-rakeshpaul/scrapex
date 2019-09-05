@@ -90,6 +90,7 @@ This is what `scrapex` will try to grab from a web page:
 - `links` - An array of links embedded within the article text. (text and href for each)
 - `logo` — eg. https://entrepreneur.com/favicon180x180.png. An image URL that best represents the publisher brand.
 - `content` — readability view html of the article.
+- `html` — full html of the page.
 - `text` — clear text of the readable html.
 
 # Todo
