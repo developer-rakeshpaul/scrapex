@@ -26,7 +26,8 @@ describe('scrape', () => {
       'text',
       'favicon',
       'tags',
-      'content'
+      'content',
+      'html',
     ];
 
     expect(data).toContainAnyKeys(keys);
