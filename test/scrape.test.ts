@@ -11,7 +11,7 @@ describe('scrape', () => {
       'https://appleinsider.com/articles/19/08/22/like-apple-music-spotify-now-offers-a-three-month-premium-trial';
     const data = await scrape(url);
 
-    console.log('data :', data);
+    // console.log('data :', data);
     const keys = [
       'audio',
       'author',
@@ -31,5 +31,5 @@ describe('scrape', () => {
     ];
 
     expect(data).toContainAnyKeys(keys);
-  });
+  }, 30000);
 });

@@ -19,8 +19,9 @@ import { isUri } from 'valid-url';
 import get from 'lodash.get';
 import { getMetadata } from 'page-metadata-parser';
 import { createWindow } from 'domino';
-import r from 'readability-node';
+import Readability from 'readability';
 import sanitize from 'sanitize-html';
+import { JSDOM } from 'jsdom';
 
 export interface ILink {
   text?: string;
@@ -70,7 +71,10 @@ export const scrape = async (url: string): Promise<IMetadata | null> => {
     const metadata = await scraper({ html, url });
     const doc = createWindow(html).document;
     const data = getMetadata(doc, url);
-    const article = new r.Readability(url, doc).parse();
+    const jsdom = new JSDOM(html, {
+      url,
+    });
+    const article = new Readability(jsdom.window.document).parse();
 
     const content = sanitize(get(article, 'content'), {
       allowedTags: sanitize.defaults.allowedTags.concat(['img']),
