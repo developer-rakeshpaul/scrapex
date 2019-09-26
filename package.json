@@ -12,7 +12,7 @@
     "build": "tsdx build",
     "test": "tsdx test",
     "test:watch": "npm run test -- --watch",
-    "prepublish": "npm run build",
+    "prepare": "npm run build",
     "release": "npx np"
   },
   "repository": {
