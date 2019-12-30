@@ -25,6 +25,10 @@
       "pre-commit": "pretty-quick --staged"
     }
   },
+  "np": {
+    "yarn": false,
+    "contents": "dist"
+  },
   "license": "MIT",
   "prettier": {
     "printWidth": 80,
