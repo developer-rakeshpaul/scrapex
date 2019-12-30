@@ -1,4 +1,3 @@
-import { ILink } from './index';
 import metascraper from 'metascraper';
 import metascraperAudio from 'metascraper-audio';
 import metascraperAuthor from 'metascraper-author';
