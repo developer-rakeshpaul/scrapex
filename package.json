@@ -60,7 +60,7 @@
     "metascraper-video": "^5.11.6",
     "node-fetch": "^2.6.0",
     "page-metadata-parser": "^1.1.4",
-    "readability": "git+https://git@github.com/mozilla/readability.git",
+    "readability": "git+https://mozilla@github.com/mozilla/readability.git",
     "sanitize-html": "^1.22.1",
     "unfluff": "^3.2.0",
     "valid-url": "^1.0.9"
