@@ -82,7 +82,7 @@ export const scrape = async (url: string): Promise<IMetadata | null> => {
     const sanitized = extractor(content);
 
     const links = get(sanitized, 'links', []).filter((link: ILink) => {
-      return isUri(link.href);
+      return link.href && isUri(link.href);
     });
 
     return {
