@@ -269,7 +269,7 @@ export const scrape = async (
           allowedAttributes: {},
         });
         return {
-          // html,
+          html,
           content,
           ...metadata,
           author: article?.byline || get(metadata, 'author'),
