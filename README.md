@@ -1,10 +1,10 @@
-# Overview
+## Overview
 
 ScrapeX provides a node library to scrape basic details of a url using the [metascraper](https://metascraper.js.org/#/), [firefox readability](https://github.com/mozilla/readability), [page-metadata-parser](https://github.com/mozilla/page-metadata-parser) libraries.
 
-# Getting Started
+## Getting Started
 
-## Install
+### Install
 
 Install
 
@@ -12,18 +12,31 @@ Install
 npm i scrapex --save or yarn add scrapex
 ```
 
-## Usage
+### Usage
 
 ```javascript
 import { scrape } from 'scrapex';
 // or
 const { scrape } = require('scrapex');
+// usage
+scrape(url, metascraperRules?, timeout?)
+metascraperRules = optional array of 'audio'
+  | 'amazon'
+  | 'iframe'
+  | 'media-provider'
+  | 'soundcloud'
+  | 'uol'
+  | 'spotify'
+  | 'video'
+  | 'youtube'
+timeout: number = default to 60 seconds
+
 ```
 
 ```javascript
 // define a url
 const url = "https://appleinsider.com/articles/19/08/22/like-apple-music-spotify-now-offers-a-three-month-premium-trial"
-const data = await scrape(url)
+const data = await scrape(url, ['youtube'])
 
 console.log(data)
 
@@ -127,13 +140,13 @@ This is what `scrapex` will try to grab from a web page:
 - `html` — full html of the page.
 - `text` — clear text of the readable html.
 
-# Todo
+## Todo
 
-# Contributors
+## Contributors
 
 <img width=150px src="https://pbs.twimg.com/profile_images/1028292150205661185/TFP8E8Fc_400x400.jpg">
 <p><strong>Rakesh Paul</strong> - <a href="https://xtrios.com">Xtrios</a></p>
 
-# License
+## License
 
 This project is licensed under the MIT License.
