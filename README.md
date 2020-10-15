@@ -127,9 +127,9 @@ This is what `scrapex` will try to grab from a web page:
 - `publisher` - The document's publisher (website name)
 - `text` - The main text of the document with all the junk thrown away
 - `image` - The main image for the document (what's used by facebook, etc.)
-- `video` - An array of videos that were embedded in the article. Each video has src, width and height.
+- `video` - A video URL that best represents the article.
 - `embeds` - An array of iframe, embed, object, video that were embedded in the article.
-- `tags`- Any tags or keywords that could be found by checking &lt;rel&gt; tags or by looking at href urls.
+- `tags`- Any tags or keywords that could be found by checking href urls at has the following pattern `a[href*='/t/'],a[href*='/tag/'], a[href*='/tags/'], a[href*='/topic/'],a[href*='/tagged/'], a[href*='?keyword=']`.
 - `keywords`- Any keywords that could be found by checking &lt;rel&gt; tags or by looking at href urls.
 - `lang` - The language of the document, either detected or supplied by you.
 - `description` - The description of the document, from &lt;meta&gt; tags
