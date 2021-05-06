@@ -68,7 +68,7 @@
     "node-fetch": "^2.6.1",
     "page-metadata-parser": "^1.1.4",
     "robots-parser": "^2.1.1",
-    "sanitize-html": "^2.1.0",
+    "sanitize-html": "^2.3.2",
     "valid-url": "^1.0.9"
   },
   "devDependencies": {
