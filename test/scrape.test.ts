@@ -7,10 +7,10 @@ describe('scrape', () => {
   });
 
   it('returns data for valid urls', async () => {
-    const url = 'https://tech.trello.com/sync-architecture/';
-    const data = await scrape(url, ['audio', 'youtube']);
+    const url = 'https://blitzjs.com/';
+    const data = await scrape(url, ['audio', 'youtube', 'iframe']);
 
-    // console.dir(data)
+    // console.dir(data);
     const keys = [
       'audio',
       'author',

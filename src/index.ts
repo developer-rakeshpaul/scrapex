@@ -21,7 +21,6 @@ import fetch from 'node-fetch';
 import { getMetadata } from 'page-metadata-parser';
 import robotsParser from 'robots-parser';
 import sanitize from 'sanitize-html';
-import urlparse from 'url';
 import { isUri } from 'valid-url';
 
 const userAgent =
@@ -61,7 +60,7 @@ function extractTwitterMeta($: cheerio.Root) {
   return tags;
 }
 
-function getEmbedAttrs(el: cheerio.Element) {
+export function getEmbedAttrs(el: cheerio.TagElement) {
   return {
     src: el.attribs['src'],
     height: el.attribs['height'],
@@ -74,26 +73,16 @@ function extractEmbeds(
   $: cheerio.Root
 ): Array<Record<string, string | undefined>> {
   const embeds: Array<Record<string, string | undefined>> = [];
-  $('iframe, embed, object, video').each((_, el: cheerio.Element) => {
-    if (el.tagName === 'embed') {
-      if (el.parent && el.parent.name === 'object') {
-        // console.log('embed:object => ',el)
-      } else {
-        embeds.push(getEmbedAttrs(el));
-      }
-      // } else if (el.tagName === 'object') {
-      // console.log('object: ', el);
-      // return videoList.push(getObjectTag(doc, candidate));
-    } else if (el.tagName === 'iframe' || el.tagName === 'video') {
-      embeds.push(getEmbedAttrs(el));
-    }
+
+  $('iframe, video, embed').each((_, el: cheerio.Element) => {
+    embeds.push(getEmbedAttrs(el as cheerio.TagElement));
   });
 
   return embeds;
 }
 
 async function robotsAllowed(url: string) {
-  const robotsUrl = urlparse.resolve(url, '/robots.txt');
+  const robotsUrl = new URL('/robots.txt', url);
   const site = await fetch(robotsUrl, {
     headers: {
       'User-Agent': userAgent,
@@ -294,3 +283,8 @@ export const scrape = async (
   }
   return null;
 };
+
+(async function test() {
+  const url = 'https://blitzjs.com/';
+  await scrape(url, ['audio', 'youtube', 'iframe']);
+})();
