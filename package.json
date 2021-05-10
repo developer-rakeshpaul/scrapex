@@ -1,6 +1,6 @@
 {
   "name": "scrapex",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "main": "dist/index.js",
   "module": "dist/scrapex.esm.js",
   "typings": "dist/index.d.ts",
