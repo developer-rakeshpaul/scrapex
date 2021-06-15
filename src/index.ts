@@ -6,17 +6,6 @@ import get from 'lodash.get';
 import uniq from 'lodash.uniq';
 import metascraper, { Metadata } from 'metascraper';
 
-import metascraperAuthor from 'metascraper-author';
-import metascraperClearbit from 'metascraper-clearbit';
-import metascraperDate from 'metascraper-date';
-import metascraperDescription from 'metascraper-description';
-import metascraperImage from 'metascraper-image';
-import metascraperLang from 'metascraper-lang';
-import metascraperLogoFavicon from 'metascraper-logo-favicon';
-import metascraperPublisher from 'metascraper-publisher';
-import metascraperReadability from 'metascraper-readability';
-import metascraperTitle from 'metascraper-title';
-import metascraperUrl from 'metascraper-url';
 import { getMetadata } from 'page-metadata-parser';
 import robotsParser from 'robots-parser';
 import sanitize, { IOptions as SanitizeHtmlOptions } from 'sanitize-html';
@@ -100,17 +89,17 @@ async function robotsAllowed(prefixUrl: string) {
 }
 
 const defaultRules = [
-  metascraperAuthor(),
-  metascraperClearbit(),
-  metascraperDate(),
-  metascraperDescription(),
-  metascraperImage(),
-  metascraperLang(),
-  metascraperLogoFavicon(),
-  metascraperPublisher(),
-  metascraperReadability(),
-  metascraperTitle(),
-  metascraperUrl(),
+  'author',
+  'clearbit',
+  'date',
+  'description',
+  'image',
+  'lang',
+  'logo-favicon',
+  'publisher',
+  'readability',
+  'title',
+  'url',
 ];
 
 type MetaScraperRules =
@@ -226,11 +215,11 @@ export const scrape = async (
       const isAllowed = await robotsAllowed(url);
 
       if (isAllowed) {
-        const rules = metascraperRules.map((rule: string) =>
-          require(`metascraper-${rule}`)()
+        const rules = [...defaultRules, ...metascraperRules].map(
+          (rule: string) => require(`metascraper-${rule}`)()
         );
 
-        const scraper = metascraper([...defaultRules, ...rules]);
+        const scraper = metascraper(rules);
         const { body: html } = await await got(url, {
           headers: {
             'User-Agent': userAgent,
@@ -321,11 +310,11 @@ export const scrapeHtml = async (
     try {
       const parsedUrl = new URL(url);
 
-      const rules = metascraperRules.map((rule: string) =>
+      const rules = [...defaultRules, ...metascraperRules].map((rule: string) =>
         require(`metascraper-${rule}`)()
       );
 
-      const scraper = metascraper([...defaultRules, ...rules]);
+      const scraper = metascraper(rules);
       const $: cheerio.Root = cheerio.load(html);
 
       const metadata: Metadata = await scraper({ html, url });

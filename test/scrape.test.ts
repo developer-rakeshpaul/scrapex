@@ -1,5 +1,4 @@
-import { scrapeHtml } from './../src/index';
-import { scrape } from '../src';
+import { scrape, scrapeHtml } from '../src';
 import { SampleHtml } from './sample_html';
 
 const keys = [
@@ -25,6 +24,16 @@ describe('scrape', () => {
     const data = await scrape('1');
     expect(data).toBeNull();
   });
+
+  it('returns data for valid urls with default options', async () => {
+    const url = 'https://blitzjs.com/';
+    const data = await scrape(url);
+
+    console.dir(data?.title);
+    if (data !== null) {
+      expect(data).toContainAnyKeys(keys);
+    }
+  }, 60000);
 
   it('returns data for valid urls', async () => {
     const url = 'https://blitzjs.com/';
