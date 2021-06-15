@@ -32,7 +32,7 @@ describe('scrape', () => {
       metascraperRules: ['audio', 'youtube', 'iframe'],
     });
 
-    console.dir(data);
+    // console.dir(data);
     if (data !== null) {
       expect(data).toContainAnyKeys(keys);
     }
