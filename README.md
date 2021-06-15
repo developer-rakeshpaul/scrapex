@@ -15,11 +15,12 @@ npm i scrapex --save or yarn add scrapex
 ### Usage
 
 ```javascript
-import { scrape } from 'scrapex';
+import { scrape, scrapeHtml } from 'scrapex';
 // or
-const { scrape } = require('scrapex');
+const { scrape, scrapeHtml } = require('scrapex');
 // usage
-scrape(url, metascraperRules?, timeout?)
+scrape(url, options)
+options = { metascraperRules?, timeout?, sanitizeOptions?}
 metascraperRules = optional array of 'audio'
   | 'amazon'
   | 'iframe'
@@ -30,16 +31,19 @@ metascraperRules = optional array of 'audio'
   | 'video'
   | 'youtube'
 timeout: number = default to 60 seconds
+sanitizeOptions: sanitize-html options
 
 ```
 
 ```javascript
 // define a url
 const url = "https://appleinsider.com/articles/19/08/22/like-apple-music-spotify-now-offers-a-three-month-premium-trial"
-const data = await scrape(url, ['youtube'])
+const data = await scrape(url, {metascraperRules:['youtube']})
+// or
+const html = `html string of the webpage extracted separately`
+const data = await scrape(url, html, {metascraperRules:['youtube']})
 
-console.log(data)
-
+// scrape result
 {
   audio: undefined,
   author: 'Amber Neely',
