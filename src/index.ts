@@ -25,7 +25,14 @@ export interface ILink {
   href?: string;
 }
 
-export interface IMetadata extends Metadata {
+export interface IMetadata {
+  url: string;
+  date?: string;
+  image?: string;
+  publisher?: string;
+  title?: string;
+  author?: string;
+  description?: string;
   audio?: string;
   logo?: string;
   lang?: string;
@@ -38,6 +45,7 @@ export interface IMetadata extends Metadata {
   html?: string;
   source: string;
   video?: string;
+  code?: string[];
   embeds?: Array<Record<string, string | undefined>>;
   twitter: Record<string, string | undefined>;
 }
@@ -71,6 +79,15 @@ function extractEmbeds(
   });
 
   return embeds;
+}
+
+function extractCodeSnippets($: cheerio.Root): string[] {
+  const code: string[] = [];
+  const codeBlocks = $('pre code');
+  codeBlocks.each((_, el: cheerio.Element) => {
+    code.push($(el).text());
+  });
+  return code;
 }
 
 async function robotsAllowed(prefixUrl: string) {
@@ -200,26 +217,101 @@ const defaultOptions = {
   timeout: 60,
   sanitizeOptions: defaultSanitizeOptions,
 };
+
+async function parseMetadata(
+  url: string,
+  html: string,
+  options?: ScrapeOptions
+) {
+  const parsedUrl = new URL(url);
+  const { metascraperRules, sanitizeOptions } = options
+    ? { ...defaultOptions, ...options }
+    : defaultOptions;
+
+  const rules = [...defaultRules, ...metascraperRules].map((rule: string) =>
+    require(`metascraper-${rule}`)()
+  );
+  const scraper = metascraper(rules);
+
+  const $: cheerio.Root = cheerio.load(html);
+
+  const metadata: Metadata = await scraper({ html, url });
+  // console.log([...rules], metadata)
+  const doc = createWindow(html).document;
+  const data: PageMetaData = getMetadata(doc, url);
+  const jsdom = new JSDOM(html, {
+    url,
+  });
+  const article = new Readability(jsdom.window.document).parse();
+
+  const content = sanitize(article?.content || '', sanitizeOptions)
+    .replace(/(\r\n|\n|\r)/gm, '')
+    .trim();
+
+  const links: Array<ILink> = [];
+
+  cheerio
+    .load(content)('a')
+    .each(function (_, link) {
+      links.push({
+        href: $(link).attr('href'),
+        text: $(link).text(),
+      });
+    });
+  const tags: Array<string> = [];
+  $(
+    "a[href*='/t/'],a[href*='/tag/'], a[href*='/tags/'], a[href*='/topic/'],a[href*='/tagged/'], a[href*='?keyword=']"
+  ).each(function (_, link) {
+    tags.push($(link).text());
+  });
+  const embeds = extractEmbeds($);
+
+  const code = extractCodeSnippets($);
+  const title = get(metadata, 'title') || article?.title;
+  // console.dir({ defaultRules, rules });
+
+  const text = sanitize(content || '', {
+    allowedTags: [],
+    allowedAttributes: {},
+  });
+
+  return {
+    html,
+    content,
+    ...metadata,
+    author: get(metadata, 'author') || article?.byline,
+    favicon: get(data, 'icon'),
+    publisher: get(metadata, 'publisher') || article?.siteName || data.provider,
+    description:
+      get(metadata, 'description') || article?.excerpt || data.description,
+    lang: get(metadata, 'lang') || get(data, 'lang'),
+    url: get(data, 'url') || get(metadata, 'url'),
+    text,
+    embeds,
+    code,
+    tags: uniq(tags),
+    source: parsedUrl.hostname,
+    twitter: extractTwitterMeta($),
+    title,
+    links,
+    keywords: get(data, 'keywords', []),
+  };
+}
+
 export const scrape = async (
   url: string,
   options?: ScrapeOptions
 ): Promise<IMetadata | null> => {
-  const { metascraperRules, timeout, sanitizeOptions } = options
+  const { timeout } = options
     ? { ...defaultOptions, ...options }
     : defaultOptions;
   const valid = isUri(url);
 
   if (valid) {
     try {
-      const parsedUrl = new URL(url);
       const isAllowed = await robotsAllowed(url);
 
       if (isAllowed) {
-        const rules = [...defaultRules, ...metascraperRules].map(
-          (rule: string) => require(`metascraper-${rule}`)()
-        );
-
-        const scraper = metascraper(rules);
         const { body: html } = await await got(url, {
           headers: {
             'User-Agent': userAgent,
@@ -230,64 +322,8 @@ export const scrape = async (
           },
           timeout: timeout * 1000, // 10s request timeout
         });
-        const $: cheerio.Root = cheerio.load(html);
 
-        const metadata: Metadata = await scraper({ html, url });
-        // console.log([...rules], metadata)
-        const doc = createWindow(html).document;
-        const data: PageMetaData = getMetadata(doc, url);
-        const jsdom = new JSDOM(html, {
-          url,
-        });
-        const article = new Readability(jsdom.window.document).parse();
-
-        const content = sanitize(article?.content || '', sanitizeOptions)
-          .replace(/(\r\n|\n|\r)/gm, '')
-          .trim();
-
-        const links: Array<ILink> = [];
-
-        cheerio
-          .load(content)('a')
-          .each(function (_, link) {
-            links.push({
-              href: $(link).attr('href'),
-              text: $(link).text(),
-            });
-          });
-        const tags: Array<string> = [];
-        $(
-          "a[href*='/t/'],a[href*='/tag/'], a[href*='/tags/'], a[href*='/topic/'],a[href*='/tagged/'], a[href*='?keyword=']"
-        ).each(function (_, link) {
-          tags.push($(link).text());
-        });
-        const embeds = extractEmbeds($);
-        const title = article?.title || get(metadata, 'title');
-        // console.dir({ metadata });
-        // console.dir({ defaultRules, rules });
-        const text = sanitize(content || '', {
-          allowedTags: [],
-          allowedAttributes: {},
-        });
-        return {
-          html,
-          content,
-          ...metadata,
-          author: article?.byline || get(metadata, 'author'),
-          favicon: get(data, 'icon'),
-          publisher: article?.siteName || get(metadata, 'publisher'),
-          description: article?.excerpt || get(metadata, 'description'),
-          lang: get(metadata, 'lang') || get(data, 'lang'),
-          url: get(data, 'url') || get(metadata, 'url'),
-          text,
-          embeds,
-          tags: uniq(tags),
-          source: parsedUrl.hostname,
-          twitter: extractTwitterMeta($),
-          title,
-          links,
-          keywords: get(data, 'keywords', []),
-        };
+        return await parseMetadata(url, html, options);
       }
     } catch (error) {
       console.error(error);
@@ -301,78 +337,15 @@ export const scrapeHtml = async (
   html: string,
   options?: ScrapeOptions
 ): Promise<IMetadata | null> => {
-  const { metascraperRules, sanitizeOptions } = options
-    ? { ...defaultOptions, ...options }
-    : defaultOptions;
   const valid = isUri(url);
 
   if (valid) {
     try {
-      const parsedUrl = new URL(url);
-
-      const rules = [...defaultRules, ...metascraperRules].map((rule: string) =>
-        require(`metascraper-${rule}`)()
-      );
-
-      const scraper = metascraper(rules);
-      const $: cheerio.Root = cheerio.load(html);
-
-      const metadata: Metadata = await scraper({ html, url });
-      // console.log([...rules], metadata)
-      const doc = createWindow(html).document;
-      const data: PageMetaData = getMetadata(doc, url);
-      const jsdom = new JSDOM(html, {
+      return await parseMetadata(
         url,
-      });
-      const article = new Readability(jsdom.window.document).parse();
-
-      const content = sanitize(article?.content || '', sanitizeOptions)
-        .replace(/(\r\n|\n|\r)/gm, '')
-        .trim();
-
-      const links: Array<ILink> = [];
-
-      cheerio
-        .load(content)('a')
-        .each(function (_, link) {
-          links.push({
-            href: $(link).attr('href'),
-            text: $(link).text(),
-          });
-        });
-      const tags: Array<string> = [];
-      $(
-        "a[href*='/t/'],a[href*='/tag/'], a[href*='/tags/'], a[href*='/topic/'],a[href*='/tagged/'], a[href*='?keyword=']"
-      ).each(function (_, link) {
-        tags.push($(link).text());
-      });
-      const embeds = extractEmbeds($);
-      const title = article?.title || get(metadata, 'title');
-      // console.dir({ metadata });
-      // console.dir({ defaultRules, rules });
-      const text = sanitize(content || '', {
-        allowedTags: [],
-        allowedAttributes: {},
-      });
-      return {
         html,
-        content,
-        ...metadata,
-        author: article?.byline || get(metadata, 'author'),
-        favicon: get(data, 'icon'),
-        publisher: article?.siteName || get(metadata, 'publisher'),
-        description: article?.excerpt || get(metadata, 'description'),
-        lang: get(metadata, 'lang') || get(data, 'lang'),
-        url: get(data, 'url') || get(metadata, 'url'),
-        text,
-        embeds,
-        tags: uniq(tags),
-        source: parsedUrl.hostname,
-        twitter: extractTwitterMeta($),
-        title,
-        links,
-        keywords: get(data, 'keywords', []),
-      };
+        options ? { ...defaultOptions, ...options } : defaultOptions
+      );
     } catch (error) {
       console.error(error);
     }

@@ -1,3 +1,7 @@
+const { TextEncoder, TextDecoder } = require('util');
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
 import { scrape, scrapeHtml } from '../src';
 import { SampleHtml } from './sample_html';
 
@@ -25,18 +29,20 @@ describe('scrape', () => {
     expect(data).toBeNull();
   });
 
+  const url = 'https://whatthefuck.is/memoization';
   it('returns data for valid urls with default options', async () => {
-    const url = 'https://blitzjs.com/';
     const data = await scrape(url);
 
-    console.dir(data?.title);
+    // delete data?.content;
+    // delete data?.html;
+    // delete data?.text;
+
     if (data !== null) {
       expect(data).toContainAnyKeys(keys);
     }
   }, 60000);
 
   it('returns data for valid urls', async () => {
-    const url = 'https://blitzjs.com/';
     const data = await scrape(url, {
       metascraperRules: ['audio', 'youtube', 'iframe'],
     });
@@ -48,7 +54,6 @@ describe('scrape', () => {
   }, 60000);
 
   it('returns data for valid html', async () => {
-    const url = 'https://blitzjs.com/';
     const data = await scrapeHtml(url, SampleHtml, {
       metascraperRules: ['audio', 'youtube', 'iframe'],
     });
