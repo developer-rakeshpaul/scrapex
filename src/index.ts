@@ -307,26 +307,25 @@ export const scrape = async (
     : defaultOptions;
   const valid = isUri(url);
 
+  if (!valid) throw new Error('Invalid URL');
   if (valid) {
-    try {
-      const isAllowed = await robotsAllowed(url);
+    const isAllowed = await robotsAllowed(url);
 
-      if (isAllowed) {
-        const { body: html } = await await got(url, {
-          headers: {
-            'User-Agent': userAgent,
-          },
-          agent: {
-            http: new HttpAgent(),
-            https: new HttpsAgent(),
-          },
-          timeout: timeout * 1000, // 10s request timeout
-        });
+    if (isAllowed) {
+      const { body: html } = await await got(url, {
+        headers: {
+          'User-Agent': userAgent,
+        },
+        agent: {
+          http: new HttpAgent(),
+          https: new HttpsAgent(),
+        },
+        timeout: timeout * 1000, // 10s request timeout
+      });
 
-        return await parseMetadata(url, html, options);
-      }
-    } catch (error) {
-      console.error(error);
+      return await parseMetadata(url, html, options);
+    } else {
+      throw new Error('Robots.txt disallowed');
     }
   }
   return null;
@@ -339,16 +338,14 @@ export const scrapeHtml = async (
 ): Promise<IMetadata | null> => {
   const valid = isUri(url);
 
+  if (!valid) throw new Error('Invalid URL');
   if (valid) {
-    try {
-      return await parseMetadata(
-        url,
-        html,
-        options ? { ...defaultOptions, ...options } : defaultOptions
-      );
-    } catch (error) {
-      console.error(error);
-    }
+    const metadata = await parseMetadata(
+      url,
+      html,
+      options ? { ...defaultOptions, ...options } : defaultOptions
+    );
+    return metadata;
   }
   return null;
 };

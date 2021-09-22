@@ -143,6 +143,7 @@ This is what `scrapex` will try to grab from a web page:
 - `content` — readability view html of the article.
 - `html` — full html of the page.
 - `text` — clear text of the readable html.
+- `code` - code segments defined using pre > code tags
 
 ## Todo
 

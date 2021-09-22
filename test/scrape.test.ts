@@ -24,12 +24,19 @@ const keys = [
 ];
 
 describe('scrape', () => {
-  it('returns null on invalid url', async () => {
-    const data = await scrape('1');
-    expect(data).toBeNull();
+  it('throws error on invalid url', async () => {
+    await expect(scrape('1')).rejects.toThrow('Invalid URL');
   });
 
-  const url = 'https://whatthefuck.is/memoization';
+  it('throws error on 404', async () => {
+    await expect(
+      scrape(
+        'https://open-blog.dev/posts/slashgear/creating-an-image-lazy-loading-component-with-react/'
+      )
+    ).rejects.toThrow('getaddrinfo ENOTFOUND open-blog.dev');
+  });
+
+  const url = 'https://xtrios.com/';
   it('returns data for valid urls with default options', async () => {
     const data = await scrape(url);
 
