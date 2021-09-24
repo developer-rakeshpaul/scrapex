@@ -312,7 +312,7 @@ export const scrape = async (
     const isAllowed = await robotsAllowed(url);
 
     if (isAllowed) {
-      const { body: html } = await await got(url, {
+      const { body: html } = await got(url, {
         headers: {
           'User-Agent': userAgent,
         },
