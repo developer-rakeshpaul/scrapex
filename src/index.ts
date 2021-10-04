@@ -1,7 +1,7 @@
 import { Readability } from '@mozilla/readability';
 import cheerio from 'cheerio';
 import { createWindow } from 'domino';
-import { JSDOM } from 'jsdom';
+import { JSDOM, VirtualConsole } from 'jsdom';
 import get from 'lodash.get';
 import uniq from 'lodash.uniq';
 import metascraper, { Metadata } from 'metascraper';
@@ -239,8 +239,10 @@ async function parseMetadata(
   // console.log([...rules], metadata)
   const doc = createWindow(html).document;
   const data: PageMetaData = getMetadata(doc, url);
+  const virtualConsole = new VirtualConsole();
   const jsdom = new JSDOM(html, {
     url,
+    virtualConsole,
   });
   const article = new Readability(jsdom.window.document).parse();
 
