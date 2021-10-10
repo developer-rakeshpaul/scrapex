@@ -36,7 +36,7 @@ describe('scrape', () => {
     ).rejects.toThrow('getaddrinfo ENOTFOUND open-blog.dev');
   });
 
-  const url = 'https://xtrios.com/';
+  const url = 'https://nodejs.org/api/url.html';
   it('returns data for valid urls with default options', async () => {
     const data = await scrape(url);
 
@@ -44,6 +44,7 @@ describe('scrape', () => {
     // delete data?.html;
     // delete data?.text;
 
+    console.dir(data.text);
     if (data !== null) {
       expect(data).toContainAnyKeys(keys);
     }
