@@ -36,7 +36,7 @@ describe('scrape', () => {
     ).rejects.toThrow('getaddrinfo ENOTFOUND open-blog.dev');
   });
 
-  const url = 'https://nodejs.org/api/url.html';
+  const url = 'https://www.canva.com/learn/blog-header-design/';
   it('returns data for valid urls with default options', async () => {
     const data = await scrape(url);
 

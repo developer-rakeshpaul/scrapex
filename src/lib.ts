@@ -43,27 +43,32 @@ export const getHTML = async (
   respectRobots: boolean = true
 ) => {
   const valid = isUri(url);
-  let isAllowed = true;
+  let isAllowed = false;
 
   if (!valid) throw new Error('Invalid URL');
   if (respectRobots) {
     isAllowed = await robotsAllowed(url);
   }
 
+  console.log('robots allowed');
   if (isAllowed) {
-    const { body: html } = await got(url, {
-      headers: {
-        'User-Agent': new UserAgent().toString(),
-      },
-      agent: {
-        http: new HttpAgent({ keepAlive: true }),
-        https: new Agent({ keepAlive: true }),
-      },
-      timeout: timeout * 1000, // 10s request timeout
-    });
+    try {
+      const { body: html } = await got(url, {
+        headers: {
+          'User-Agent': new UserAgent().toString(),
+        },
+        agent: {
+          http: new HttpAgent({ keepAlive: true }),
+          https: new Agent({ keepAlive: true }),
+        },
+        timeout: timeout * 1000, // 10s request timeout
+      });
 
-    console.log(html.length);
-    return html;
+      return html;
+    } catch (error) {
+      console.log(error);
+      throw new Error('Failed to fetch HTML');
+    }
   } else {
     throw new Error('Robots.txt disallowed');
   }
