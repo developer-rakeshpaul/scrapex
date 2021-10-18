@@ -11,10 +11,10 @@ import {
 import get from 'lodash.get';
 import uniq from 'lodash.uniq';
 import metascraper, { Metadata } from 'metascraper';
-import { getMetadata } from 'page-metadata-parser';
+import { getMetadata, IPageMetadata } from 'page-metadata-parser';
 import sanitize from 'sanitize-html';
 import { isUri } from 'valid-url';
-import { ILink, IMetadata, PageMetaData, ScrapeOptions } from './types';
+import { ILink, IMetadata, ScrapeOptions } from './types';
 
 const defaultRules = [
   'author',
@@ -133,7 +133,7 @@ async function parseMetadata(
   // console.log([...rules], metadata)
   const $: cheerio.Root = cheerio.load(html);
   const doc = createWindow(html).document;
-  const data: PageMetaData = getMetadata(doc, url);
+  const data: IPageMetadata = getMetadata(doc, url);
   const article = getReadability(url, html);
 
   const content = sanitize(article?.content || '', sanitizeOptions)

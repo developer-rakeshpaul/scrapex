@@ -10,6 +10,10 @@ import UserAgent from 'user-agents';
 
 export const getReadability = (url: string, html: string) => {
   const virtualConsole = new VirtualConsole();
+
+  if (!html) {
+    throw new Error('html is required');
+  }
   const jsdom = new JSDOM(html, {
     url,
     virtualConsole,
@@ -74,10 +78,48 @@ export const getHTML = async (
   }
 };
 
+export function opengraphMeta($: cheerio.Root) {
+  const OPENGRAPH_META_TAGS = [
+    'title',
+    'type',
+    'url',
+    'image',
+    'audio',
+    'description',
+    'video',
+    'site_name',
+    'image:secure_url',
+    'image:type',
+    'image:width',
+    'image:height',
+    'image:alt',
+    'audio:secure_url',
+    'audio:type',
+    'video.type',
+    'video:width',
+    'video:height',
+    'video:secure_url',
+    'article:published_time',
+    'article:modified_time',
+    'article:author', // profile array - Writers of the article.
+    'article:section', // string - A high-level section name. E.g. Technology
+    'article:tag', //  - string array - Tag words associated with this article.
+  ];
+  const tags: Record<string, string | undefined> = {};
+  OPENGRAPH_META_TAGS.map((tag: string) => {
+    tags[`${tag}`] =
+      $(`meta[name='og:${tag}']`).attr('content') ||
+      $(`meta[property='og:${tag}']`).attr('content');
+  });
+  return tags;
+}
+
 export function extractTwitterMeta($: cheerio.Root) {
   const TWITTER_META_TAGS = [
+    'card',
     'site',
     'creator',
+    'url',
     'description',
     'title',
     'image',
