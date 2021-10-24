@@ -36,14 +36,16 @@ describe('scrape', () => {
     ).rejects.toThrow('getaddrinfo ENOTFOUND open-blog.dev');
   });
 
-  const url = 'https://xtrios.com/';
+  const url =
+    'https://stackoverflow.com/questions/60819889/how-to-check-using-javascript-if-url-contains-video-but-not-audio-or-audio-bu';
   it('returns data for valid urls with default options', async () => {
     const data = await scrape(url);
 
-    // delete data?.content;
-    // delete data?.html;
-    // delete data?.text;
+    delete data?.content;
+    delete data?.html;
+    delete data?.text;
 
+    console.dir(data);
     if (data !== null) {
       expect(data).toContainAnyKeys(keys);
     }
