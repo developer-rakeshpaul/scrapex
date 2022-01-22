@@ -67,7 +67,7 @@
     "metascraper-url": "^5.24.6",
     "metascraper-video": "^5.24.6",
     "metascraper-youtube": "^5.24.6",
-    "node-fetch": "^3.0.0",
+    "node-fetch": "^3.1.1",
     "page-metadata-parser": "^1.1.4",
     "robots-parser": "^2.3.0",
     "sanitize-html": "^2.5.0",
