@@ -238,43 +238,6 @@ interface MarkdownLink {
 }
 ```
 
-### AwesomeList
-
-Parsed awesome list structure.
-
-```typescript
-interface AwesomeList {
-  title: string;
-  description: string;
-  sections: AwesomeSection[];
-}
-```
-
-### AwesomeSection
-
-A section in an awesome list.
-
-```typescript
-interface AwesomeSection {
-  name: string;
-  level: number;
-  items: AwesomeItem[];
-  subsections?: AwesomeSection[];
-}
-```
-
-### AwesomeItem
-
-An item in an awesome list section.
-
-```typescript
-interface AwesomeItem {
-  name: string;
-  url: string;
-  description: string;
-}
-```
-
 ## Error Types
 
 ### ScrapeError
@@ -331,9 +294,6 @@ import type {
 // Parser types
 import type {
   MarkdownParseResult,
-  AwesomeList,
-  AwesomeSection,
-  AwesomeItem,
 } from 'scrapex/parsers';
 ```
 

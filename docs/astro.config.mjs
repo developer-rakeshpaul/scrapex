@@ -1,5 +1,5 @@
-import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import { defineConfig } from 'astro/config';
 
 export default defineConfig({
   site: 'https://developer-rakeshpaul.github.io/scrapex',
@@ -8,6 +8,14 @@ export default defineConfig({
     starlight({
       title: 'scrapex',
       description: 'Modern web scraper with LLM-enhanced extraction',
+      head: [
+        { tag: 'link', attrs: { rel: 'icon', type: 'image/png', href: '/scrapex/favicon-96x96.png', sizes: '96x96' } },
+        { tag: 'link', attrs: { rel: 'icon', type: 'image/svg+xml', href: '/scrapex/favicon.svg' } },
+        { tag: 'link', attrs: { rel: 'shortcut icon', href: '/scrapex/favicon.ico' } },
+        { tag: 'link', attrs: { rel: 'apple-touch-icon', sizes: '180x180', href: '/scrapex/apple-touch-icon.png' } },
+        { tag: 'meta', attrs: { name: 'apple-mobile-web-app-title', content: 'scrapex' } },
+        { tag: 'link', attrs: { rel: 'manifest', href: '/scrapex/site.webmanifest' } },
+      ],
       logo: {
         light: './src/assets/logo-light.svg',
         dark: './src/assets/logo-dark.svg',
@@ -52,6 +60,9 @@ export default defineConfig({
         },
       ],
       customCss: ['./src/styles/custom.css'],
+      expressiveCode: {
+        themes: ['catppuccin-mocha', 'catppuccin-latte'],
+      },
     }),
   ],
 });

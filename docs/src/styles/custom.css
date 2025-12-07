@@ -1,14 +1,411 @@
-/* Custom styles for scrapex docs */
+/* Font Imports: Bricolage Grotesque (Distinctive headers) & JetBrains Mono (Tech/Code) */
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=JetBrains+Mono:wght@400;700&display=swap");
 
-/* Custom accent colors - Starlight handles the rest */
+/* CATPPUCCIN MOCHA (Dark) & LATTE (Light) Theme Configuration */
 :root {
-  --sl-color-accent-low: #dbeafe;
-  --sl-color-accent: #2563eb;
-  --sl-color-accent-high: #1d4ed8;
+  /* Default to Latte (Light) variables */
+  --ctp-latte-base: #eff1f5;
+  --ctp-latte-text: #4c4f69;
+  --ctp-latte-surface0: #ccd0da;
+  --ctp-latte-blue: #1e66f5;
+  --ctp-latte-mauve: #8839ef;
+  --ctp-latte-peach: #fe640b;
+  --ctp-latte-green: #40a02b;
+
+  /* Fonts */
+  --sl-font-system: "Bricolage Grotesque", system-ui, sans-serif;
+  --sl-font-mono: "JetBrains Mono", monospace;
+
+  /* Starlight Light Mode Mappings */
+  --sl-color-accent-low: #dce0e8;
+  --sl-color-accent: var(--ctp-latte-blue);
+  --sl-color-accent-high: #7287fd;
+  --sl-color-white: var(--ctp-latte-base);
+  --sl-color-gray-1: #e6e9ef;
+  --sl-color-gray-2: #dce0e8;
+  --sl-color-gray-3: #ccd0da;
+  --sl-color-gray-4: #bcc0cc;
+  --sl-color-gray-5: #9ca0b0;
+  --sl-color-gray-6: #4c4f69;
+  --sl-color-black: var(--ctp-latte-text);
 }
 
 :root[data-theme="dark"] {
-  --sl-color-accent-low: #1e3a5f;
-  --sl-color-accent: #60a5fa;
-  --sl-color-accent-high: #93c5fd;
+  /* Catppuccin Mocha Palette */
+  --ctp-mocha-base: #1e1e2e;
+  --ctp-mocha-mantle: #181825;
+  --ctp-mocha-text: #cdd6f4;
+  --ctp-mocha-subtext: #a6adc8;
+  --ctp-mocha-surface1: #45475a;
+  --ctp-mocha-blue: #89b4fa;
+  --ctp-mocha-mauve: #cba6f7;
+  --ctp-mocha-peach: #fab387;
+  --ctp-mocha-green: #a6e3a1;
+
+  /* Starlight Dark Mode Mappings */
+  --sl-color-accent-low: #313244;
+  --sl-color-accent: var(--ctp-mocha-mauve);
+  --sl-color-accent-high: #b4befe;
+  --sl-color-white: var(--ctp-mocha-text);
+  --sl-color-gray-1: #313244;
+  --sl-color-gray-2: #45475a;
+  --sl-color-gray-3: #585b70;
+  --sl-color-gray-4: #9399b2;
+  --sl-color-gray-5: #bac2de;
+  --sl-color-gray-6: #cdd6f4;
+  --sl-color-black: var(--ctp-mocha-base);
+  --sl-color-bg: var(--ctp-mocha-base);
+  --sl-color-bg-nav: var(--ctp-mocha-mantle);
+  --sl-color-bg-sidebar: var(--ctp-mocha-mantle);
+  --sl-color-text: var(--ctp-mocha-text);
+  --sl-color-heading: var(--ctp-mocha-text);
+  color-scheme: dark;
+}
+
+/* -------------------------------------------------------------------------
+   HEADER ICON VISIBILITY FIX (Dark Mode)
+   ------------------------------------------------------------------------- */
+
+/* Social icons in header */
+[data-theme="dark"] .social-icons a {
+  color: var(--ctp-mocha-text);
+}
+
+/* Search button */
+[data-theme="dark"] site-search button {
+  color: var(--ctp-mocha-text);
+}
+
+/* Search keyboard shortcut */
+[data-theme="dark"] site-search kbd {
+  color: var(--ctp-mocha-subtext);
+  border-color: var(--ctp-mocha-surface1);
+}
+
+/* Search dialog/popup dark mode */
+[data-theme="dark"] dialog {
+  background-color: var(--ctp-mocha-base);
+  border-color: var(--ctp-mocha-surface1);
+}
+
+[data-theme="dark"] dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Pagefind search input */
+[data-theme="dark"] .pagefind-ui__search-input {
+  background-color: var(--ctp-mocha-mantle);
+  color: var(--ctp-mocha-text);
+  border-color: var(--ctp-mocha-surface1);
+}
+
+[data-theme="dark"] .pagefind-ui__search-input::placeholder {
+  color: var(--ctp-mocha-subtext);
+}
+
+/* Pagefind results */
+[data-theme="dark"] .pagefind-ui__results-area {
+  background-color: var(--ctp-mocha-base);
+}
+
+[data-theme="dark"] .pagefind-ui__result {
+  background-color: var(--ctp-mocha-mantle);
+  border-color: var(--ctp-mocha-surface1);
+}
+
+[data-theme="dark"] .pagefind-ui__result:hover {
+  background-color: #313244;
+}
+
+[data-theme="dark"] .pagefind-ui__result-link {
+  color: var(--ctp-mocha-blue);
+}
+
+[data-theme="dark"] .pagefind-ui__result-title {
+  color: var(--ctp-mocha-text);
+}
+
+[data-theme="dark"] .pagefind-ui__result-excerpt {
+  color: var(--ctp-mocha-subtext);
+}
+
+[data-theme="dark"] .pagefind-ui__result-nested {
+  border-color: var(--ctp-mocha-surface1);
+}
+
+/* Search highlight marks */
+[data-theme="dark"] mark {
+  background-color: rgba(250, 179, 135, 0.4);
+  color: #fab387;
+}
+
+[data-theme="dark"] .pagefind-ui__result-excerpt mark {
+  background-color: rgba(250, 179, 135, 0.4);
+  color: #fab387;
+}
+
+[data-theme="dark"] .pagefind-ui__result-title mark {
+  background-color: rgba(250, 179, 135, 0.4);
+  color: #fab387;
+}
+
+/* Starlight search dialog specific */
+[data-theme="dark"] [data-pagefind-ui] {
+  --pagefind-ui-text: #cdd6f4;
+  --pagefind-ui-background: #1e1e2e;
+  --pagefind-ui-border: #45475a;
+  --pagefind-ui-tag: #45475a;
+  --pagefind-ui-primary: #fab387;
+}
+
+/* Force mark visibility in search results */
+[data-theme="dark"] [data-pagefind-ui] mark {
+  color: #fab387;
+  background-color: rgba(250, 179, 135, 0.35);
+}
+
+/* Theme selector - fix icon and text visibility */
+[data-theme="dark"] starlight-theme-select label {
+  color: var(--ctp-mocha-text);
+}
+
+[data-theme="dark"] starlight-theme-select select {
+  color: var(--ctp-mocha-text);
+}
+
+/* Sidebar text visibility in dark mode */
+[data-theme="dark"] .sidebar-content a {
+  color: #a6adc8;
+}
+
+[data-theme="dark"] .sidebar-content a:hover {
+  color: var(--ctp-mocha-text);
+}
+
+/* Selected sidebar item - needs dark text on light accent background */
+[data-theme="dark"] .sidebar-content a[aria-current="page"] {
+  color: #1e1e2e;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .sidebar-content details summary {
+  color: var(--ctp-mocha-text);
+}
+
+/* Right sidebar (table of contents) */
+[data-theme="dark"] .right-sidebar a {
+  color: #a6adc8;
+}
+
+[data-theme="dark"] .right-sidebar a:hover,
+[data-theme="dark"] .right-sidebar a[aria-current="true"] {
+  color: var(--ctp-mocha-text);
+}
+
+[data-theme="dark"] .right-sidebar h2 {
+  color: var(--ctp-mocha-text);
+}
+
+/* -------------------------------------------------------------------------
+   HOMEPAGE HERO REDESIGN
+   ------------------------------------------------------------------------- */
+
+/* Animated Gradient Background for Hero/Splash Area */
+[data-template="splash"] .hero {
+  position: relative;
+  overflow: hidden;
+  padding-block: 5rem;
+  text-align: left;
+}
+
+[data-template="splash"] .hero::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(circle at center, rgba(203, 166, 247, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(137, 180, 250, 0.1) 0%, transparent 40%);
+  animation: bg-drift 20s linear infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* -------------------------------------------------------------------------
+   TYPOGRAPHY - Hero Styles
+   ------------------------------------------------------------------------- */
+
+/* Hero title */
+[data-template="splash"] .hero h1 {
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-weight: 800;
+  font-stretch: 110%;
+  letter-spacing: -0.03em;
+  font-size: 4.5rem;
+  line-height: 1.1;
+  background: linear-gradient(135deg, var(--sl-color-white) 30%, var(--sl-color-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-inline: 0;
+}
+
+/* Hero tagline */
+[data-template="splash"] .hero .tagline {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.1rem;
+  max-width: 60ch;
+  margin-inline: 0;
+  animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s backwards;
+}
+
+/* Light mode tagline */
+:root:not([data-theme="dark"]) [data-template="splash"] .hero .tagline {
+  color: var(--ctp-latte-text);
+}
+
+/* Dark mode tagline */
+[data-theme="dark"] [data-template="splash"] .hero .tagline,
+[data-theme="dark"] .hero .tagline {
+  color: #cdd6f4;
+}
+
+/* Hero actions */
+[data-template="splash"] .hero .actions {
+  justify-content: flex-start;
+  animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s backwards;
+}
+
+/* Action Buttons */
+[data-template="splash"] .hero .action.primary {
+  background: var(--sl-color-accent);
+  color: var(--ctp-mocha-base);
+  border-radius: 4px;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  border: 1px solid transparent;
+}
+
+[data-template="splash"] .hero .action.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(203, 166, 247, 0.4);
+}
+
+/* -------------------------------------------------------------------------
+   CONTENT READABILITY (Dark Mode)
+   ------------------------------------------------------------------------- */
+
+[data-theme="dark"] .sl-markdown-content p,
+[data-theme="dark"] .sl-markdown-content li,
+[data-theme="dark"] .sl-markdown-content td,
+[data-theme="dark"] .sl-markdown-content th,
+[data-theme="dark"] .sl-markdown-content code {
+  color: var(--ctp-mocha-text);
+}
+
+[data-theme="dark"] .sl-markdown-content h1,
+[data-theme="dark"] .sl-markdown-content h2,
+[data-theme="dark"] .sl-markdown-content h3,
+[data-theme="dark"] .sl-markdown-content h4,
+[data-theme="dark"] .sl-markdown-content h5,
+[data-theme="dark"] .sl-markdown-content h6 {
+  color: var(--ctp-mocha-text);
+}
+
+[data-theme="dark"] .sl-markdown-content a {
+  color: var(--ctp-mocha-blue);
+}
+
+/* Table text visibility in dark mode */
+[data-theme="dark"] .sl-markdown-content table {
+  color: var(--ctp-mocha-text);
+}
+
+[data-theme="dark"] .sl-markdown-content th {
+  color: var(--ctp-mocha-text);
+  background-color: #313244;
+}
+
+[data-theme="dark"] .sl-markdown-content td {
+  color: #bac2de;
+}
+
+[data-theme="dark"] .sl-markdown-content td code {
+  color: var(--ctp-mocha-peach);
+  background-color: #313244;
+}
+
+/* Inline code visibility in dark mode (not in code blocks) */
+[data-theme="dark"] .sl-markdown-content code:not(pre code) {
+  color: var(--ctp-mocha-peach);
+  background-color: #313244;
+  padding: 0.125em 0.25em;
+  border-radius: 3px;
+}
+
+/* -------------------------------------------------------------------------
+   CARD STYLING
+   ------------------------------------------------------------------------- */
+
+.card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--sl-color-gray-1);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  transition:
+    border-color 0.3s ease,
+    transform 0.3s ease;
+}
+
+.card:hover {
+  border-color: var(--sl-color-accent);
+  transform: translateY(-4px);
+}
+
+.card .title {
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-weight: 700;
+}
+
+/* -------------------------------------------------------------------------
+   DARK MODE BACKGROUND GRID
+   ------------------------------------------------------------------------- */
+
+[data-theme="dark"] body {
+  background-image:
+    linear-gradient(rgba(49, 50, 68, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(49, 50, 68, 0.3) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* -------------------------------------------------------------------------
+   ANIMATIONS
+   ------------------------------------------------------------------------- */
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bg-drift {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

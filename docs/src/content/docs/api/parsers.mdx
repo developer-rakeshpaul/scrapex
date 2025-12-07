@@ -1,6 +1,6 @@
 ---
 title: Parsers
-description: API reference for Markdown and awesome list parsers.
+description: API reference for Markdown parsers.
 ---
 
 Parsers extract structured data from Markdown content.
@@ -77,90 +77,6 @@ The parser extracts descriptions from these patterns:
 - [Link](url) — Description with em dash
 ```
 
-## parseAwesomeList()
-
-Specialized parser for GitHub awesome lists.
-
-```typescript
-function parseAwesomeList(markdown: string): AwesomeList
-```
-
-### AwesomeList
-
-```typescript
-interface AwesomeList {
-  title: string;
-  description: string;
-  sections: AwesomeSection[];
-}
-
-interface AwesomeSection {
-  name: string;
-  level: number;
-  items: AwesomeItem[];
-  subsections?: AwesomeSection[];
-}
-
-interface AwesomeItem {
-  name: string;
-  url: string;
-  description: string;
-}
-```
-
-### Example
-
-```typescript
-import { parseAwesomeList } from 'scrapex/parsers';
-
-const markdown = `
-# Awesome Tools
-
-A curated list of awesome tools.
-
-## Editors
-
-- [VS Code](https://code.visualstudio.com) - Free and open source
-- [Sublime Text](https://sublimetext.com) - Sophisticated text editor
-
-### Vim-based
-
-- [Neovim](https://neovim.io) - Hyperextensible Vim-based editor
-
-## Terminals
-
-- [iTerm2](https://iterm2.com) - macOS terminal replacement
-- [Warp](https://warp.dev) - Modern terminal with AI
-`;
-
-const result = parseAwesomeList(markdown);
-
-console.log(result.title);
-// 'Awesome Tools'
-
-console.log(result.description);
-// 'A curated list of awesome tools.'
-
-console.log(result.sections[0]);
-// {
-//   name: 'Editors',
-//   level: 2,
-//   items: [
-//     { name: 'VS Code', url: 'https://code.visualstudio.com', description: 'Free and open source' },
-//     { name: 'Sublime Text', url: 'https://sublimetext.com', description: 'Sophisticated text editor' },
-//   ],
-//   subsections: [
-//     {
-//       name: 'Vim-based',
-//       level: 3,
-//       items: [
-//         { name: 'Neovim', url: 'https://neovim.io', description: 'Hyperextensible Vim-based editor' },
-//       ],
-//     },
-//   ],
-// }
-```
-
 ## GithubMarkdownParser
 
 Extended parser for GitHub-flavored Markdown.
@@ -228,35 +144,6 @@ console.log(result.tableOfContents);
 //   { text: 'Installation', anchor: 'installation', level: 2 },
 //   { text: 'Usage', anchor: 'usage', level: 2 },
 // ]
-```
-
-## Utilities
-
-### Flattening Sections
-
-Get all items from an awesome list:
-
-```typescript
-function flattenAwesomeList(list: AwesomeList): AwesomeItem[] {
-  const items: AwesomeItem[] = [];
-
-  function processSection(section: AwesomeSection) {
-    items.push(...section.items);
-    section.subsections?.forEach(processSection);
-  }
-
-  list.sections.forEach(processSection);
-  return items;
-}
-
-const allItems = flattenAwesomeList(result);
-```
-
-### Filtering by Section
-
-```typescript
-const section = result.sections.find(s => s.name === 'Editors');
-const editorLinks = section?.items ?? [];
 ```
 
 ## See Also
