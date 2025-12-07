@@ -1,0 +1,163 @@
+---
+title: scrapeHtml()
+description: Extract data from an HTML string without fetching a URL.
+---
+
+Extract structured data from HTML content directly, without making HTTP requests.
+
+## Signature
+
+```typescript
+function scrapeHtml(
+  html: string,
+  url: string,
+  options?: ScrapeOptions
+): Promise<ScrapedData>
+```
+
+## Parameters
+
+### html
+
+- **Type:** `string`
+- **Required:** Yes
+
+The HTML content to parse and extract data from.
+
+### url
+
+- **Type:** `string`
+- **Required:** Yes
+
+The base URL for resolving relative links. This URL is also used in the response.
+
+### options
+
+- **Type:** `ScrapeOptions`
+- **Required:** No
+
+Same options as `scrape()`, except network-related options are ignored.
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `extractors` | `Extractor[]` | `defaultExtractors` | Custom extractor pipeline |
+| `enhancer` | `Enhancer` | `undefined` | LLM enhancement pipeline |
+| `maxContentLength` | `number` | `undefined` | Max content length to process |
+
+## Returns
+
+Returns a `Promise<ScrapedData>` identical to `scrape()`.
+
+## Examples
+
+### Basic Usage
+
+```typescript
+import { scrapeHtml } from 'scrapex';
+
+const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Article</title>
+  <meta name="description" content="Article description">
+</head>
+<body>
+  <article>
+    <h1>Article Title</h1>
+    <p>Article content goes here...</p>
+    <a href="/other-page">Related Article</a>
+  </article>
+</body>
+</html>
+`;
+
+const result = await scrapeHtml(html, 'https://example.com/article');
+
+console.log(result.title);       // 'My Article'
+console.log(result.description); // 'Article description'
+console.log(result.links);       // [{ url: 'https://example.com/other-page', ... }]
+```
+
+### From File
+
+```typescript
+import { readFile } from 'fs/promises';
+import { scrapeHtml } from 'scrapex';
+
+const html = await readFile('page.html', 'utf-8');
+const result = await scrapeHtml(html, 'https://example.com');
+```
+
+### From fetch Response
+
+```typescript
+import { scrapeHtml } from 'scrapex';
+
+const response = await fetch('https://example.com');
+const html = await response.text();
+
+const result = await scrapeHtml(html, response.url);
+```
+
+### With Custom Extractors
+
+```typescript
+import { scrapeHtml, defaultExtractors, type Extractor } from 'scrapex';
+
+class PriceExtractor implements Extractor {
+  readonly name = 'price';
+  readonly priority = 50;
+
+  async extract(context) {
+    const { $ } = context;
+    const price = $('.price').text();
+    return { custom: { price } };
+  }
+}
+
+const result = await scrapeHtml(html, url, {
+  extractors: [...defaultExtractors, new PriceExtractor()],
+});
+```
+
+### Testing Extractors
+
+`scrapeHtml()` is useful for testing custom extractors:
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { scrapeHtml, defaultExtractors } from 'scrapex';
+import { MyExtractor } from './my-extractor';
+
+describe('MyExtractor', () => {
+  it('extracts custom data', async () => {
+    const html = `
+      <html>
+        <body>
+          <div class="my-data">Test Value</div>
+        </body>
+      </html>
+    `;
+
+    const result = await scrapeHtml(html, 'https://example.com', {
+      extractors: [...defaultExtractors, new MyExtractor()],
+    });
+
+    expect(result.custom?.myData).toBe('Test Value');
+  });
+});
+```
+
+## Use Cases
+
+- **Testing:** Test extractors without network requests
+- **Offline Processing:** Process cached or stored HTML
+- **Custom Fetching:** Use your own HTTP client with custom auth/cookies
+- **Streaming:** Process HTML as it arrives
+- **Batch Processing:** Process multiple HTML files from disk
+
+## See Also
+
+- [scrape()](/api/scrape) - Scrape by URL
+- [Custom Extractors](/guides/custom-extractors) - Create custom extractors

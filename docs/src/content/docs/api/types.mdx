@@ -1,0 +1,344 @@
+---
+title: Types
+description: Complete TypeScript type definitions for scrapex.
+---
+
+Complete TypeScript type definitions for scrapex.
+
+## Core Types
+
+### ScrapedData
+
+The main result type returned by `scrape()` and `scrapeHtml()`.
+
+```typescript
+interface ScrapedData {
+  // Basic metadata
+  url: string;
+  title: string;
+  description?: string;
+  author?: string;
+  publishedDate?: string;
+
+  // Content
+  content: string;         // HTML content
+  textContent: string;     // Plain text content
+  excerpt?: string;
+
+  // Site information
+  siteName?: string;
+  favicon?: string;
+  image?: string;
+  language?: string;
+
+  // Links
+  links: LinkInfo[];
+
+  // Classification
+  contentType?: string;
+
+  // Custom extractor data
+  custom?: Record<string, unknown>;
+
+  // LLM-enhanced fields
+  summary?: string;
+  entities?: Record<string, string[]>;
+  categories?: string[];
+  structured?: unknown;
+}
+```
+
+### ScrapeOptions
+
+Options for the `scrape()` and `scrapeHtml()` functions.
+
+```typescript
+interface ScrapeOptions {
+  // HTTP options (scrape() only)
+  timeout?: number;
+  headers?: Record<string, string>;
+  userAgent?: string;
+
+  // Behavior
+  respectRobots?: boolean;
+  maxContentLength?: number;
+
+  // Pipeline customization
+  extractors?: Extractor[];
+  enhancer?: Enhancer;
+}
+```
+
+### LinkInfo
+
+Information about an extracted link.
+
+```typescript
+interface LinkInfo {
+  url: string;
+  text: string;
+  rel?: string;
+  isExternal: boolean;
+}
+```
+
+## Extractor Types
+
+### Extractor
+
+Interface for content extractors.
+
+```typescript
+interface Extractor {
+  readonly name: string;
+  readonly priority: number;
+
+  canHandle?(context: ExtractionContext): boolean;
+  extract(context: ExtractionContext): Promise<Partial<ScrapedData>>;
+}
+```
+
+### ExtractionContext
+
+Context passed to extractors.
+
+```typescript
+interface ExtractionContext {
+  $: CheerioAPI;
+  url: string;
+  document: Document;
+  options: ScrapeOptions;
+}
+```
+
+### Document
+
+Readability parsed document.
+
+```typescript
+interface Document {
+  title: string;
+  content: string;
+  textContent: string;
+  length: number;
+  excerpt: string;
+  byline: string | null;
+  dir: string | null;
+  siteName: string | null;
+  lang: string | null;
+}
+```
+
+## LLM Types
+
+### LLMProvider
+
+Interface for LLM providers.
+
+```typescript
+interface LLMProvider {
+  complete(prompt: string, options?: CompletionOptions): Promise<string>;
+}
+```
+
+### CompletionOptions
+
+Options for LLM completions.
+
+```typescript
+interface CompletionOptions {
+  maxTokens?: number;
+  temperature?: number;
+  systemPrompt?: string;
+}
+```
+
+### OpenAIOptions
+
+Options for `createOpenAI()`.
+
+```typescript
+interface OpenAIOptions {
+  apiKey?: string;
+  baseURL?: string;
+  model?: string;
+  maxTokens?: number;
+  temperature?: number;
+}
+```
+
+### AnthropicOptions
+
+Options for `AnthropicProvider`.
+
+```typescript
+interface AnthropicOptions {
+  apiKey?: string;
+  model?: string;
+  maxTokens?: number;
+}
+```
+
+### Enhancer
+
+LLM enhancement pipeline.
+
+```typescript
+interface Enhancer {
+  enhance(data: ScrapedData): Promise<Partial<ScrapedData>>;
+}
+```
+
+### EnhancerBuilder
+
+Builder for creating enhancers.
+
+```typescript
+interface EnhancerBuilder extends Enhancer {
+  summarize(): EnhancerBuilder;
+  extractEntities(): EnhancerBuilder;
+  classify(categories: string[]): EnhancerBuilder;
+  extractStructured(schema: JSONSchema): EnhancerBuilder;
+}
+```
+
+## Parser Types
+
+### MarkdownParseResult
+
+Result from `MarkdownParser.parse()`.
+
+```typescript
+interface MarkdownParseResult {
+  headings: Heading[];
+  links: MarkdownLink[];
+}
+```
+
+### Heading
+
+A Markdown heading.
+
+```typescript
+interface Heading {
+  level: number;
+  text: string;
+}
+```
+
+### MarkdownLink
+
+A link extracted from Markdown.
+
+```typescript
+interface MarkdownLink {
+  url: string;
+  text: string;
+  description: string;
+}
+```
+
+### AwesomeList
+
+Parsed awesome list structure.
+
+```typescript
+interface AwesomeList {
+  title: string;
+  description: string;
+  sections: AwesomeSection[];
+}
+```
+
+### AwesomeSection
+
+A section in an awesome list.
+
+```typescript
+interface AwesomeSection {
+  name: string;
+  level: number;
+  items: AwesomeItem[];
+  subsections?: AwesomeSection[];
+}
+```
+
+### AwesomeItem
+
+An item in an awesome list section.
+
+```typescript
+interface AwesomeItem {
+  name: string;
+  url: string;
+  description: string;
+}
+```
+
+## Error Types
+
+### ScrapeError
+
+Custom error class.
+
+```typescript
+class ScrapeError extends Error {
+  readonly code: ErrorCode;
+  readonly url?: string;
+  readonly statusCode?: number;
+}
+```
+
+### ErrorCode
+
+Possible error codes.
+
+```typescript
+type ErrorCode =
+  | 'FETCH_ERROR'
+  | 'TIMEOUT'
+  | 'HTTP_ERROR'
+  | 'PARSE_ERROR'
+  | 'ROBOTS_BLOCKED'
+  | 'INVALID_URL'
+  | 'CONTENT_TOO_LARGE';
+```
+
+## Importing Types
+
+```typescript
+// Core types
+import type {
+  ScrapedData,
+  ScrapeOptions,
+  LinkInfo,
+} from 'scrapex';
+
+// Extractor types
+import type {
+  Extractor,
+  ExtractionContext,
+} from 'scrapex';
+
+// LLM types
+import type {
+  LLMProvider,
+  CompletionOptions,
+  Enhancer,
+  EnhancerBuilder,
+} from 'scrapex/llm';
+
+// Parser types
+import type {
+  MarkdownParseResult,
+  AwesomeList,
+  AwesomeSection,
+  AwesomeItem,
+} from 'scrapex/parsers';
+```
+
+## See Also
+
+- [API Reference: scrape()](/api/scrape) - Main function
+- [API Reference: Extractors](/api/extractors) - Extractor API
+- [API Reference: LLM Providers](/api/llm-providers) - LLM API

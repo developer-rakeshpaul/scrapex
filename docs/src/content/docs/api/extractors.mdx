@@ -1,0 +1,192 @@
+---
+title: Extractors
+description: API reference for built-in extractors and the Extractor interface.
+---
+
+Extractors are responsible for parsing HTML and extracting structured data.
+
+## Extractor Interface
+
+```typescript
+interface Extractor {
+  readonly name: string;
+  readonly priority: number;
+
+  canHandle?(context: ExtractionContext): boolean;
+  extract(context: ExtractionContext): Promise<Partial<ScrapedData>>;
+}
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `name` | `string` | Unique identifier for the extractor |
+| `priority` | `number` | Execution order (higher runs first) |
+
+### Methods
+
+#### canHandle(context)
+
+Optional method to determine if the extractor should run.
+
+- **Parameters:** `context: ExtractionContext`
+- **Returns:** `boolean`
+- **Default:** `true` (runs for all pages)
+
+#### extract(context)
+
+Main extraction method. Returns partial data to merge into the result.
+
+- **Parameters:** `context: ExtractionContext`
+- **Returns:** `Promise<Partial<ScrapedData>>`
+
+## ExtractionContext
+
+```typescript
+interface ExtractionContext {
+  $: CheerioAPI;           // Cheerio instance for DOM queries
+  url: string;             // Original URL being scraped
+  document: Document;      // Readability parsed document
+  options: ScrapeOptions;  // Options passed to scrape()
+}
+```
+
+## Built-in Extractors
+
+### MetaExtractor
+
+**Priority:** 100
+
+Extracts metadata from HTML `<head>`:
+
+- Title from `<title>` and Open Graph
+- Description from meta tags
+- Author from meta tags and `<link rel="author">`
+- Published date from various meta formats
+- Site name, favicon, language
+
+```typescript
+import { MetaExtractor } from 'scrapex/extractors';
+```
+
+### ContentExtractor
+
+**Priority:** 90
+
+Extracts main content using Readability algorithm:
+
+- Main article content (HTML)
+- Plain text content
+- Excerpt
+- Byline detection
+
+```typescript
+import { ContentExtractor } from 'scrapex/extractors';
+```
+
+### JsonLdExtractor
+
+**Priority:** 80
+
+Parses JSON-LD structured data:
+
+- Article metadata
+- Product information
+- Person/Organization data
+- Event details
+
+Supports multiple `@type` values including Article, NewsArticle, BlogPosting, Product, and more.
+
+```typescript
+import { JsonLdExtractor } from 'scrapex/extractors';
+```
+
+### LinksExtractor
+
+**Priority:** 70
+
+Extracts and categorizes links:
+
+- Internal vs external links
+- Link text and relationship
+- Filters navigation/boilerplate links
+
+```typescript
+import { LinksExtractor } from 'scrapex/extractors';
+```
+
+## defaultExtractors
+
+Array of all built-in extractors in priority order:
+
+```typescript
+import { defaultExtractors } from 'scrapex';
+
+// [MetaExtractor, ContentExtractor, JsonLdExtractor, LinksExtractor]
+```
+
+## Creating Custom Extractors
+
+```typescript
+import type { Extractor, ExtractionContext, ScrapedData } from 'scrapex';
+
+class VideoExtractor implements Extractor {
+  readonly name = 'video';
+  readonly priority = 60;
+
+  canHandle(context: ExtractionContext): boolean {
+    const { $ } = context;
+    return $('video, iframe[src*="youtube"], iframe[src*="vimeo"]').length > 0;
+  }
+
+  async extract(context: ExtractionContext): Promise<Partial<ScrapedData>> {
+    const { $ } = context;
+
+    const videos = $('video source, iframe[src*="youtube"], iframe[src*="vimeo"]')
+      .map((_, el) => {
+        const $el = $(el);
+        return {
+          src: $el.attr('src') || $el.parent().attr('src'),
+          type: $el.attr('type') || 'video/embed',
+        };
+      })
+      .get();
+
+    return {
+      custom: { videos },
+    };
+  }
+}
+```
+
+## Using Custom Extractors
+
+```typescript
+import { scrape, defaultExtractors } from 'scrapex';
+
+// Add to defaults
+const extractors = [...defaultExtractors, new VideoExtractor()];
+
+// Or replace entirely
+const extractors = [
+  new MetaExtractor(),
+  new VideoExtractor(),
+];
+
+const result = await scrape(url, { extractors });
+```
+
+## Extractor Execution
+
+1. Extractors are sorted by priority (highest first)
+2. For each extractor:
+   - `canHandle()` is called if defined
+   - If `true` or undefined, `extract()` is called
+   - Returned data is merged into the result
+3. Later extractors can override earlier data
+
+## See Also
+
+- [Custom Extractors Guide](/guides/custom-extractors) - Detailed guide
+- [Types Reference](/api/types) - Full type definitions

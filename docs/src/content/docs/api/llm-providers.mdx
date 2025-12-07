@@ -1,0 +1,220 @@
+---
+title: LLM Providers
+description: API reference for LLM provider configuration and enhancement.
+---
+
+LLM providers enable AI-powered content enhancement.
+
+## createOpenAI()
+
+Creates an OpenAI-compatible provider. Works with OpenAI, Azure OpenAI, Ollama, LM Studio, and other compatible APIs.
+
+```typescript
+function createOpenAI(options: OpenAIOptions): LLMProvider
+```
+
+### Options
+
+| Option | Type | Required | Default | Description |
+|--------|------|----------|---------|-------------|
+| `apiKey` | `string` | No* | `OPENAI_API_KEY` env | API key |
+| `baseURL` | `string` | No | OpenAI API | Custom endpoint |
+| `model` | `string` | No | `gpt-4o-mini` | Model to use |
+| `maxTokens` | `number` | No | `4096` | Max response tokens |
+| `temperature` | `number` | No | `0.7` | Response randomness |
+
+*Required unless using environment variable or local endpoint.
+
+### Examples
+
+```typescript
+import { createOpenAI } from 'scrapex/llm';
+
+// OpenAI
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  model: 'gpt-4o',
+});
+
+// Ollama (local)
+const ollama = createOpenAI({
+  baseURL: 'http://localhost:11434/v1',
+  model: 'llama3.2',
+});
+
+// LM Studio (local)
+const lmstudio = createOpenAI({
+  baseURL: 'http://localhost:1234/v1',
+  model: 'local-model',
+});
+
+// Azure OpenAI
+const azure = createOpenAI({
+  apiKey: process.env.AZURE_OPENAI_KEY,
+  baseURL: 'https://your-resource.openai.azure.com/openai/deployments/your-deployment',
+});
+```
+
+## AnthropicProvider
+
+Native Anthropic Claude provider.
+
+```typescript
+class AnthropicProvider implements LLMProvider
+```
+
+### Constructor
+
+```typescript
+new AnthropicProvider(options: AnthropicOptions)
+```
+
+### Options
+
+| Option | Type | Required | Default | Description |
+|--------|------|----------|---------|-------------|
+| `apiKey` | `string` | No | `ANTHROPIC_API_KEY` env | API key |
+| `model` | `string` | No | `claude-3-5-haiku-20241022` | Model to use |
+| `maxTokens` | `number` | No | `4096` | Max response tokens |
+
+### Example
+
+```typescript
+import { AnthropicProvider } from 'scrapex/llm';
+
+const anthropic = new AnthropicProvider({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  model: 'claude-3-5-sonnet-20241022',
+});
+```
+
+## LLMProvider Interface
+
+Implement this interface for custom providers:
+
+```typescript
+interface LLMProvider {
+  complete(prompt: string, options?: CompletionOptions): Promise<string>;
+}
+
+interface CompletionOptions {
+  maxTokens?: number;
+  temperature?: number;
+  systemPrompt?: string;
+}
+```
+
+### Custom Provider Example
+
+```typescript
+class MyProvider implements LLMProvider {
+  async complete(prompt: string, options?: CompletionOptions): Promise<string> {
+    const response = await fetch('https://my-llm-api.com/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt,
+        max_tokens: options?.maxTokens ?? 4096,
+      }),
+    });
+
+    const data = await response.json();
+    return data.text;
+  }
+}
+```
+
+## createEnhancer()
+
+Creates an enhancement pipeline from a provider.
+
+```typescript
+function createEnhancer(provider: LLMProvider): EnhancerBuilder
+```
+
+### EnhancerBuilder Methods
+
+| Method | Description |
+|--------|-------------|
+| `.summarize()` | Add summarization |
+| `.extractEntities()` | Add entity extraction |
+| `.classify(categories)` | Add classification |
+| `.extractStructured(schema)` | Add structured extraction |
+
+### Example
+
+```typescript
+import { createOpenAI, createEnhancer } from 'scrapex/llm';
+
+const provider = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+const enhancer = createEnhancer(provider)
+  .summarize()
+  .extractEntities()
+  .classify(['tech', 'business', 'science']);
+```
+
+## Enhancement Types
+
+### Summarization
+
+```typescript
+.summarize()
+```
+
+Adds a `summary` field to the result with a concise summary of the content.
+
+### Entity Extraction
+
+```typescript
+.extractEntities()
+```
+
+Adds an `entities` field with categorized entities:
+
+```typescript
+{
+  people: string[];
+  organizations: string[];
+  locations: string[];
+  technologies: string[];
+  // ... other categories
+}
+```
+
+### Classification
+
+```typescript
+.classify(categories: string[])
+```
+
+Adds a `categories` field with matching categories from the provided list.
+
+### Structured Extraction
+
+```typescript
+.extractStructured(schema: JSONSchema)
+```
+
+Adds a `structured` field with data matching the provided JSON schema.
+
+## Using Enhancers
+
+```typescript
+import { scrape } from 'scrapex';
+
+const result = await scrape('https://example.com', {
+  enhancer,
+});
+
+// Access enhanced data
+console.log(result.summary);
+console.log(result.entities);
+console.log(result.categories);
+console.log(result.structured);
+```
+
+## See Also
+
+- [LLM Integration Guide](/guides/llm-integration) - Detailed usage guide
+- [Types Reference](/api/types) - Full type definitions

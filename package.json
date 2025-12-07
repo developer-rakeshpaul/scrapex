@@ -1,0 +1,99 @@
+{
+  "name": "scrapex",
+  "version": "2.0.0",
+  "description": "Modern web scraper with LLM-enhanced extraction, extensible pipeline, and pluggable parsers",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./parsers": {
+      "types": "./dist/parsers/index.d.mts",
+      "import": "./dist/parsers/index.mjs",
+      "require": "./dist/parsers/index.cjs"
+    },
+    "./llm": {
+      "types": "./dist/llm/index.d.mts",
+      "import": "./dist/llm/index.mjs",
+      "require": "./dist/llm/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsdown --watch",
+    "build": "tsdown",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit",
+    "lint": "biome lint ./src",
+    "lint:fix": "biome lint --write ./src",
+    "format": "biome format ./src",
+    "format:fix": "biome format --write ./src",
+    "check": "biome check ./src",
+    "check:fix": "biome check --write ./src",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/developer-rakeshpaul/scrapex"
+  },
+  "keywords": [
+    "scraper",
+    "web-scraping",
+    "metadata",
+    "llm",
+    "extraction",
+    "readability",
+    "markdown",
+    "parser"
+  ],
+  "author": "Rakesh Paul",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "cheerio": "^1.1.2",
+    "jsdom": "^27.2.0",
+    "mdast-util-from-markdown": "^2.0.2",
+    "mdast-util-to-string": "^4.0.0",
+    "turndown": "^7.2.2",
+    "unist-util-visit": "^5.0.0",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.8",
+    "@types/jsdom": "^27.0.0",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^22.10.0",
+    "@types/turndown": "^5.0.6",
+    "tsdown": "^0.17.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": ">=0.30.0",
+    "openai": ">=4.0.0",
+    "puppeteer": ">=23.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@anthropic-ai/sdk": {
+      "optional": true
+    },
+    "openai": {
+      "optional": true
+    },
+    "puppeteer": {
+      "optional": true
+    }
+  }
+}

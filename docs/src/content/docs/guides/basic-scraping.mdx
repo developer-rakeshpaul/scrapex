@@ -1,0 +1,178 @@
+---
+title: Basic Scraping
+description: Learn the fundamentals of web scraping with scrapex.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## The scrape() Function
+
+The `scrape()` function fetches a URL and extracts metadata and content:
+
+```typescript
+import { scrape } from 'scrapex';
+
+const result = await scrape('https://example.com/article');
+```
+
+## Scraping Options
+
+### Timeout
+
+Set a custom timeout (default: 10000ms):
+
+```typescript
+const result = await scrape(url, {
+  timeout: 30000, // 30 seconds
+});
+```
+
+### User Agent
+
+Use a custom user agent:
+
+```typescript
+const result = await scrape(url, {
+  userAgent: 'MyBot/1.0 (+https://mysite.com/bot)',
+});
+```
+
+### Content Length
+
+Limit extracted content length:
+
+```typescript
+const result = await scrape(url, {
+  maxContentLength: 100000, // 100k characters
+});
+```
+
+### Disable Content Extraction
+
+Skip content extraction for faster metadata-only scraping:
+
+```typescript
+const result = await scrape(url, {
+  extractContent: false,
+});
+```
+
+### Respect robots.txt
+
+Check robots.txt before scraping:
+
+```typescript
+const result = await scrape(url, {
+  respectRobots: true, // Throws if blocked
+});
+```
+
+## Content Types
+
+scrapex automatically classifies content:
+
+| Type | Description |
+|------|-------------|
+| `article` | Blog posts, news articles |
+| `repo` | GitHub repositories |
+| `docs` | Documentation pages |
+| `package` | npm/PyPI packages |
+| `video` | YouTube, Vimeo |
+| `product` | E-commerce products |
+| `tool` | Online tools |
+| `unknown` | Unclassified |
+
+```typescript
+const result = await scrape('https://github.com/user/repo');
+console.log(result.contentType); // 'repo'
+```
+
+## URL Utilities
+
+scrapex provides URL helper functions:
+
+```typescript
+import {
+  isValidUrl,
+  normalizeUrl,
+  extractDomain,
+  resolveUrl,
+  isExternalUrl,
+} from 'scrapex';
+
+// Validate URLs
+isValidUrl('https://example.com'); // true
+isValidUrl('not-a-url'); // false
+
+// Normalize (removes tracking params)
+normalizeUrl('https://example.com?utm_source=test');
+// 'https://example.com'
+
+// Extract domain
+extractDomain('https://www.example.com/path');
+// 'example.com'
+
+// Resolve relative URLs
+resolveUrl('/path', 'https://example.com/page');
+// 'https://example.com/path'
+
+// Check if external
+isExternalUrl('https://other.com', 'example.com');
+// true
+```
+
+## Checking robots.txt
+
+Manually check robots.txt before scraping:
+
+```typescript
+import { checkRobotsTxt } from 'scrapex';
+
+const check = await checkRobotsTxt('https://example.com/page');
+
+if (check.allowed) {
+  const result = await scrape('https://example.com/page');
+} else {
+  console.log('Blocked by robots.txt');
+}
+```
+
+<Aside type="tip">
+  The `respectRobots: true` option does this automatically and throws a `ScrapeError` with code `ROBOTS_BLOCKED` if the URL is disallowed.
+</Aside>
+
+## Extracted Links
+
+scrapex extracts links from the main content:
+
+```typescript
+const result = await scrape(url);
+
+for (const link of result.links ?? []) {
+  console.log(link.url);        // Full URL
+  console.log(link.text);       // Link text
+  console.log(link.isExternal); // true if external
+}
+```
+
+Links in navigation, header, footer, and sidebars are automatically filtered out.
+
+## JSON-LD Data
+
+Structured data is extracted from JSON-LD scripts:
+
+```typescript
+const result = await scrape(url);
+
+if (result.jsonLd) {
+  for (const item of result.jsonLd) {
+    console.log(item['@type']); // 'Article', 'Product', etc.
+  }
+}
+```
+
+## Next Steps
+
+- [LLM Integration](/guides/llm-integration) - Add AI-powered enhancements
+- [Custom Extractors](/guides/custom-extractors) - Create domain-specific extractors
+- [Error Handling](/guides/error-handling) - Handle scraping failures gracefully

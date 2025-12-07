@@ -1,0 +1,258 @@
+---
+title: Custom Extractors
+description: Create domain-specific extractors to enhance scrapex with custom data extraction.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+scrapex uses an extensible extractor pipeline. You can create custom extractors to handle domain-specific data extraction.
+
+## Extractor Interface
+
+Every extractor implements the `Extractor` interface:
+
+```typescript
+import type { Extractor, ExtractionContext, ScrapedData } from 'scrapex';
+
+interface Extractor {
+  readonly name: string;      // Unique identifier
+  readonly priority: number;  // Execution order (higher = earlier)
+
+  canHandle?(context: ExtractionContext): boolean;
+  extract(context: ExtractionContext): Promise<Partial<ScrapedData>>;
+}
+```
+
+## Extraction Context
+
+The `ExtractionContext` provides access to:
+
+```typescript
+interface ExtractionContext {
+  $: CheerioAPI;           // Cheerio instance for DOM queries
+  url: string;             // Original URL
+  document: Document;      // Readability document
+  options: ScrapeOptions;  // Scraping options
+}
+```
+
+## Creating a Custom Extractor
+
+<Steps>
+
+1. **Define the extractor class**
+
+   ```typescript
+   import type { Extractor, ExtractionContext, ScrapedData } from 'scrapex';
+
+   class RecipeExtractor implements Extractor {
+     readonly name = 'recipe';
+     readonly priority = 60;
+
+     canHandle(context: ExtractionContext): boolean {
+       const { $ } = context;
+       // Only handle pages with recipe schema
+       return $('script[type="application/ld+json"]').text().includes('"Recipe"');
+     }
+
+     async extract(context: ExtractionContext): Promise<Partial<ScrapedData>> {
+       const { $ } = context;
+
+       // Extract recipe-specific data
+       const ingredients = $('.ingredients li')
+         .map((_, el) => $(el).text().trim())
+         .get();
+
+       const instructions = $('.instructions li')
+         .map((_, el) => $(el).text().trim())
+         .get();
+
+       const prepTime = $('[itemprop="prepTime"]').attr('content');
+       const cookTime = $('[itemprop="cookTime"]').attr('content');
+
+       return {
+         custom: {
+           recipe: {
+             ingredients,
+             instructions,
+             prepTime,
+             cookTime,
+           },
+         },
+       };
+     }
+   }
+   ```
+
+2. **Register the extractor**
+
+   ```typescript
+   import { scrapeHtml, defaultExtractors } from 'scrapex';
+
+   const extractors = [...defaultExtractors, new RecipeExtractor()];
+
+   const result = await scrapeHtml(html, url, { extractors });
+   ```
+
+3. **Access custom data**
+
+   ```typescript
+   const recipe = result.custom?.recipe;
+   if (recipe) {
+     console.log('Ingredients:', recipe.ingredients);
+     console.log('Instructions:', recipe.instructions);
+   }
+   ```
+
+</Steps>
+
+## Priority Levels
+
+Extractors run in priority order (highest first). Built-in priorities:
+
+| Priority | Extractor | Purpose |
+|----------|-----------|---------|
+| 100 | MetaExtractor | Title, description, author |
+| 90 | ContentExtractor | Main content, Readability |
+| 80 | JsonLdExtractor | Structured data |
+| 70 | LinksExtractor | Link extraction |
+
+<Aside type="tip">
+  Use priority 50-69 for custom extractors that should run after core extraction but before finalization.
+</Aside>
+
+## Conditional Extraction
+
+Use `canHandle()` to skip extraction for irrelevant pages:
+
+```typescript
+class GitHubRepoExtractor implements Extractor {
+  readonly name = 'github-repo';
+  readonly priority = 55;
+
+  canHandle(context: ExtractionContext): boolean {
+    return context.url.includes('github.com') &&
+           !context.url.includes('/issues') &&
+           !context.url.includes('/pull');
+  }
+
+  async extract(context: ExtractionContext): Promise<Partial<ScrapedData>> {
+    const { $ } = context;
+
+    return {
+      custom: {
+        repo: {
+          stars: parseInt($('.js-social-count').text().trim() || '0'),
+          forks: $('[href$="/forks"] .Counter').text().trim(),
+          language: $('[itemprop="programmingLanguage"]').text().trim(),
+        },
+      },
+    };
+  }
+}
+```
+
+## Overriding Built-in Data
+
+Custom extractors can override built-in fields:
+
+```typescript
+class BetterTitleExtractor implements Extractor {
+  readonly name = 'better-title';
+  readonly priority = 95; // Run after MetaExtractor (100)
+
+  async extract(context: ExtractionContext): Promise<Partial<ScrapedData>> {
+    const { $ } = context;
+
+    // Use h1 if it's more descriptive than the page title
+    const h1 = $('article h1, main h1').first().text().trim();
+    const title = $('title').text().trim();
+
+    if (h1 && h1.length > title.length * 0.5) {
+      return { title: h1 };
+    }
+
+    return {};
+  }
+}
+```
+
+## TypeScript: Typing Custom Data
+
+For type safety with custom data:
+
+```typescript
+interface ProductData {
+  name: string;
+  price: number;
+  currency: string;
+  inStock: boolean;
+}
+
+const result = await scrape(url, { extractors });
+const product = result.custom?.product as ProductData | undefined;
+
+if (product) {
+  console.log(`${product.name}: ${product.currency}${product.price}`);
+}
+```
+
+## Full Example
+
+```typescript
+import { scrape, defaultExtractors, type Extractor, type ExtractionContext, type ScrapedData } from 'scrapex';
+
+class EcommerceExtractor implements Extractor {
+  readonly name = 'ecommerce';
+  readonly priority = 55;
+
+  canHandle(context: ExtractionContext): boolean {
+    const { $ } = context;
+    return $('[itemtype*="Product"]').length > 0 ||
+           $('.product-price, .price').length > 0;
+  }
+
+  async extract(context: ExtractionContext): Promise<Partial<ScrapedData>> {
+    const { $ } = context;
+
+    const priceText = $('[itemprop="price"], .product-price, .price')
+      .first()
+      .text()
+      .trim();
+
+    const priceMatch = priceText.match(/[\d,.]+/);
+    const price = priceMatch ? parseFloat(priceMatch[0].replace(',', '')) : null;
+
+    const currency = priceText.match(/[$€£¥]/)?.[0] || 'USD';
+
+    const inStock = $('[itemprop="availability"]').attr('content')?.includes('InStock') ??
+                    !$('.out-of-stock, .sold-out').length;
+
+    return {
+      contentType: 'product',
+      custom: {
+        product: {
+          name: $('[itemprop="name"], .product-title, h1').first().text().trim(),
+          price,
+          currency,
+          inStock,
+          sku: $('[itemprop="sku"]').text().trim() || undefined,
+          brand: $('[itemprop="brand"]').text().trim() || undefined,
+        },
+      },
+    };
+  }
+}
+
+// Usage
+const extractors = [...defaultExtractors, new EcommerceExtractor()];
+const result = await scrape('https://shop.example.com/product', { extractors });
+
+console.log(result.contentType); // 'product'
+console.log(result.custom?.product);
+```
+
+## Next Steps
+
+- [Error Handling](/guides/error-handling) - Handle extraction failures gracefully
+- [API Reference: Extractors](/api/extractors) - Full extractor API documentation

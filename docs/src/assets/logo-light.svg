@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none">
+  <style>
+    .sigil-s-light {
+      animation: draw 2s ease-out forwards;
+    }
+    .sigil-x-light {
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: draw 1.5s ease-out forwards 0.5s;
+    }
+    @keyframes draw {
+      to { stroke-dashoffset: 0; }
+    }
+  </style>
+
+  <!-- Background Base (Subtle Grid) -->
+  <path d="M10 20 L110 20 M10 100 L110 100" stroke="#ff3300" stroke-width="2" opacity="0.1" />
+  <path d="M60 10 L60 110" stroke="#ff3300" stroke-width="1" opacity="0.05" stroke-dasharray="4 4"/>
+  
+  <!-- THE SIGIL S -->
+  <path class="sigil-s-light" d="M70 30 L45 30 L30 50 L60 70 L45 90 L20 90" stroke="#ff3300" stroke-width="6" stroke-linecap="square" stroke-dasharray="240" stroke-dashoffset="240" fill="none" />
+  
+  <!-- CONNECTING BRIDGE -->
+  <path d="M60 70 L75 70" stroke="#ff3300" stroke-width="2" opacity="0.3" />
+
+  <!-- THE CALCULUS 'x' (Subscript - smaller, positioned lower-right) -->
+  <!-- Two curves intersecting to form italic x -->
+  <path class="sigil-x-light" d="M95 72 Q 87 82 78 93 M 78 72 Q 87 82 95 93" stroke="#ff3300" stroke-width="3" stroke-linecap="round" fill="none" />
+  
+  <!-- Data Nodes (Solid) -->
+  <rect x="67" y="27" width="6" height="6" fill="#0f172a" />
+  <rect x="17" y="87" width="6" height="6" fill="#0f172a" />
+  
+  <!-- Connecting Tech Lines -->
+  <path d="M45 30 L45 15 M45 90 L45 105" stroke="#0f172a" stroke-width="2" />
+
+</svg>

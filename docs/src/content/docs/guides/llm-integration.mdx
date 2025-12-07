@@ -1,0 +1,202 @@
+---
+title: LLM Integration
+description: Enhance scraped content with AI-powered summarization, entity extraction, and structured data.
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+scrapex integrates with LLM providers to enhance scraped content with AI capabilities.
+
+## Setting Up a Provider
+
+<Tabs>
+  <TabItem label="OpenAI">
+    ```typescript
+    import { scrape } from 'scrapex';
+    import { createOpenAI } from 'scrapex/llm';
+
+    const openai = createOpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      model: 'gpt-4o-mini', // optional, defaults to gpt-4o-mini
+    });
+    ```
+  </TabItem>
+  <TabItem label="Anthropic">
+    ```typescript
+    import { scrape } from 'scrapex';
+    import { AnthropicProvider } from 'scrapex/llm';
+
+    const anthropic = new AnthropicProvider({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      model: 'claude-3-5-haiku-20241022', // optional
+    });
+    ```
+  </TabItem>
+  <TabItem label="Ollama">
+    ```typescript
+    import { createOpenAI } from 'scrapex/llm';
+
+    const ollama = createOpenAI({
+      baseURL: 'http://localhost:11434/v1',
+      model: 'llama3.2',
+    });
+    ```
+  </TabItem>
+  <TabItem label="LM Studio">
+    ```typescript
+    import { createOpenAI } from 'scrapex/llm';
+
+    const lmstudio = createOpenAI({
+      baseURL: 'http://localhost:1234/v1',
+      model: 'local-model',
+    });
+    ```
+  </TabItem>
+</Tabs>
+
+## Creating an Enhancer
+
+Use `createEnhancer()` to build an enhancement pipeline:
+
+```typescript
+import { createEnhancer } from 'scrapex/llm';
+
+const enhancer = createEnhancer(openai)
+  .summarize()
+  .extractEntities()
+  .classify(['tech', 'business', 'science']);
+```
+
+## Enhancing Scraped Content
+
+Pass the enhancer to the `scrape()` function:
+
+```typescript
+const result = await scrape('https://example.com/article', {
+  enhancer,
+});
+
+console.log(result.summary);     // AI-generated summary
+console.log(result.entities);    // Extracted entities
+console.log(result.categories);  // Classification results
+```
+
+## Enhancement Types
+
+### Summarize
+
+Generate a concise summary of the content:
+
+```typescript
+const enhancer = createEnhancer(provider).summarize();
+
+const result = await scrape(url, { enhancer });
+console.log(result.summary);
+// "This article discusses the latest developments in..."
+```
+
+### Extract Entities
+
+Extract named entities (people, organizations, locations, etc.):
+
+```typescript
+const enhancer = createEnhancer(provider).extractEntities();
+
+const result = await scrape(url, { enhancer });
+console.log(result.entities);
+// {
+//   people: ['John Smith', 'Jane Doe'],
+//   organizations: ['Acme Corp', 'TechCo'],
+//   locations: ['San Francisco', 'New York'],
+//   technologies: ['React', 'Node.js'],
+// }
+```
+
+### Classify
+
+Classify content into predefined categories:
+
+```typescript
+const categories = ['technology', 'business', 'science', 'politics'];
+const enhancer = createEnhancer(provider).classify(categories);
+
+const result = await scrape(url, { enhancer });
+console.log(result.categories);
+// ['technology', 'business']
+```
+
+### Extract Structured Data
+
+Extract specific data using a JSON schema:
+
+```typescript
+const enhancer = createEnhancer(provider).extractStructured({
+  type: 'object',
+  properties: {
+    productName: { type: 'string' },
+    price: { type: 'number' },
+    features: { type: 'array', items: { type: 'string' } },
+  },
+  required: ['productName', 'price'],
+});
+
+const result = await scrape(url, { enhancer });
+console.log(result.structured);
+// { productName: 'Widget Pro', price: 99.99, features: ['Fast', 'Reliable'] }
+```
+
+## Chaining Enhancements
+
+Chain multiple enhancements together:
+
+```typescript
+const enhancer = createEnhancer(provider)
+  .summarize()
+  .extractEntities()
+  .classify(['tech', 'news', 'tutorial'])
+  .extractStructured({
+    type: 'object',
+    properties: {
+      author: { type: 'string' },
+      topics: { type: 'array', items: { type: 'string' } },
+    },
+  });
+```
+
+<Aside type="note">
+  Enhancements run sequentially in the order they're added. More enhancements = more API calls and tokens.
+</Aside>
+
+## Token Usage
+
+Each enhancement makes one or more LLM API calls. To minimize costs:
+
+- Use `textContent` instead of `content` (plain text uses fewer tokens)
+- Set `maxContentLength` to limit input size
+- Use smaller/faster models for simple tasks
+
+```typescript
+const result = await scrape(url, {
+  maxContentLength: 10000, // Limit content to 10k chars
+  enhancer: createEnhancer(provider).summarize(),
+});
+```
+
+## Error Handling
+
+LLM enhancements can fail without failing the entire scrape:
+
+```typescript
+const result = await scrape(url, { enhancer });
+
+if (result.summary) {
+  console.log('Summary:', result.summary);
+} else {
+  console.log('Summary enhancement failed or was skipped');
+}
+```
+
+## Next Steps
+
+- [Custom Extractors](/guides/custom-extractors) - Create domain-specific extractors
+- [API Reference: LLM Providers](/api/llm-providers) - Full provider API documentation

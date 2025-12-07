@@ -1,0 +1,256 @@
+---
+title: Error Handling
+description: Handle scraping errors gracefully with scrapex error types and recovery strategies.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+scrapex provides structured error handling to help you handle failures gracefully.
+
+## ScrapeError
+
+All scraping errors are instances of `ScrapeError`:
+
+```typescript
+import { scrape, ScrapeError } from 'scrapex';
+
+try {
+  const result = await scrape('https://example.com');
+} catch (error) {
+  if (error instanceof ScrapeError) {
+    console.log('Code:', error.code);
+    console.log('Message:', error.message);
+    console.log('URL:', error.url);
+    console.log('Status:', error.statusCode);
+  }
+}
+```
+
+## Error Codes
+
+| Code | Description | Common Causes |
+|------|-------------|---------------|
+| `FETCH_ERROR` | Failed to fetch URL | Network issues, DNS failure |
+| `TIMEOUT` | Request timed out | Slow server, network issues |
+| `HTTP_ERROR` | Non-2xx HTTP response | 404, 500, rate limiting |
+| `PARSE_ERROR` | Failed to parse HTML | Malformed HTML |
+| `ROBOTS_BLOCKED` | Blocked by robots.txt | `respectRobots: true` and disallowed |
+| `INVALID_URL` | Invalid URL provided | Malformed URL string |
+| `CONTENT_TOO_LARGE` | Response too large | Exceeds size limits |
+
+## Handling Specific Errors
+
+```typescript
+import { scrape, ScrapeError } from 'scrapex';
+
+async function safeScrape(url: string) {
+  try {
+    return await scrape(url, { timeout: 10000 });
+  } catch (error) {
+    if (!(error instanceof ScrapeError)) {
+      throw error; // Re-throw unknown errors
+    }
+
+    switch (error.code) {
+      case 'TIMEOUT':
+        console.log(`Timeout scraping ${url}, retrying...`);
+        return await scrape(url, { timeout: 30000 });
+
+      case 'HTTP_ERROR':
+        if (error.statusCode === 429) {
+          console.log('Rate limited, waiting...');
+          await sleep(5000);
+          return await scrape(url);
+        }
+        if (error.statusCode === 404) {
+          console.log('Page not found');
+          return null;
+        }
+        throw error;
+
+      case 'ROBOTS_BLOCKED':
+        console.log('Blocked by robots.txt, skipping');
+        return null;
+
+      default:
+        throw error;
+    }
+  }
+}
+```
+
+## Retry Logic
+
+Implement exponential backoff for transient failures:
+
+```typescript
+async function scrapeWithRetry(
+  url: string,
+  maxRetries = 3,
+  baseDelay = 1000
+) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await scrape(url);
+    } catch (error) {
+      if (!(error instanceof ScrapeError)) throw error;
+
+      const isRetryable = ['FETCH_ERROR', 'TIMEOUT'].includes(error.code) ||
+                          (error.code === 'HTTP_ERROR' && error.statusCode === 429);
+
+      if (!isRetryable || attempt === maxRetries - 1) {
+        throw error;
+      }
+
+      const delay = baseDelay * Math.pow(2, attempt);
+      console.log(`Attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+```
+
+## Batch Scraping
+
+Handle errors in batch operations:
+
+```typescript
+async function scrapeBatch(urls: string[]) {
+  const results = await Promise.allSettled(
+    urls.map(url => scrape(url))
+  );
+
+  const successful = [];
+  const failed = [];
+
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    if (result.status === 'fulfilled') {
+      successful.push(result.value);
+    } else {
+      failed.push({
+        url: urls[i],
+        error: result.reason,
+      });
+    }
+  }
+
+  console.log(`Success: ${successful.length}, Failed: ${failed.length}`);
+  return { successful, failed };
+}
+```
+
+## Error Logging
+
+Create a structured error logger:
+
+```typescript
+function logScrapeError(error: ScrapeError) {
+  const entry = {
+    timestamp: new Date().toISOString(),
+    code: error.code,
+    url: error.url,
+    message: error.message,
+    statusCode: error.statusCode,
+    stack: error.stack,
+  };
+
+  console.error(JSON.stringify(entry));
+  // Send to monitoring service
+}
+```
+
+## Graceful Degradation
+
+Return partial results when possible:
+
+```typescript
+async function scrapeWithFallback(url: string) {
+  try {
+    return await scrape(url, { enhancer });
+  } catch (error) {
+    if (error instanceof ScrapeError && error.code === 'LLM_ERROR') {
+      // LLM enhancement failed, try without it
+      console.log('LLM enhancement failed, scraping without enhancement');
+      return await scrape(url);
+    }
+    throw error;
+  }
+}
+```
+
+## Validation
+
+Validate URLs before scraping:
+
+```typescript
+import { isValidUrl, scrape, ScrapeError } from 'scrapex';
+
+async function validateAndScrape(url: string) {
+  if (!isValidUrl(url)) {
+    throw new ScrapeError('INVALID_URL', `Invalid URL: ${url}`, url);
+  }
+
+  // Optionally check robots.txt first
+  const robotsCheck = await checkRobotsTxt(url);
+  if (!robotsCheck.allowed) {
+    throw new ScrapeError('ROBOTS_BLOCKED', 'Blocked by robots.txt', url);
+  }
+
+  return await scrape(url);
+}
+```
+
+<Aside type="caution">
+  Always validate user-provided URLs before scraping to prevent SSRF attacks and invalid requests.
+</Aside>
+
+## Error Recovery Patterns
+
+### Circuit Breaker
+
+Prevent cascading failures:
+
+```typescript
+class CircuitBreaker {
+  private failures = 0;
+  private lastFailure = 0;
+  private readonly threshold = 5;
+  private readonly resetTime = 60000; // 1 minute
+
+  async execute<T>(fn: () => Promise<T>): Promise<T> {
+    if (this.isOpen()) {
+      throw new Error('Circuit breaker is open');
+    }
+
+    try {
+      const result = await fn();
+      this.failures = 0;
+      return result;
+    } catch (error) {
+      this.failures++;
+      this.lastFailure = Date.now();
+      throw error;
+    }
+  }
+
+  private isOpen(): boolean {
+    if (this.failures >= this.threshold) {
+      if (Date.now() - this.lastFailure > this.resetTime) {
+        this.failures = 0; // Reset after timeout
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }
+}
+
+const breaker = new CircuitBreaker();
+const result = await breaker.execute(() => scrape(url));
+```
+
+## Next Steps
+
+- [API Reference: scrape()](/api/scrape) - Full scrape function reference
+- [Basic Scraping](/guides/basic-scraping) - Learn scraping fundamentals

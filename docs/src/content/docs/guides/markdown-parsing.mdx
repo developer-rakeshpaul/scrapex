@@ -1,0 +1,253 @@
+---
+title: Markdown Parsing
+description: Parse Markdown files and GitHub awesome lists for link extraction.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+scrapex includes powerful Markdown parsing capabilities for extracting structured data from Markdown content.
+
+## MarkdownParser
+
+The `MarkdownParser` class extracts headings and links from Markdown content:
+
+```typescript
+import { MarkdownParser } from 'scrapex/parsers';
+
+const parser = new MarkdownParser();
+const markdown = `
+# My Document
+
+Check out [Example](https://example.com) for more info.
+
+## Section One
+
+- [Link 1](https://one.com) - First link
+- [Link 2](https://two.com) - Second link
+
+## Section Two
+
+More content with [another link](https://three.com).
+`;
+
+const result = parser.parse(markdown);
+```
+
+### Parsed Output
+
+```typescript
+console.log(result.headings);
+// [
+//   { level: 1, text: 'My Document' },
+//   { level: 2, text: 'Section One' },
+//   { level: 2, text: 'Section Two' },
+// ]
+
+console.log(result.links);
+// [
+//   { url: 'https://example.com', text: 'Example', description: '' },
+//   { url: 'https://one.com', text: 'Link 1', description: 'First link' },
+//   { url: 'https://two.com', text: 'Link 2', description: 'Second link' },
+//   { url: 'https://three.com', text: 'another link', description: '' },
+// ]
+```
+
+## GitHub Awesome List Parser
+
+The `parseAwesomeList()` function is specialized for parsing GitHub awesome lists:
+
+```typescript
+import { parseAwesomeList } from 'scrapex/parsers';
+
+const markdown = `
+# Awesome JavaScript
+
+A curated list of JavaScript resources.
+
+## Contents
+
+- [Frameworks](#frameworks)
+- [Libraries](#libraries)
+
+## Frameworks
+
+- [React](https://react.dev) - A JavaScript library for building user interfaces
+- [Vue](https://vuejs.org) - The Progressive JavaScript Framework
+- [Angular](https://angular.io) - Platform for building mobile and desktop apps
+
+## Libraries
+
+### State Management
+
+- [Redux](https://redux.js.org) - Predictable state container
+- [MobX](https://mobx.js.org) - Simple, scalable state management
+
+### Utilities
+
+- [Lodash](https://lodash.com) - Utility library
+- [Ramda](https://ramdajs.com) - Functional programming library
+`;
+
+const result = parseAwesomeList(markdown);
+```
+
+### Awesome List Output
+
+```typescript
+console.log(result.title);
+// 'Awesome JavaScript'
+
+console.log(result.description);
+// 'A curated list of JavaScript resources.'
+
+console.log(result.sections);
+// [
+//   {
+//     name: 'Frameworks',
+//     level: 2,
+//     items: [
+//       { name: 'React', url: 'https://react.dev', description: 'A JavaScript library...' },
+//       { name: 'Vue', url: 'https://vuejs.org', description: 'The Progressive...' },
+//       { name: 'Angular', url: 'https://angular.io', description: 'Platform for...' },
+//     ],
+//   },
+//   {
+//     name: 'Libraries',
+//     level: 2,
+//     items: [],
+//     subsections: [
+//       {
+//         name: 'State Management',
+//         level: 3,
+//         items: [
+//           { name: 'Redux', url: 'https://redux.js.org', description: 'Predictable...' },
+//           { name: 'MobX', url: 'https://mobx.js.org', description: 'Simple...' },
+//         ],
+//       },
+//       {
+//         name: 'Utilities',
+//         level: 3,
+//         items: [
+//           { name: 'Lodash', url: 'https://lodash.com', description: 'Utility library' },
+//           { name: 'Ramda', url: 'https://ramdajs.com', description: 'Functional...' },
+//         ],
+//       },
+//     ],
+//   },
+// ]
+```
+
+## Fetching and Parsing GitHub READMEs
+
+Combine with scraping to parse awesome lists from GitHub:
+
+```typescript
+import { scrape } from 'scrapex';
+import { parseAwesomeList } from 'scrapex/parsers';
+
+async function getAwesomeList(repoUrl: string) {
+  // GitHub raw URL for README
+  const rawUrl = repoUrl
+    .replace('github.com', 'raw.githubusercontent.com')
+    .replace(/\/?$/, '/main/README.md');
+
+  const response = await fetch(rawUrl);
+  const markdown = await response.text();
+
+  return parseAwesomeList(markdown);
+}
+
+const list = await getAwesomeList('https://github.com/sindresorhus/awesome-nodejs');
+console.log(`Found ${list.sections.length} sections`);
+```
+
+## Link Description Extraction
+
+The parsers extract descriptions from common patterns:
+
+```markdown
+- [Link](url) - Description after dash
+- [Link](url): Description after colon
+- [Link](url) — Description after em dash
+```
+
+All produce:
+```typescript
+{ text: 'Link', url: 'url', description: 'Description after...' }
+```
+
+## Filtering Links
+
+Filter extracted links by domain or pattern:
+
+```typescript
+import { MarkdownParser } from 'scrapex/parsers';
+import { extractDomain } from 'scrapex';
+
+const parser = new MarkdownParser();
+const result = parser.parse(markdown);
+
+// Only GitHub links
+const githubLinks = result.links.filter(
+  link => extractDomain(link.url) === 'github.com'
+);
+
+// Only npm packages
+const npmLinks = result.links.filter(
+  link => link.url.includes('npmjs.com/package/')
+);
+```
+
+<Aside type="tip">
+  Use `extractDomain()` from scrapex for reliable domain extraction that handles subdomains.
+</Aside>
+
+## Use Cases
+
+### RAG Pipelines
+
+Extract links from awesome lists to build knowledge bases:
+
+```typescript
+const list = parseAwesomeList(markdown);
+
+const allLinks = list.sections.flatMap(section => [
+  ...section.items,
+  ...(section.subsections?.flatMap(sub => sub.items) ?? []),
+]);
+
+for (const link of allLinks) {
+  await indexForRAG({
+    url: link.url,
+    title: link.name,
+    description: link.description,
+    category: link.section,
+  });
+}
+```
+
+### Resource Aggregation
+
+Build a categorized resource database:
+
+```typescript
+const list = parseAwesomeList(markdown);
+
+const resources = list.sections.map(section => ({
+  category: section.name,
+  items: section.items.map(item => ({
+    name: item.name,
+    url: item.url,
+    description: item.description,
+  })),
+  subcategories: section.subsections?.map(sub => ({
+    name: sub.name,
+    items: sub.items,
+  })),
+}));
+```
+
+## Next Steps
+
+- [API Reference: Parsers](/api/parsers) - Full parser API documentation
+- [Basic Scraping](/guides/basic-scraping) - Combine with web scraping

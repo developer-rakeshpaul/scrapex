@@ -1,0 +1,144 @@
+---
+title: scrape()
+description: Main function to scrape a URL and extract structured data.
+---
+
+The primary function for scraping web pages by URL.
+
+## Signature
+
+```typescript
+function scrape(url: string, options?: ScrapeOptions): Promise<ScrapedData>
+```
+
+## Parameters
+
+### url
+
+- **Type:** `string`
+- **Required:** Yes
+
+The URL to scrape. Must be a valid HTTP or HTTPS URL.
+
+### options
+
+- **Type:** `ScrapeOptions`
+- **Required:** No
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `timeout` | `number` | `30000` | Request timeout in milliseconds |
+| `headers` | `Record<string, string>` | `{}` | Custom HTTP headers |
+| `userAgent` | `string` | Default UA | Custom User-Agent string |
+| `respectRobots` | `boolean` | `false` | Respect robots.txt rules |
+| `maxContentLength` | `number` | `undefined` | Max content length to process |
+| `extractors` | `Extractor[]` | `defaultExtractors` | Custom extractor pipeline |
+| `enhancer` | `Enhancer` | `undefined` | LLM enhancement pipeline |
+
+## Returns
+
+Returns a `Promise<ScrapedData>` with the extracted data.
+
+```typescript
+interface ScrapedData {
+  url: string;
+  title: string;
+  description?: string;
+  author?: string;
+  publishedDate?: string;
+  content: string;
+  textContent: string;
+  excerpt?: string;
+  siteName?: string;
+  favicon?: string;
+  image?: string;
+  links: LinkInfo[];
+  contentType?: string;
+  language?: string;
+  custom?: Record<string, unknown>;
+
+  // LLM-enhanced fields (when enhancer is provided)
+  summary?: string;
+  entities?: Record<string, string[]>;
+  categories?: string[];
+  structured?: unknown;
+}
+```
+
+## Examples
+
+### Basic Usage
+
+```typescript
+import { scrape } from 'scrapex';
+
+const result = await scrape('https://example.com/article');
+
+console.log(result.title);
+console.log(result.content);
+console.log(result.links);
+```
+
+### With Options
+
+```typescript
+const result = await scrape('https://example.com', {
+  timeout: 10000,
+  headers: {
+    'Accept-Language': 'en-US',
+  },
+  respectRobots: true,
+});
+```
+
+### With LLM Enhancement
+
+```typescript
+import { scrape } from 'scrapex';
+import { createOpenAI, createEnhancer } from 'scrapex/llm';
+
+const provider = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const enhancer = createEnhancer(provider)
+  .summarize()
+  .extractEntities();
+
+const result = await scrape('https://example.com', { enhancer });
+
+console.log(result.summary);
+console.log(result.entities);
+```
+
+### With Custom Extractors
+
+```typescript
+import { scrape, defaultExtractors } from 'scrapex';
+import { MyCustomExtractor } from './extractors';
+
+const result = await scrape('https://example.com', {
+  extractors: [...defaultExtractors, new MyCustomExtractor()],
+});
+
+console.log(result.custom?.myData);
+```
+
+## Error Handling
+
+```typescript
+import { scrape, ScrapeError } from 'scrapex';
+
+try {
+  const result = await scrape('https://example.com');
+} catch (error) {
+  if (error instanceof ScrapeError) {
+    console.log(error.code);    // 'FETCH_ERROR', 'TIMEOUT', etc.
+    console.log(error.url);     // The URL that failed
+    console.log(error.message); // Error description
+  }
+}
+```
+
+## See Also
+
+- [scrapeHtml()](/api/scrape-html) - Scrape from HTML string
+- [ScrapeOptions](/api/types#scrapeoptions) - Full options reference
+- [ScrapedData](/api/types#scrapeddata) - Full response reference

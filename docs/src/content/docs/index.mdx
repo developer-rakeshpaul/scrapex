@@ -1,0 +1,69 @@
+---
+title: scrapex
+description: Modern web scraper with LLM-enhanced extraction
+template: splash
+hero:
+  title: scrapex
+  tagline: Modern web scraper with LLM-enhanced extraction for Node.js
+  image:
+    alt: scrapex logo
+    dark: ../../assets/logo-dark.svg
+    light: ../../assets/logo-light.svg
+  actions:
+    - text: Get Started
+      link: /scrapex/getting-started/introduction/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/developer-rakeshpaul/scrapex
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Features
+
+<CardGrid stagger>
+  <Card title="Easy to Use" icon="pencil">
+    Simple API with sensible defaults. Scrape any webpage with a single function call.
+  </Card>
+  <Card title="LLM Integration" icon="star">
+    Enhance scraped content with AI-powered summarization, entity extraction, and classification.
+  </Card>
+  <Card title="Extensible Pipeline" icon="add-document">
+    Create custom extractors for domain-specific data extraction needs.
+  </Card>
+  <Card title="TypeScript First" icon="setting">
+    Full TypeScript support with comprehensive type definitions.
+  </Card>
+</CardGrid>
+
+## Quick Example
+
+```typescript
+import { scrape } from 'scrapex';
+
+const result = await scrape('https://example.com/article');
+
+console.log(result.title);       // Page title
+console.log(result.content);     // Main content
+console.log(result.textContent); // Plain text
+console.log(result.links);       // Extracted links
+```
+
+## With LLM Enhancement
+
+```typescript
+import { scrape } from 'scrapex';
+import { createOpenAI, createEnhancer } from 'scrapex/llm';
+
+const provider = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const enhancer = createEnhancer(provider)
+  .summarize()
+  .extractEntities();
+
+const result = await scrape('https://example.com', { enhancer });
+
+console.log(result.summary);   // AI-generated summary
+console.log(result.entities);  // Extracted entities
+```

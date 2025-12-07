@@ -1,0 +1,243 @@
+---
+title: Utilities
+description: API reference for URL and text utility functions.
+---
+
+scrapex provides utility functions for common operations.
+
+## URL Utilities
+
+### isValidUrl()
+
+Check if a string is a valid URL.
+
+```typescript
+function isValidUrl(url: string): boolean
+```
+
+#### Example
+
+```typescript
+import { isValidUrl } from 'scrapex';
+
+isValidUrl('https://example.com');     // true
+isValidUrl('http://localhost:3000');   // true
+isValidUrl('not-a-url');               // false
+isValidUrl('');                        // false
+```
+
+### extractDomain()
+
+Extract the domain from a URL.
+
+```typescript
+function extractDomain(url: string): string | null
+```
+
+#### Example
+
+```typescript
+import { extractDomain } from 'scrapex';
+
+extractDomain('https://www.example.com/page');     // 'example.com'
+extractDomain('https://blog.example.com/post');    // 'blog.example.com'
+extractDomain('https://example.com:8080/api');     // 'example.com'
+extractDomain('invalid');                          // null
+```
+
+### normalizeUrl()
+
+Normalize a URL for consistent comparison.
+
+```typescript
+function normalizeUrl(url: string): string
+```
+
+Normalization includes:
+- Lowercasing the hostname
+- Removing default ports (80, 443)
+- Removing trailing slashes
+- Sorting query parameters
+
+#### Example
+
+```typescript
+import { normalizeUrl } from 'scrapex';
+
+normalizeUrl('HTTPS://Example.COM/');
+// 'https://example.com'
+
+normalizeUrl('https://example.com:443/page');
+// 'https://example.com/page'
+
+normalizeUrl('https://example.com?b=2&a=1');
+// 'https://example.com?a=1&b=2'
+```
+
+### resolveUrl()
+
+Resolve a relative URL against a base URL.
+
+```typescript
+function resolveUrl(base: string, relative: string): string
+```
+
+#### Example
+
+```typescript
+import { resolveUrl } from 'scrapex';
+
+resolveUrl('https://example.com/page/', '../other');
+// 'https://example.com/other'
+
+resolveUrl('https://example.com/blog/post', '/about');
+// 'https://example.com/about'
+
+resolveUrl('https://example.com', 'https://other.com');
+// 'https://other.com'
+```
+
+### isExternalUrl()
+
+Check if a URL is external relative to a base URL.
+
+```typescript
+function isExternalUrl(url: string, baseUrl: string): boolean
+```
+
+#### Example
+
+```typescript
+import { isExternalUrl } from 'scrapex';
+
+isExternalUrl('https://other.com', 'https://example.com');
+// true
+
+isExternalUrl('https://example.com/page', 'https://example.com');
+// false
+
+isExternalUrl('/page', 'https://example.com');
+// false
+```
+
+## Text Utilities
+
+### truncateText()
+
+Truncate text to a maximum length with ellipsis.
+
+```typescript
+function truncateText(text: string, maxLength: number): string
+```
+
+#### Example
+
+```typescript
+import { truncateText } from 'scrapex';
+
+truncateText('Hello, World!', 8);
+// 'Hello...'
+
+truncateText('Short', 10);
+// 'Short'
+```
+
+### cleanText()
+
+Clean and normalize text content.
+
+```typescript
+function cleanText(text: string): string
+```
+
+Cleaning includes:
+- Trimming whitespace
+- Collapsing multiple spaces
+- Removing control characters
+
+#### Example
+
+```typescript
+import { cleanText } from 'scrapex';
+
+cleanText('  Hello   World  \n\n  Test  ');
+// 'Hello World Test'
+```
+
+### extractText()
+
+Extract visible text from HTML.
+
+```typescript
+function extractText(html: string): string
+```
+
+#### Example
+
+```typescript
+import { extractText } from 'scrapex';
+
+extractText('<p>Hello <strong>World</strong></p>');
+// 'Hello World'
+
+extractText('<div><script>alert("x")</script>Text</div>');
+// 'Text'
+```
+
+## Error Utilities
+
+### ScrapeError
+
+Custom error class for scraping failures.
+
+```typescript
+class ScrapeError extends Error {
+  constructor(code: ErrorCode, message: string, url?: string);
+
+  readonly code: ErrorCode;
+  readonly url?: string;
+  readonly statusCode?: number;
+}
+
+type ErrorCode =
+  | 'FETCH_ERROR'
+  | 'TIMEOUT'
+  | 'HTTP_ERROR'
+  | 'PARSE_ERROR'
+  | 'ROBOTS_BLOCKED'
+  | 'INVALID_URL'
+  | 'CONTENT_TOO_LARGE';
+```
+
+#### Example
+
+```typescript
+import { ScrapeError, scrape } from 'scrapex';
+
+try {
+  await scrape(url);
+} catch (error) {
+  if (error instanceof ScrapeError) {
+    console.log(`Error: ${error.code} - ${error.message}`);
+    console.log(`URL: ${error.url}`);
+  }
+}
+```
+
+### createScrapeError()
+
+Factory function for creating ScrapeError instances.
+
+```typescript
+function createScrapeError(
+  code: ErrorCode,
+  message: string,
+  url?: string,
+  statusCode?: number
+): ScrapeError
+```
+
+## See Also
+
+- [Error Handling Guide](/guides/error-handling) - Error handling patterns
+- [Types Reference](/api/types) - Full type definitions

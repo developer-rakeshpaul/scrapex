@@ -1,0 +1,58 @@
+---
+title: Introduction
+description: Modern web scraper with LLM-enhanced extraction, extensible pipeline, and pluggable parsers.
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+**scrapex** is a modern web scraping library designed for AI/LLM applications. It extracts content as Markdown, provides structured metadata, and integrates with LLM providers for intelligent enhancement.
+
+## Features
+
+<CardGrid>
+  <Card title="LLM-Ready Output" icon="document">
+    Content extracted as Markdown, optimized for AI/LLM consumption with lower token usage.
+  </Card>
+  <Card title="Provider-Agnostic LLM" icon="puzzle">
+    Works with OpenAI, Anthropic Claude, Ollama, LM Studio, or any OpenAI-compatible API.
+  </Card>
+  <Card title="Extensible Pipeline" icon="setting">
+    Pluggable extractors with priority-based execution. Add custom extractors for domain-specific needs.
+  </Card>
+  <Card title="Smart Extraction" icon="magnifier">
+    Uses Mozilla Readability for content extraction and Cheerio for fast metadata parsing.
+  </Card>
+</CardGrid>
+
+## Why scrapex?
+
+Traditional web scrapers return raw HTML or basic metadata. scrapex is built for the AI era:
+
+- **Markdown output** - Clean, structured content ready for LLM prompts
+- **Token-efficient** - Plain text option for lower token usage
+- **LLM enhancements** - Built-in summarization, entity extraction, and classification
+- **Structured extraction** - Define schemas and let LLMs extract specific data
+- **TypeScript first** - Full type safety with comprehensive type exports
+
+## Use Cases
+
+- **AI Agents** - Feed web content to LLMs for research and analysis
+- **RAG Pipelines** - Extract and chunk web content for retrieval
+- **Content Aggregation** - Collect and categorize articles, repos, and resources
+- **Data Extraction** - Pull structured data from product pages, profiles, etc.
+- **Awesome List Parsing** - Parse GitHub awesome lists and extract categorized links
+
+## Quick Example
+
+```typescript
+import { scrape } from 'scrapex';
+
+const result = await scrape('https://example.com/article');
+
+console.log(result.title);       // "Article Title"
+console.log(result.content);     // Markdown content
+console.log(result.textContent); // Plain text (lower tokens)
+console.log(result.excerpt);     // First ~300 chars
+```
+
+Ready to get started? Head to the [Installation](/getting-started/installation) guide.

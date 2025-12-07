@@ -1,0 +1,140 @@
+---
+title: Quick Start
+description: Get up and running with scrapex in minutes.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## Basic Scraping
+
+<Steps>
+
+1. **Import the scrape function**
+
+   ```typescript
+   import { scrape } from 'scrapex';
+   ```
+
+2. **Scrape a URL**
+
+   ```typescript
+   const result = await scrape('https://example.com/article');
+   ```
+
+3. **Use the extracted data**
+
+   ```typescript
+   console.log(result.title);       // Page title
+   console.log(result.description); // Meta description
+   console.log(result.content);     // Markdown content
+   console.log(result.textContent); // Plain text
+   ```
+
+</Steps>
+
+## Full Example
+
+```typescript
+import { scrape } from 'scrapex';
+
+async function main() {
+  const result = await scrape('https://example.com/article');
+
+  // Identity
+  console.log('URL:', result.url);
+  console.log('Domain:', result.domain);
+  console.log('Canonical:', result.canonicalUrl);
+
+  // Metadata
+  console.log('Title:', result.title);
+  console.log('Description:', result.description);
+  console.log('Author:', result.author);
+  console.log('Published:', result.publishedAt);
+
+  // Content
+  console.log('Content (Markdown):', result.content);
+  console.log('Word Count:', result.wordCount);
+  console.log('Content Type:', result.contentType);
+
+  // Links
+  console.log('Links found:', result.links?.length);
+}
+
+main();
+```
+
+## Scraping from HTML
+
+If you already have HTML content, use `scrapeHtml`:
+
+```typescript
+import { scrapeHtml } from 'scrapex';
+
+const html = `
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>My Page</title>
+      <meta name="description" content="Page description">
+    </head>
+    <body>
+      <article>
+        <h1>Hello World</h1>
+        <p>This is the content.</p>
+      </article>
+    </body>
+  </html>
+`;
+
+const result = await scrapeHtml(html, 'https://example.com/page');
+console.log(result.title); // "My Page"
+```
+
+## Configuration Options
+
+Customize scraping behavior with options:
+
+```typescript
+const result = await scrape('https://example.com', {
+  // Timeout in milliseconds (default: 10000)
+  timeout: 15000,
+
+  // Custom user agent
+  userAgent: 'MyBot/1.0',
+
+  // Maximum content length (default: 50000)
+  maxContentLength: 100000,
+
+  // Check robots.txt before scraping
+  respectRobots: true,
+});
+```
+
+## Result Object
+
+The `ScrapedData` result contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `url` | `string` | Original URL |
+| `canonicalUrl` | `string` | Canonical URL |
+| `domain` | `string` | Domain without www |
+| `title` | `string` | Page title |
+| `description` | `string` | Meta description |
+| `content` | `string` | Markdown content |
+| `textContent` | `string` | Plain text content |
+| `excerpt` | `string` | ~300 char preview |
+| `wordCount` | `number` | Word count |
+| `contentType` | `string` | Content classification |
+| `author` | `string?` | Author name |
+| `publishedAt` | `string?` | Publish date (ISO) |
+| `image` | `string?` | Main image URL |
+| `favicon` | `string?` | Favicon URL |
+| `links` | `array?` | Extracted links |
+| `jsonLd` | `array?` | JSON-LD data |
+
+## Next Steps
+
+- [Basic Scraping Guide](/guides/basic-scraping) - Learn more about scraping options
+- [LLM Integration](/guides/llm-integration) - Add AI-powered enhancements
+- [Custom Extractors](/guides/custom-extractors) - Create domain-specific extractors

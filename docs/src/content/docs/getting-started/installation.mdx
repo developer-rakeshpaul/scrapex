@@ -1,0 +1,100 @@
+---
+title: Installation
+description: How to install scrapex and its optional dependencies.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Install scrapex
+
+<Tabs>
+  <TabItem label="npm">
+    ```bash
+    npm install scrapex
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn add scrapex
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add scrapex
+    ```
+  </TabItem>
+</Tabs>
+
+## Optional Peer Dependencies
+
+scrapex has optional peer dependencies for specific features:
+
+### LLM Providers
+
+Install the SDK for your preferred LLM provider:
+
+<Tabs>
+  <TabItem label="OpenAI">
+    ```bash
+    npm install openai
+    ```
+    Also works with Ollama and LM Studio (OpenAI-compatible APIs).
+  </TabItem>
+  <TabItem label="Anthropic">
+    ```bash
+    npm install @anthropic-ai/sdk
+    ```
+  </TabItem>
+</Tabs>
+
+### JavaScript-Rendered Pages
+
+For pages that require JavaScript execution:
+
+```bash
+npm install puppeteer
+```
+
+## Requirements
+
+- **Node.js 20+** - scrapex uses modern Node.js features
+- **TypeScript 5.0+** - For type imports (if using TypeScript)
+
+## Package Exports
+
+scrapex provides multiple entry points:
+
+```typescript
+// Main entry - scraping functions and utilities
+import { scrape, scrapeHtml } from 'scrapex';
+
+// LLM providers and enhancers
+import { createOpenAI, AnthropicProvider } from 'scrapex/llm';
+
+// Markdown and GitHub parsers
+import { MarkdownParser, parseAwesomeList } from 'scrapex/parsers';
+```
+
+## Verify Installation
+
+Create a simple test file:
+
+```typescript
+import { scrape } from 'scrapex';
+
+const result = await scrape('https://example.com');
+console.log('Title:', result.title);
+console.log('Domain:', result.domain);
+```
+
+Run it:
+
+```bash
+npx tsx test.ts
+```
+
+You should see the title and domain of example.com printed.
+
+## Next Steps
+
+Now that you have scrapex installed, check out the [Quick Start](/getting-started/quick-start) guide to learn the basics.
