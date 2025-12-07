@@ -65,12 +65,75 @@ export async function enhance(
 }
 
 /**
+ * Options for the ask() function
+ */
+export interface AskOptions {
+  /** Key to store the result under in custom field */
+  key?: string;
+  /** Schema for structured response */
+  schema?: ExtractionSchema;
+}
+
+/**
+ * Ask a custom question about the scraped content
+ * Results are stored in the `custom` field of ScrapedData
+ */
+export async function ask(
+  data: ScrapedData,
+  provider: LLMProvider,
+  prompt: string,
+  options?: AskOptions
+): Promise<Partial<ScrapedData>> {
+  const key = options?.key || 'response';
+  const content = data.excerpt || data.textContent.slice(0, 10000);
+
+  // Apply placeholder replacements
+  const processedPrompt = applyPlaceholders(prompt, data, content);
+
+  if (options?.schema) {
+    // Use structured extraction
+    const result = await extract(data, provider, options.schema, processedPrompt);
+    return { custom: { [key]: result } };
+  }
+
+  // Simple string response
+  const fullPrompt = prompt.includes('{{content}}')
+    ? processedPrompt
+    : `${processedPrompt}\n\nTitle: ${data.title}\nURL: ${data.url}\n\nContent:\n${content}`;
+
+  const response = await provider.complete(fullPrompt);
+  return { custom: { [key]: response } };
+}
+
+/**
+ * Apply placeholder replacements to a prompt template
+ */
+function applyPlaceholders(prompt: string, data: ScrapedData, content: string): string {
+  const domain = (() => {
+    try {
+      return new URL(data.url).hostname;
+    } catch {
+      return '';
+    }
+  })();
+
+  return prompt
+    .replace(/\{\{title\}\}/g, data.title)
+    .replace(/\{\{url\}\}/g, data.url)
+    .replace(/\{\{content\}\}/g, content)
+    .replace(/\{\{description\}\}/g, data.description || '')
+    .replace(/\{\{excerpt\}\}/g, data.excerpt || '')
+    .replace(/\{\{domain\}\}/g, domain);
+}
+
+/**
  * Extract structured data using LLM and a custom schema
  */
 export async function extract<T>(
   data: ScrapedData,
   provider: LLMProvider,
-  schema: ExtractionSchema
+  schema: ExtractionSchema,
+  promptTemplate?: string
 ): Promise<T> {
   // Convert simple schema to Zod schema
   const zodShape: Record<string, z.ZodTypeAny> = {};
@@ -106,7 +169,19 @@ export async function extract<T>(
   const zodSchema = z.object(zodShape) as unknown as z.ZodType<T>;
 
   const content = data.textContent.slice(0, 4000);
-  const prompt = `Extract the following information from this content:
+
+  let prompt: string;
+
+  if (promptTemplate) {
+    // Apply all placeholder replacements
+    prompt = applyPlaceholders(promptTemplate, data, content);
+
+    // If content wasn't included via placeholder, append it
+    if (!promptTemplate.includes('{{content}}')) {
+      prompt += `\n\nContext:\n${content}`;
+    }
+  } else {
+    prompt = `Extract the following information from this content:
 
 Title: ${data.title}
 URL: ${data.url}
@@ -118,6 +193,7 @@ Extract these fields:
 ${Object.entries(schema)
   .map(([key, type]) => `- ${key} (${type})`)
   .join('\n')}`;
+  }
 
   return provider.completeJSON<T>(prompt, zodSchema as z.ZodType<T>);
 }

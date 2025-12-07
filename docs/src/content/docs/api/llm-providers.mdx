@@ -154,6 +154,101 @@ const enhancer = createEnhancer(provider)
   .classify(['tech', 'business', 'science']);
 ```
 
+## ask()
+
+Ask custom questions about scraped content. Results are stored in the `custom` field.
+
+```typescript
+function ask(
+  data: ScrapedData,
+  provider: LLMProvider,
+  prompt: string,
+  options?: AskOptions
+): Promise<Partial<ScrapedData>>
+```
+
+### Options
+
+| Option | Type | Required | Default | Description |
+|--------|------|----------|---------|-------------|
+| `key` | `string` | No | `'response'` | Key to store result under in `custom` |
+| `schema` | `ExtractionSchema` | No | - | Schema for structured response |
+
+### Template Placeholders
+
+Use these placeholders in your prompts:
+
+| Placeholder | Description |
+|-------------|-------------|
+| `{{title}}` | Page title |
+| `{{url}}` | Full URL |
+| `{{content}}` | Main content |
+| `{{description}}` | Meta description |
+| `{{excerpt}}` | Content excerpt |
+| `{{domain}}` | Hostname only |
+
+### Examples
+
+```typescript
+import { scrape } from 'scrapex';
+import { createOpenAI, ask } from 'scrapex/llm';
+
+const provider = createOpenAI({ model: 'gpt-4o-mini' });
+const data = await scrape('https://example.com/article');
+
+// Simple question
+const result = await ask(data, provider, "What is the author's main argument?", {
+  key: 'mainArgument'
+});
+console.log(result.custom?.mainArgument);
+// "The author argues that AI will transform healthcare..."
+
+// Structured response
+const result2 = await ask(data, provider, "Analyze the sentiment", {
+  key: 'sentiment',
+  schema: { tone: 'string', score: 'number', reasoning: 'string' }
+});
+console.log(result2.custom?.sentiment);
+// { tone: 'optimistic', score: 0.75, reasoning: '...' }
+
+// Using placeholders
+const result3 = await ask(data, provider,
+  "For the article from {{domain}}, summarize the key points about {{title}}",
+  { key: 'keyPoints' }
+);
+```
+
+## extract()
+
+Extract structured data using a schema and optional custom prompt template.
+
+```typescript
+function extract<T>(
+  data: ScrapedData,
+  provider: LLMProvider,
+  schema: ExtractionSchema,
+  promptTemplate?: string
+): Promise<T>
+```
+
+### Example with Custom Prompt
+
+```typescript
+import { extract } from 'scrapex/llm';
+
+interface Product {
+  name: string;
+  price: number;
+  inStock: boolean;
+}
+
+const products = await extract<Product[]>(data, provider, {
+  name: 'string',
+  price: 'number',
+  inStock: 'boolean'
+}, "Find all products mentioned in {{content}} from {{domain}}");
+```
+
 ## Enhancement Types
 
 ### Summarization

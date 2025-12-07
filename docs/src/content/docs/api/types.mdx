@@ -202,6 +202,35 @@ interface EnhancerBuilder extends Enhancer {
 }
 ```
 
+### AskOptions
+
+Options for the `ask()` function.
+
+```typescript
+interface AskOptions {
+  /** Key to store the result under in custom field */
+  key?: string;
+  /** Schema for structured response */
+  schema?: ExtractionSchema;
+}
+```
+
+### ExtractionSchema
+
+Schema for structured LLM extraction.
+
+```typescript
+type ExtractionSchemaType =
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'string[]'
+  | 'number[]'
+  | `${string}?`; // Optional fields
+
+type ExtractionSchema = Record<string, ExtractionSchemaType>;
+```
+
 ## Parser Types
 
 ### MarkdownParseResult
@@ -289,6 +318,7 @@ import type {
   CompletionOptions,
   Enhancer,
   EnhancerBuilder,
+  AskOptions,
 } from 'scrapex/llm';
 
 // Parser types

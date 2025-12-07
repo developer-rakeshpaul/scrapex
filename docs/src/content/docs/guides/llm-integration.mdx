@@ -182,6 +182,52 @@ const result = await scrape(url, {
 });
 ```
 
+## Custom Questions with ask()
+
+Use `ask()` for ad-hoc questions about scraped content:
+
+```typescript
+import { scrape } from 'scrapex';
+import { createOpenAI, ask } from 'scrapex/llm';
+
+const provider = createOpenAI({ model: 'gpt-4o-mini' });
+const data = await scrape('https://example.com/article');
+
+// Simple question - returns string
+const result = await ask(data, provider, "What is the main argument?", {
+  key: 'mainArgument'
+});
+console.log(result.custom?.mainArgument);
+// "The author argues that..."
+
+// Structured response - returns typed object
+const sentiment = await ask(data, provider, "Analyze the sentiment", {
+  key: 'sentiment',
+  schema: { tone: 'string', score: 'number', reasoning: 'string' }
+});
+console.log(sentiment.custom?.sentiment);
+// { tone: 'positive', score: 0.8, reasoning: '...' }
+```
+
+### Template Placeholders
+
+Use placeholders in prompts for dynamic content:
+
+```typescript
+const result = await ask(data, provider,
+  "For {{domain}}: What are the key takeaways from '{{title}}'?",
+  { key: 'takeaways' }
+);
+```
+
+Available placeholders:
+- `{{title}}` - Page title
+- `{{url}}` - Full URL
+- `{{content}}` - Main content
+- `{{description}}` - Meta description
+- `{{excerpt}}` - Content excerpt
+- `{{domain}}` - Hostname only
+
 ## Error Handling
 
 LLM enhancements can fail without failing the entire scrape:
