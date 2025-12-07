@@ -1,5 +1,5 @@
-/* Font Imports: Bricolage Grotesque (Distinctive headers) & JetBrains Mono (Tech/Code) */
-@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=JetBrains+Mono:wght@400;700&display=swap");
+/* Font Imports: Sora (Headers) & JetBrains Mono (Tech/Code) */
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap");
 
 /* CATPPUCCIN MOCHA (Dark) & LATTE (Light) Theme Configuration */
 :root {
@@ -13,7 +13,7 @@
   --ctp-latte-green: #40a02b;
 
   /* Fonts */
-  --sl-font-system: "Bricolage Grotesque", system-ui, sans-serif;
+  --sl-font-system: "Sora", system-ui, sans-serif;
   --sl-font-mono: "JetBrains Mono", monospace;
 
   /* Starlight Light Mode Mappings */
@@ -239,10 +239,9 @@
 
 /* Hero title */
 [data-template="splash"] .hero h1 {
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: "Sora", sans-serif;
   font-weight: 800;
-  font-stretch: 110%;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   font-size: 4.5rem;
   line-height: 1.1;
   background: linear-gradient(135deg, var(--sl-color-white) 30%, var(--sl-color-accent) 100%);
@@ -371,7 +370,7 @@
 }
 
 .card .title {
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: "Sora", sans-serif;
   font-weight: 700;
 }
 
