@@ -1,6 +1,6 @@
 {
   "name": "scrapex",
-  "version": "2.0.0",
+  "version": "1.0.0-alpha.1",
   "description": "Modern web scraper with LLM-enhanced extraction, extensible pipeline, and pluggable parsers",
   "type": "module",
   "exports": {
