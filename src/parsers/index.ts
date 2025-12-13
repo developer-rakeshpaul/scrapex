@@ -2,13 +2,9 @@
 
 // GitHub utilities
 export {
-  type AwesomeListResult,
-  type EnhancedLink,
   fetchRepoMeta,
   groupByCategory,
-  isAwesomeList,
   isGitHubRepo,
-  parseAwesomeList,
   parseGitHubUrl,
   toRawUrl,
 } from './github.js';

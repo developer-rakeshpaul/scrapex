@@ -2,6 +2,18 @@ import type { CheerioAPI } from 'cheerio';
 import * as cheerio from 'cheerio';
 import type { ExtractionContext, ScrapedData, ScrapeOptions } from './types.js';
 
+// Cached JSDOM module for lazy loading
+let jsdomModule: typeof import('jsdom') | null = null;
+
+/**
+ * Preload JSDOM module (called once during scrape initialization)
+ */
+export async function preloadJsdom(): Promise<void> {
+  if (!jsdomModule) {
+    jsdomModule = await import('jsdom');
+  }
+}
+
 /**
  * Create an extraction context with lazy JSDOM loading.
  *
@@ -29,12 +41,12 @@ export function createExtractionContext(
     results: {},
 
     getDocument(): Document {
-      // Lazy-load JSDOM only when needed (for Readability)
+      // Use preloaded JSDOM module
       if (!document) {
-        // Dynamic import to avoid loading JSDOM if not needed
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { JSDOM } = require('jsdom') as typeof import('jsdom');
-        const dom = new JSDOM(html, { url: finalUrl });
+        if (!jsdomModule) {
+          throw new Error('JSDOM not preloaded. Call preloadJsdom() before using getDocument().');
+        }
+        const dom = new jsdomModule.JSDOM(html, { url: finalUrl });
         document = dom.window.document;
       }
       return document;

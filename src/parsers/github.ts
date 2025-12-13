@@ -1,9 +1,7 @@
-import { extractListLinks } from './markdown.js';
 import type { GitHubMeta, MarkdownLink } from './types.js';
 
 /**
- * GitHub-specific utilities for parsing awesome lists and repositories.
- * These can be composed with the MarkdownParser for enhanced GitHub parsing.
+ * GitHub-specific utilities for parsing repositories.
  */
 
 /**
@@ -11,17 +9,6 @@ import type { GitHubMeta, MarkdownLink } from './types.js';
  */
 export function isGitHubRepo(url: string): boolean {
   return /^https?:\/\/(www\.)?github\.com\/[^/]+\/[^/]+\/?$/.test(url);
-}
-
-/**
- * Check if a URL is a GitHub awesome list (README.md in a repo)
- */
-export function isAwesomeList(url: string): boolean {
-  const lowerUrl = url.toLowerCase();
-  return (
-    lowerUrl.includes('github.com') &&
-    (lowerUrl.includes('awesome') || lowerUrl.includes('/readme'))
-  );
 }
 
 /**
@@ -43,79 +30,6 @@ export function toRawUrl(url: string, branch = 'main', file = 'README.md'): stri
   const info = parseGitHubUrl(url);
   if (!info) return url;
   return `https://raw.githubusercontent.com/${info.owner}/${info.repo}/${branch}/${file}`;
-}
-
-/**
- * Extract links from an awesome list markdown content.
- * Filters and enhances links with GitHub-specific metadata.
- */
-export function parseAwesomeList(markdown: string): AwesomeListResult {
-  const allLinks = extractListLinks(markdown);
-
-  // Categorize links
-  const repositories: EnhancedLink[] = [];
-  const tools: EnhancedLink[] = [];
-  const articles: EnhancedLink[] = [];
-  const other: EnhancedLink[] = [];
-
-  for (const link of allLinks) {
-    const enhanced: EnhancedLink = {
-      ...link,
-      category: link.context,
-      isGitHub: link.url.includes('github.com'),
-    };
-
-    if (isGitHubRepo(link.url)) {
-      const info = parseGitHubUrl(link.url);
-      if (info) {
-        enhanced.repoOwner = info.owner;
-        enhanced.repoName = info.repo;
-      }
-      repositories.push(enhanced);
-    } else if (
-      link.url.includes('medium.com') ||
-      link.url.includes('dev.to') ||
-      link.url.includes('blog')
-    ) {
-      articles.push(enhanced);
-    } else if (
-      link.text.toLowerCase().includes('tool') ||
-      link.context?.toLowerCase().includes('tool')
-    ) {
-      tools.push(enhanced);
-    } else {
-      other.push(enhanced);
-    }
-  }
-
-  return {
-    repositories,
-    tools,
-    articles,
-    other,
-    total: allLinks.length,
-  };
-}
-
-/**
- * Enhanced link with GitHub-specific metadata
- */
-export interface EnhancedLink extends MarkdownLink {
-  category?: string;
-  isGitHub?: boolean;
-  repoOwner?: string;
-  repoName?: string;
-}
-
-/**
- * Result from parsing an awesome list
- */
-export interface AwesomeListResult {
-  repositories: EnhancedLink[];
-  tools: EnhancedLink[];
-  articles: EnhancedLink[];
-  other: EnhancedLink[];
-  total: number;
 }
 
 /**

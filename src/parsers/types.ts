@@ -69,7 +69,7 @@ export interface CodeBlock {
 }
 
 /**
- * GitHub-specific metadata for awesome lists
+ * GitHub repository metadata
  */
 export interface GitHubMeta {
   repoOwner?: string;

@@ -2,7 +2,7 @@ import { createDefaultExtractors, sortExtractors } from '@/extractors/index.js';
 import { checkRobotsTxt, defaultFetcher } from '@/fetchers/index.js';
 import { enhance, extract } from '@/llm/enhancer.js';
 import { extractDomain, isValidUrl, normalizeUrl } from '@/utils/url.js';
-import { createExtractionContext, mergeResults } from './context.js';
+import { createExtractionContext, mergeResults, preloadJsdom } from './context.js';
 import { ScrapeError } from './errors.js';
 import type { Extractor, ScrapedData, ScrapeOptions } from './types.js';
 
@@ -47,6 +47,9 @@ export async function scrape(url: string, options: ScrapeOptions = {}): Promise<
     timeout: options.timeout,
     userAgent: options.userAgent,
   });
+
+  // Preload JSDOM for content extraction (async dynamic import)
+  await preloadJsdom();
 
   // Create extraction context
   let context = createExtractionContext(
@@ -176,6 +179,9 @@ export async function scrapeHtml(
   }
 
   const normalizedUrl = normalizeUrl(url);
+
+  // Preload JSDOM for content extraction (async dynamic import)
+  await preloadJsdom();
 
   // Create extraction context
   let context = createExtractionContext(normalizedUrl, normalizedUrl, html, options);

@@ -235,10 +235,10 @@ const result = await scrape(url, {
 
 ## Markdown Parsing
 
-Parse markdown content and awesome lists:
+Parse markdown content:
 
 ```typescript
-import { MarkdownParser, parseAwesomeList } from 'scrapex/parsers';
+import { MarkdownParser, extractListLinks, groupByCategory } from 'scrapex/parsers';
 
 // Parse any markdown
 const parser = new MarkdownParser();
@@ -249,13 +249,13 @@ console.log(result.data.sections);
 console.log(result.data.links);
 console.log(result.data.codeBlocks);
 
-// Parse GitHub awesome lists
-const awesome = parseAwesomeList(markdownContent);
+// Extract links from markdown lists and group by category
+const links = extractListLinks(markdownContent);
+const grouped = groupByCategory(links);
 
-console.log(awesome.repositories); // GitHub repos with owner/name
-console.log(awesome.tools);        // Tool links
-console.log(awesome.articles);     // Blog/article links
-console.log(awesome.total);        // Total link count
+grouped.forEach((categoryLinks, category) => {
+  console.log(`${category}: ${categoryLinks.length} links`);
+});
 ```
 
 ### GitHub Utilities
