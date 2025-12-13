@@ -24,18 +24,24 @@ For cloud LLM examples (05-08, 10), set your API key:
 OPENAI_API_KEY=sk-... npx tsx examples/05-llm-summarize.ts
 ```
 
-For local LLM example (09), run Docker Model Runner or Ollama:
+For local LLM example (09), run Docker Model Runner or Ollama.
+Learn more: https://www.docker.com/blog/run-llms-locally/
 
 ```bash
 # Option 1: Docker Model Runner (Docker Desktop 4.40+)
 # Enable in Settings > Features in development > Docker Model Runner
+docker model list                              # List available models
+docker model pull ai/smollm2:360M-Q4_K_M       # Pull a model
 
 # Option 2: Ollama in Docker
 docker run -d -p 11434:11434 --name ollama ollama/ollama
 docker exec ollama ollama pull llama3.2
 
-# Then run the example
+# Run the example (auto-detects provider)
 npx tsx examples/09-llm-local-docker.ts
+
+# Or specify custom endpoint via environment variables
+LLM_URL=http://localhost:12434/engines/v1 LLM_MODEL=ai/smollm2:360M-Q4_K_M npx tsx examples/09-llm-local-docker.ts
 ```
 
 For the Puppeteer example (18), install the optional peer dependency:
