@@ -55,7 +55,7 @@
     "markdown",
     "parser"
   ],
-  "author": "Rakesh Paul",
+  "author": "Rakesh Paul <https://binaryroute.com/authors/rk-paul/>",
   "license": "MIT",
   "engines": {
     "node": ">=20"

@@ -401,4 +401,4 @@ MIT
 
 ## Author
 
-Rakesh Paul - [Xtrios](https://xtrios.com)
+Rakesh Paul - [binaryroute](https://binaryroute.com/authors/rk-paul/)
