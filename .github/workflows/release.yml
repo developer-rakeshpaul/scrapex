@@ -25,6 +25,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate tag matches package version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="$(node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")"
+          if [[ "$TAG" != "v$VERSION" ]]; then
+            echo "Release tag ($TAG) does not match package.json version (v$VERSION)"
+            exit 1
+          fi
+
       - name: Type check
         run: npm run type-check
 
@@ -39,10 +48,13 @@ jobs:
 
       - name: Publish to npm
         run: |
-          if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
-            npm publish --provenance --access public --tag alpha
+          TAG="${{ github.event.release.tag_name }}"
+          IS_PRERELEASE="${{ github.event.release.prerelease }}"
+
+          if [[ "$IS_PRERELEASE" == "true" || "$TAG" == *-* ]]; then
+            npm publish --provenance --access public --tag alpha || npm publish --access public --tag alpha
           else
-            npm publish --provenance --access public
+            npm publish --provenance --access public || npm publish --access public
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
