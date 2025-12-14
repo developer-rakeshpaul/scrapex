@@ -4,7 +4,8 @@ This repo publishes to npm automatically when a GitHub Release is **published**.
 
 ## One-time setup
 
-- Create a GitHub Actions secret named `NPM_TOKEN` with an npm automation token that can publish `scrapex`.
+- Preferred: configure **npm Trusted Publishing** (OIDC) for this GitHub repo/package so GitHub Actions can publish without storing an npm token.
+- Alternative (token-based): create a GitHub Actions secret named `NPM_TOKEN` using an npm token allowed to publish with 2FA enabled (npm may require an Automation token or a granular token with 2FA bypass for publishing).
 
 ## Publish an alpha (example: `v1.0.0-alpha.1`)
 
@@ -26,4 +27,3 @@ This repo publishes to npm automatically when a GitHub Release is **published**.
 
 - GitHub Actions workflow `.github/workflows/release.yml` runs `type-check`, `lint`, `test`, `build`, then publishes to npm.
 - Pre-releases publish to the npm dist-tag `alpha` (install via `npm i scrapex@alpha`).
-
