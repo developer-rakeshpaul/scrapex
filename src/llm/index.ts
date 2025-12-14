@@ -2,9 +2,9 @@
 
 // Providers
 export { AnthropicProvider } from './anthropic.js';
+export type { AskOptions } from './enhancer.js';
 // Enhancers
 export { ask, enhance, extract } from './enhancer.js';
-export type { AskOptions } from './enhancer.js';
 export {
   createLMStudio,
   createOllama,
