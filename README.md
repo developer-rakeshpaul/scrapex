@@ -295,6 +295,11 @@ console.log(result.data.title);   // Feed title
 console.log(result.data.items);   // Array of feed items
 ```
 
+**Supported formats:**
+- `rss2` - RSS 2.0 (most common format)
+- `rss1` - RSS 1.0 (RDF-based, older format)
+- `atom` - Atom 1.0 (modern format with better semantics)
+
 ### Feed Item Structure
 
 ```typescript

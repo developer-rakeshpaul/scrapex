@@ -244,7 +244,7 @@ const text = feedToText(feed, { maxItems: 5 });
 
 ### paginateFeed()
 
-Iterate through paginated feeds (RFC 5005).
+Iterate through paginated Atom feeds using [RFC 5005](https://tools.ietf.org/html/rfc5005) (Feed Paging and Archiving). This follows `rel="next"` links to fetch subsequent pages.
 
 ```typescript
 function paginateFeed(

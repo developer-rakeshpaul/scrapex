@@ -135,7 +135,11 @@ export function feedToMarkdown(
       lines.push(item.description);
     }
 
-    lines.push(`[Read more](${item.link})`, "");
+    if (item.link) {
+      lines.push(`[Read more](${item.link})`, "");
+    } else {
+      lines.push("");
+    }
   }
 
   return lines.join("\n");
