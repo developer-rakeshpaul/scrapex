@@ -2,7 +2,7 @@
 
 Modern web scraper with LLM-enhanced extraction, extensible pipeline, and pluggable parsers.
 
-> **Alpha Release**: v1.0.0 is currently in alpha. The API may change before the stable release.
+> **Beta Release**: v1.0.0 is currently in beta. The API is stable but minor changes may occur before the stable release.
 
 ## Features
 
@@ -18,7 +18,7 @@ Modern web scraper with LLM-enhanced extraction, extensible pipeline, and plugga
 ## Installation
 
 ```bash
-npm install scrapex@alpha
+npm install scrapex@beta
 ```
 
 ### Optional Peer Dependencies
