@@ -109,6 +109,39 @@ describe('url utilities', () => {
         'https://other.com/path/to/resource'
       );
     });
+
+    it('should handle protocol-relative URLs with query strings', () => {
+      expect(resolveUrl('//cdn.example.com/script.js?v=1.0', baseUrl)).toBe(
+        'https://cdn.example.com/script.js?v=1.0'
+      );
+      expect(resolveUrl('//cdn.example.com/api?foo=bar&baz=qux', baseUrl)).toBe(
+        'https://cdn.example.com/api?foo=bar&baz=qux'
+      );
+    });
+
+    it('should handle protocol-relative URLs with fragments', () => {
+      expect(resolveUrl('//cdn.example.com/page#section', baseUrl)).toBe(
+        'https://cdn.example.com/page#section'
+      );
+      expect(resolveUrl('//cdn.example.com/docs#api-reference', baseUrl)).toBe(
+        'https://cdn.example.com/docs#api-reference'
+      );
+    });
+
+    it('should handle protocol-relative URLs with ports', () => {
+      expect(resolveUrl('//cdn.example.com:8080/resource', baseUrl)).toBe(
+        'https://cdn.example.com:8080/resource'
+      );
+      expect(resolveUrl('//localhost:3000/api', baseUrl)).toBe(
+        'https://localhost:3000/api'
+      );
+    });
+
+    it('should handle protocol-relative URLs with query strings, fragments, and ports combined', () => {
+      expect(resolveUrl('//cdn.example.com:8080/path?v=1#section', baseUrl)).toBe(
+        'https://cdn.example.com:8080/path?v=1#section'
+      );
+    });
   });
 
   describe('isExternalUrl', () => {

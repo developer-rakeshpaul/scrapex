@@ -218,6 +218,15 @@ The parser uses Cheerio's XML mode, which doesn't process external entities or D
   The public URL utilities (`resolveUrl`, `isValidUrl`, etc.) accept both `http:` and `https:` URLs. HTTPS-only enforcement is specific to the RSS parser. Protocol-relative URLs (e.g., `//example.com/path`) are resolved against the base URL's protocol.
 </Aside>
 
+```typescript
+// Protocol-relative URLs inherit the base URL's protocol
+const result = parser.parse(feedXml, 'https://example.com/feed.xml');
+// Item link '//cdn.example.com/image.jpg' → 'https://cdn.example.com/image.jpg' ✓
+
+const result2 = parser.parse(feedXml, 'http://example.com/feed.xml');
+// Item link '//cdn.example.com/image.jpg' → '' (rejected, resolved to http)
+```
+
 ## Next Steps
 
 - [API Reference: Parsers](/api/parsers) - Full RSSParser API documentation
