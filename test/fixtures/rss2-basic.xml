@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>Scrapex RSS 2.0 Test</title>
+  <link>https://example.com</link>
+  <description>Testing RSS 2.0 parsing</description>
+  <language>en-us</language>
+  <pubDate>Mon, 06 Sep 2024 16:45:00 +0000</pubDate>
+  <lastBuildDate>Mon, 06 Sep 2024 16:45:00 +0000</lastBuildDate>
+  <copyright>Copyright 2024</copyright>
+  <generator>Scrapex Generator</generator>
+  <item>
+    <title>RSS Item 1</title>
+    <link>https://example.com/item1</link>
+    <guid>https://example.com/item1</guid>
+    <pubDate>Mon, 06 Sep 2024 16:45:00 +0000</pubDate>
+    <description>This is a short description.</description>
+    <content:encoded><![CDATA[<p>This is the <strong>full</strong> content.</p>]]></content:encoded>
+    <author>John Doe</author>
+    <category>Tech</category>
+    <category>News</category>
+    <enclosure url="https://example.com/podcast.mp3" length="123456" type="audio/mpeg" />
+  </item>
+  <item>
+    <title>RSS Item 2</title>
+    <link>https://example.com/item2</link>
+    <guid isPermaLink="false">abc-123</guid>
+    <dc:creator>Jane Smith</dc:creator>
+  </item>
+</channel>
+</rss>

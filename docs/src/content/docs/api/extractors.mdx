@@ -10,9 +10,7 @@ Extractors are responsible for parsing HTML and extracting structured data.
 ```typescript
 interface Extractor {
   readonly name: string;
-  readonly priority: number;
-
-  canHandle?(context: ExtractionContext): boolean;
+  readonly priority?: number;
   extract(context: ExtractionContext): Promise<Partial<ScrapedData>>;
 }
 ```
@@ -22,17 +20,9 @@ interface Extractor {
 | Property | Type | Description |
 |----------|------|-------------|
 | `name` | `string` | Unique identifier for the extractor |
-| `priority` | `number` | Execution order (higher runs first) |
+| `priority` | `number` | Optional execution order (higher runs first) |
 
 ### Methods
-
-#### canHandle(context)
-
-Optional method to determine if the extractor should run.
-
-- **Parameters:** `context: ExtractionContext`
-- **Returns:** `boolean`
-- **Default:** `true` (runs for all pages)
 
 #### extract(context)
 
@@ -45,9 +35,12 @@ Main extraction method. Returns partial data to merge into the result.
 
 ```typescript
 interface ExtractionContext {
-  $: CheerioAPI;           // Cheerio instance for DOM queries
   url: string;             // Original URL being scraped
-  document: Document;      // Readability parsed document
+  finalUrl: string;        // Final URL after redirects
+  html: string;            // Raw HTML
+  $: CheerioAPI;           // Cheerio instance for DOM queries
+  getDocument(): Document; // Lazy JSDOM document
+  results: Partial<ScrapedData>;
   options: ScrapeOptions;  // Options passed to scrape()
 }
 ```
@@ -72,11 +65,11 @@ import { MetaExtractor } from 'scrapex/extractors';
 
 ### ContentExtractor
 
-**Priority:** 90
+**Priority:** 50
 
 Extracts main content using Readability algorithm:
 
-- Main article content (HTML)
+- Main article content (Markdown)
 - Plain text content
 - Excerpt
 - Byline detection
@@ -102,9 +95,24 @@ Supports multiple `@type` values including Article, NewsArticle, BlogPosting, Pr
 import { JsonLdExtractor } from 'scrapex/extractors';
 ```
 
-### LinksExtractor
+### FaviconExtractor
 
 **Priority:** 70
+
+Extracts favicon URL from multiple sources:
+
+- `<link rel="icon">` and `<link rel="shortcut icon">`
+- Apple touch icons
+- Manifest icons
+- Falls back to `/favicon.ico`
+
+```typescript
+import { FaviconExtractor } from 'scrapex/extractors';
+```
+
+### LinksExtractor
+
+**Priority:** 30
 
 Extracts and categorizes links:
 
@@ -116,14 +124,14 @@ Extracts and categorizes links:
 import { LinksExtractor } from 'scrapex/extractors';
 ```
 
-## defaultExtractors
+## createDefaultExtractors
 
 Array of all built-in extractors in priority order:
 
 ```typescript
-import { defaultExtractors } from 'scrapex';
+import { createDefaultExtractors } from 'scrapex';
 
-// [MetaExtractor, ContentExtractor, JsonLdExtractor, LinksExtractor]
+const extractors = createDefaultExtractors();
 ```
 
 ## Creating Custom Extractors
@@ -135,13 +143,12 @@ class VideoExtractor implements Extractor {
   readonly name = 'video';
   readonly priority = 60;
 
-  canHandle(context: ExtractionContext): boolean {
-    const { $ } = context;
-    return $('video, iframe[src*="youtube"], iframe[src*="vimeo"]').length > 0;
-  }
-
   async extract(context: ExtractionContext): Promise<Partial<ScrapedData>> {
     const { $ } = context;
+
+    if ($('video, iframe[src*="youtube"], iframe[src*="vimeo"]').length === 0) {
+      return {};
+    }
 
     const videos = $('video source, iframe[src*="youtube"], iframe[src*="vimeo"]')
       .map((_, el) => {
@@ -163,10 +170,10 @@ class VideoExtractor implements Extractor {
 ## Using Custom Extractors
 
 ```typescript
-import { scrape, defaultExtractors } from 'scrapex';
+import { scrape, createDefaultExtractors } from 'scrapex';
 
 // Add to defaults
-const extractors = [...defaultExtractors, new VideoExtractor()];
+const extractors = [...createDefaultExtractors(), new VideoExtractor()];
 
 // Or replace entirely
 const extractors = [
@@ -181,8 +188,7 @@ const result = await scrape(url, { extractors });
 
 1. Extractors are sorted by priority (highest first)
 2. For each extractor:
-   - `canHandle()` is called if defined
-   - If `true` or undefined, `extract()` is called
+   - `extract()` is called
    - Returned data is merged into the result
 3. Later extractors can override earlier data
 

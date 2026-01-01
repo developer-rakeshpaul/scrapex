@@ -27,13 +27,17 @@ The URL to scrape. Must be a valid HTTP or HTTPS URL.
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `timeout` | `number` | `30000` | Request timeout in milliseconds |
-| `headers` | `Record<string, string>` | `{}` | Custom HTTP headers |
+| `timeout` | `number` | `10000` | Request timeout in milliseconds |
 | `userAgent` | `string` | Default UA | Custom User-Agent string |
+| `extractContent` | `boolean` | `true` | Extract full content with Readability |
+| `maxContentLength` | `number` | `50000` | Max content length to process |
+| `fetcher` | `Fetcher` | `defaultFetcher` | Custom fetcher (Puppeteer/Playwright) |
+| `extractors` | `Extractor[]` | `createDefaultExtractors()` | Custom extractor pipeline |
+| `replaceDefaultExtractors` | `boolean` | `false` | Replace default extractor set |
 | `respectRobots` | `boolean` | `false` | Respect robots.txt rules |
-| `maxContentLength` | `number` | `undefined` | Max content length to process |
-| `extractors` | `Extractor[]` | `defaultExtractors` | Custom extractor pipeline |
-| `enhancer` | `Enhancer` | `undefined` | LLM enhancement pipeline |
+| `llm` | `LLMProvider` | `undefined` | LLM provider for enhancements |
+| `enhance` | `EnhancementType[]` | `undefined` | LLM enhancement types |
+| `extract` | `ExtractionSchema` | `undefined` | LLM structured extraction schema |
 
 ## Returns
 
@@ -42,26 +46,35 @@ Returns a `Promise<ScrapedData>` with the extracted data.
 ```typescript
 interface ScrapedData {
   url: string;
+  canonicalUrl: string;
+  domain: string;
   title: string;
-  description?: string;
-  author?: string;
-  publishedDate?: string;
+  description: string;
+  image?: string;
+  favicon?: string;
   content: string;
   textContent: string;
-  excerpt?: string;
+  excerpt: string;
+  wordCount: number;
+  author?: string;
+  publishedAt?: string;
+  modifiedAt?: string;
   siteName?: string;
-  favicon?: string;
-  image?: string;
-  links: LinkInfo[];
-  contentType?: string;
   language?: string;
+  contentType: ContentType;
+  keywords: string[];
+  jsonLd?: Record<string, unknown>[];
+  links?: ExtractedLink[];
   custom?: Record<string, unknown>;
+  scrapedAt: string;
+  scrapeTimeMs: number;
+  error?: string;
 
-  // LLM-enhanced fields (when enhancer is provided)
+  // LLM-enhanced fields (when llm + enhance/extract is provided)
   summary?: string;
-  entities?: Record<string, string[]>;
-  categories?: string[];
-  structured?: unknown;
+  suggestedTags?: string[];
+  entities?: ExtractedEntities;
+  extracted?: Record<string, unknown>;
 }
 ```
 
@@ -84,9 +97,7 @@ console.log(result.links);
 ```typescript
 const result = await scrape('https://example.com', {
   timeout: 10000,
-  headers: {
-    'Accept-Language': 'en-US',
-  },
+  userAgent: 'MyBot/1.0',
   respectRobots: true,
 });
 ```
@@ -95,14 +106,14 @@ const result = await scrape('https://example.com', {
 
 ```typescript
 import { scrape } from 'scrapex';
-import { createOpenAI, createEnhancer } from 'scrapex/llm';
+import { createOpenAI } from 'scrapex/llm';
 
 const provider = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const enhancer = createEnhancer(provider)
-  .summarize()
-  .extractEntities();
 
-const result = await scrape('https://example.com', { enhancer });
+const result = await scrape('https://example.com', {
+  llm: provider,
+  enhance: ['summarize', 'entities'],
+});
 
 console.log(result.summary);
 console.log(result.entities);
@@ -111,11 +122,11 @@ console.log(result.entities);
 ### With Custom Extractors
 
 ```typescript
-import { scrape, defaultExtractors } from 'scrapex';
+import { scrape, createDefaultExtractors } from 'scrapex';
 import { MyCustomExtractor } from './extractors';
 
 const result = await scrape('https://example.com', {
-  extractors: [...defaultExtractors, new MyCustomExtractor()],
+  extractors: [...createDefaultExtractors(), new MyCustomExtractor()],
 });
 
 console.log(result.custom?.myData);
@@ -130,9 +141,10 @@ try {
   const result = await scrape('https://example.com');
 } catch (error) {
   if (error instanceof ScrapeError) {
-    console.log(error.code);    // 'FETCH_ERROR', 'TIMEOUT', etc.
-    console.log(error.url);     // The URL that failed
-    console.log(error.message); // Error description
+    console.log(error.code);       // 'FETCH_FAILED', 'TIMEOUT', etc.
+    console.log(error.message);    // Error description
+    console.log(error.statusCode); // HTTP status if applicable
+    console.log(error.isRetryable()); // true for transient errors
   }
 }
 ```

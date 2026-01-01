@@ -15,6 +15,10 @@ export {
   MarkdownParser,
   parseByHeadings,
 } from './markdown.js';
+// RSS parser (pure parsing, no I/O)
+export { RSSParser } from './rss.js';
+export type { RSSParserOptions } from './rss.js';
+
 export type {
   CodeBlock,
   GitHubMeta,
@@ -23,4 +27,8 @@ export type {
   ParsedMarkdown,
   ParserResult,
   SourceParser,
+  FeedItem,
+  FeedEnclosure,
+  ParsedFeed,
+  FeedMeta,
 } from './types.js';

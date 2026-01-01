@@ -1,0 +1,221 @@
+---
+title: RSS/Atom Feed Parsing
+description: Parse RSS 2.0, RSS 1.0 (RDF), and Atom feeds for content aggregation.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+scrapex includes a robust RSS/Atom parser for extracting structured data from syndication feeds.
+
+## RSSParser
+
+The `RSSParser` class parses RSS 2.0, RSS 1.0 (RDF), and Atom 1.0 feeds:
+
+```typescript
+import { RSSParser } from 'scrapex';
+
+const parser = new RSSParser();
+const result = parser.parse(feedXml, 'https://example.com/feed.xml');
+
+console.log(result.data.format);  // 'rss2' | 'rss1' | 'atom'
+console.log(result.data.title);   // Feed title
+console.log(result.data.items);   // Array of feed items
+```
+
+### Parsed Output
+
+```typescript
+// Feed metadata
+console.log(result.data.title);        // "My Blog"
+console.log(result.data.description);  // "A blog about..."
+console.log(result.data.link);         // "https://example.com"
+console.log(result.data.copyright);    // "Copyright 2024"
+
+// Feed items
+for (const item of result.data.items) {
+  console.log(item.title);       // "Article Title"
+  console.log(item.link);        // "https://example.com/article"
+  console.log(item.publishedAt); // "2024-09-06T16:45:00.000Z" (ISO 8601)
+  console.log(item.author);      // "John Doe"
+  console.log(item.categories);  // ["Tech", "News"]
+}
+```
+
+## Fetching Feeds
+
+Use `fetchFeed()` to fetch and parse in one call:
+
+```typescript
+import { fetchFeed } from 'scrapex';
+
+const result = await fetchFeed('https://example.com/feed.xml');
+
+for (const item of result.data.items) {
+  console.log(`${item.title} - ${item.publishedAt}`);
+}
+```
+
+<Aside type="tip">
+  `fetchFeed()` uses scrapex's fetcher infrastructure, so it respects timeouts, user agents, and other fetch options.
+</Aside>
+
+## Discovering Feeds
+
+Find RSS/Atom feed URLs in any HTML page:
+
+```typescript
+import { defaultFetcher, discoverFeeds, fetchFeed } from 'scrapex';
+
+// Fetch a page and find its feeds
+const page = await defaultFetcher.fetch('https://example.com', {});
+const feedUrls = discoverFeeds(page.html, page.finalUrl);
+// ['https://example.com/feed.xml', 'https://example.com/atom.xml']
+
+// Parse the first feed
+if (feedUrls.length > 0) {
+  const feed = await fetchFeed(feedUrls[0]);
+  console.log(feed.data.items);
+}
+```
+
+## Filtering by Date
+
+Filter feed items by date range:
+
+```typescript
+import { fetchFeed, filterByDate } from 'scrapex';
+
+const result = await fetchFeed('https://example.com/feed.xml');
+
+// Get items from the last 7 days
+const recentItems = filterByDate(result.data.items, {
+  after: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+  includeUndated: false,
+});
+
+// Get items from a specific range
+const rangeItems = filterByDate(result.data.items, {
+  after: new Date('2024-01-01'),
+  before: new Date('2024-12-31'),
+});
+```
+
+## LLM-Ready Output
+
+Convert feeds to Markdown or plain text for LLM consumption:
+
+```typescript
+import { fetchFeed, feedToMarkdown, feedToText } from 'scrapex';
+
+const result = await fetchFeed('https://example.com/feed.xml');
+
+// Markdown format (structured)
+const markdown = feedToMarkdown(result.data, { maxItems: 5 });
+// # My Blog
+//
+// ## Article Title
+// *2024-09-06*
+//
+// Article description...
+// [Read more](https://example.com/article)
+
+// Plain text (lower tokens)
+const text = feedToText(result.data, { maxItems: 5 });
+```
+
+<Aside type="tip">
+  Use `feedToMarkdown()` when structure matters (headings, links). Use `feedToText()` for lower token counts.
+</Aside>
+
+## Pagination
+
+Some Atom feeds support pagination via `rel="next"` links (RFC 5005):
+
+```typescript
+import { paginateFeed } from 'scrapex';
+
+for await (const page of paginateFeed('https://example.com/atom', { maxPages: 5 })) {
+  console.log(`Page: ${page.title}`);
+  console.log(`Items: ${page.items.length}`);
+  console.log(`Next: ${page.next || 'none'}`);
+}
+```
+
+## Custom Fields (Podcasts)
+
+Extract custom namespace fields like iTunes podcast tags:
+
+```typescript
+import { RSSParser } from 'scrapex';
+
+const parser = new RSSParser({
+  customFields: {
+    duration: 'itunes\\:duration',
+    explicit: 'itunes\\:explicit',
+    episode: 'itunes\\:episode',
+    season: 'itunes\\:season',
+  },
+});
+
+const result = parser.parse(podcastXml, url);
+
+for (const episode of result.data.items) {
+  console.log(`Episode: ${episode.title}`);
+  console.log(`Duration: ${episode.customFields?.duration}`);
+  console.log(`S${episode.customFields?.season} E${episode.customFields?.episode}`);
+}
+```
+
+<Aside type="note">
+  Note the escaped colons (`\\:`) in namespace selectors. This is required for Cheerio's CSS selector syntax.
+</Aside>
+
+## Enclosures (Media)
+
+RSS feeds can include media attachments (podcasts, videos):
+
+```typescript
+import { fetchFeed } from 'scrapex';
+
+const result = await fetchFeed('https://example.com/podcast.xml');
+
+for (const item of result.data.items) {
+  if (item.enclosure) {
+    console.log(`Media: ${item.enclosure.url}`);
+    console.log(`Type: ${item.enclosure.type}`);   // 'audio/mpeg'
+    console.log(`Size: ${item.enclosure.length}`); // bytes
+  }
+}
+```
+
+## Security
+
+The RSS parser includes several security measures:
+
+### HTTPS-Only URLs
+
+All URLs are resolved to HTTPS only. Non-HTTPS URLs (http, javascript, data, file) are rejected:
+
+```typescript
+const result = parser.parse(feedWithUnsafeLinks);
+
+// Safe links are preserved
+console.log(result.data.items[0].link); // 'https://example.com/article'
+
+// Unsafe links become empty strings
+console.log(result.data.items[1].link); // '' (was 'javascript:alert(1)')
+```
+
+### XXE Prevention
+
+The parser uses Cheerio's XML mode, which doesn't process external entities or DTDs, preventing XXE attacks.
+
+<Aside type="caution">
+  Feed content (descriptions, bodies) is returned as plain text. If you need to render HTML content, always sanitize it with a library like DOMPurify.
+</Aside>
+
+## Next Steps
+
+- [API Reference: Parsers](/api/parsers) - Full RSSParser API documentation
+- [API Reference: Utilities](/api/utilities) - Feed utility functions
+- [LLM Integration](/guides/llm-integration) - Use feeds with LLM providers

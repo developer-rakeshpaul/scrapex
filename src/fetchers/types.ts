@@ -25,6 +25,12 @@ export interface FetchOptions {
 
   /** Additional headers to send */
   headers?: Record<string, string>;
+
+  /**
+   * Allowed MIME types.
+   * Defaults to HTML/XHTML if undefined.
+   */
+  allowedContentTypes?: string[];
 }
 
 /**
