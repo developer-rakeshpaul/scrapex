@@ -93,6 +93,22 @@ describe('url utilities', () => {
       expect(resolveUrl(undefined, baseUrl)).toBeUndefined();
       expect(resolveUrl('', baseUrl)).toBeUndefined();
     });
+
+    it('should resolve protocol-relative URLs using base URL protocol', () => {
+      // Protocol-relative URLs inherit the protocol from the base URL
+      expect(resolveUrl('//cdn.example.com/script.js', 'https://example.com')).toBe(
+        'https://cdn.example.com/script.js'
+      );
+      expect(resolveUrl('//cdn.example.com/script.js', 'http://example.com')).toBe(
+        'http://cdn.example.com/script.js'
+      );
+    });
+
+    it('should handle protocol-relative URLs with paths', () => {
+      expect(resolveUrl('//other.com/path/to/resource', baseUrl)).toBe(
+        'https://other.com/path/to/resource'
+      );
+    });
   });
 
   describe('isExternalUrl', () => {

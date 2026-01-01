@@ -391,8 +391,12 @@ console.log(item.customFields?.explicit);  // 'no'
 
 ### Security
 
-- **HTTPS-only URLs**: All links are resolved to HTTPS only. Non-HTTPS URLs (http, javascript, data, file) are rejected and returned as empty strings.
+The RSS parser enforces strict URL security:
+
+- **HTTPS-only URLs (RSS parser only)**: The RSS/Atom parser (`RSSParser`) resolves all links to HTTPS only. Non-HTTPS URLs (http, javascript, data, file) are rejected and returned as empty strings. This is specific to feed parsing to prevent malicious links in untrusted feeds.
 - **XML Mode**: Feeds are parsed with Cheerio's `{ xml: true }` mode, which disables HTML entity processing and prevents XSS vectors.
+
+> **Note**: The public URL utilities (`resolveUrl`, `isValidUrl`, etc.) accept both `http:` and `https:` URLs. Protocol-relative URLs (e.g., `//example.com/path`) are resolved against the base URL's protocol by the standard `URL` constructor.
 
 ## URL Utilities
 

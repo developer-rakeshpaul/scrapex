@@ -192,9 +192,9 @@ for (const item of result.data.items) {
 
 The RSS parser includes several security measures:
 
-### HTTPS-Only URLs
+### HTTPS-Only URLs (RSS Parser Only)
 
-All URLs are resolved to HTTPS only. Non-HTTPS URLs (http, javascript, data, file) are rejected:
+The `RSSParser` resolves all URLs to HTTPS only. Non-HTTPS URLs (http, javascript, data, file) are rejected and returned as empty strings. This is specific to feed parsing to prevent malicious links in untrusted feeds:
 
 ```typescript
 const result = parser.parse(feedWithUnsafeLinks);
@@ -212,6 +212,10 @@ The parser uses Cheerio's XML mode, which doesn't process external entities or D
 
 <Aside type="caution">
   Feed content (descriptions, bodies) is returned as plain text. If you need to render HTML content, always sanitize it with a library like DOMPurify.
+</Aside>
+
+<Aside type="note">
+  The public URL utilities (`resolveUrl`, `isValidUrl`, etc.) accept both `http:` and `https:` URLs. HTTPS-only enforcement is specific to the RSS parser. Protocol-relative URLs (e.g., `//example.com/path`) are resolved against the base URL's protocol.
 </Aside>
 
 ## Next Steps

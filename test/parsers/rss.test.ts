@@ -95,6 +95,53 @@ describe('RSSParser', () => {
     expect(data.items[0].link).toBe('');
     expect(data.items[1].link).toBe('');
   });
+
+  it('should resolve protocol-relative URLs to HTTPS when base is HTTPS', () => {
+    const protocolRelativeXml = `
+      <rss version="2.0">
+        <channel>
+          <title>Test Feed</title>
+          <link>//example.com/</link>
+          <item>
+            <title>Item with protocol-relative link</title>
+            <link>//example.com/article</link>
+          </item>
+        </channel>
+      </rss>
+    `;
+
+    const parser = new RSSParser();
+    const result = parser.parse(protocolRelativeXml, 'https://example.com/feed.xml');
+    const { data } = result;
+
+    // Protocol-relative URLs should resolve to HTTPS (base URL protocol)
+    expect(data.link).toBe('https://example.com/');
+    expect(data.items[0].link).toBe('https://example.com/article');
+  });
+
+  it('should drop protocol-relative URLs when base is HTTP (resolves to non-HTTPS)', () => {
+    const protocolRelativeXml = `
+      <rss version="2.0">
+        <channel>
+          <title>Test Feed</title>
+          <link>//example.com/</link>
+          <item>
+            <title>Item</title>
+            <link>//example.com/article</link>
+          </item>
+        </channel>
+      </rss>
+    `;
+
+    const parser = new RSSParser();
+    // When base URL is HTTP, protocol-relative URLs resolve to HTTP, which is then dropped
+    const result = parser.parse(protocolRelativeXml, 'http://example.com/feed.xml');
+    const { data } = result;
+
+    // These should be empty because they resolve to HTTP, not HTTPS
+    expect(data.link).toBe('');
+    expect(data.items[0].link).toBe('');
+  });
   it('should extract custom fields', () => {
     const customXml = `
       <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
