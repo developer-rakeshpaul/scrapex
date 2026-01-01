@@ -10,7 +10,7 @@ LLM providers enable AI-powered content enhancement.
 Creates an OpenAI-compatible provider. Works with OpenAI, Azure OpenAI, Ollama, LM Studio, and other compatible APIs.
 
 ```typescript
-function createOpenAI(options: OpenAIOptions): LLMProvider
+function createOpenAI(options?: OpenAICompatibleConfig): LLMProvider
 ```
 
 ### Options
@@ -18,10 +18,8 @@ function createOpenAI(options: OpenAIOptions): LLMProvider
 | Option | Type | Required | Default | Description |
 |--------|------|----------|---------|-------------|
 | `apiKey` | `string` | No* | `OPENAI_API_KEY` env | API key |
-| `baseURL` | `string` | No | OpenAI API | Custom endpoint |
+| `baseUrl` | `string` | No | OpenAI API | Custom endpoint |
 | `model` | `string` | No | `gpt-4o-mini` | Model to use |
-| `maxTokens` | `number` | No | `4096` | Max response tokens |
-| `temperature` | `number` | No | `0.7` | Response randomness |
 
 *Required unless using environment variable or local endpoint.
 
@@ -37,22 +35,38 @@ const openai = createOpenAI({
 });
 
 // Ollama (local)
-const ollama = createOpenAI({
-  baseURL: 'http://localhost:11434/v1',
+    const ollama = createOpenAI({
+      baseUrl: 'http://localhost:11434/v1',
   model: 'llama3.2',
 });
 
 // LM Studio (local)
-const lmstudio = createOpenAI({
-  baseURL: 'http://localhost:1234/v1',
+    const lmstudio = createOpenAI({
+      baseUrl: 'http://localhost:1234/v1',
   model: 'local-model',
 });
 
 // Azure OpenAI
-const azure = createOpenAI({
-  apiKey: process.env.AZURE_OPENAI_KEY,
-  baseURL: 'https://your-resource.openai.azure.com/openai/deployments/your-deployment',
-});
+    const azure = createOpenAI({
+      apiKey: process.env.AZURE_OPENAI_KEY,
+      baseUrl: 'https://your-resource.openai.azure.com/openai/deployments/your-deployment',
+    });
+```
+
+## createOllama()
+
+Create a local Ollama provider (OpenAI-compatible).
+
+```typescript
+function createOllama(config?: { model: string; port?: number }): LLMProvider
+```
+
+## createLMStudio()
+
+Create a local LM Studio provider (OpenAI-compatible).
+
+```typescript
+function createLMStudio(config?: { model: string; port?: number }): LLMProvider
 ```
 
 ## AnthropicProvider
@@ -66,7 +80,7 @@ class AnthropicProvider implements LLMProvider
 ### Constructor
 
 ```typescript
-new AnthropicProvider(options: AnthropicOptions)
+new AnthropicProvider(options?: AnthropicConfig)
 ```
 
 ### Options
@@ -75,7 +89,7 @@ new AnthropicProvider(options: AnthropicOptions)
 |--------|------|----------|---------|-------------|
 | `apiKey` | `string` | No | `ANTHROPIC_API_KEY` env | API key |
 | `model` | `string` | No | `claude-3-5-haiku-20241022` | Model to use |
-| `maxTokens` | `number` | No | `4096` | Max response tokens |
+| `baseUrl` | `string` | No | Anthropic API | Custom endpoint |
 
 ### Example
 
@@ -95,6 +109,7 @@ Implement this interface for custom providers:
 ```typescript
 interface LLMProvider {
   complete(prompt: string, options?: CompletionOptions): Promise<string>;
+  completeJSON<T>(prompt: string, schema: z.ZodType<T>, options?: CompletionOptions): Promise<T>;
 }
 
 interface CompletionOptions {
@@ -124,34 +139,28 @@ class MyProvider implements LLMProvider {
 }
 ```
 
-## createEnhancer()
+## enhance()
 
-Creates an enhancement pipeline from a provider.
+Run LLM enhancements against scraped data.
 
 ```typescript
-function createEnhancer(provider: LLMProvider): EnhancerBuilder
+function enhance(
+  data: ScrapedData,
+  provider: LLMProvider,
+  types: EnhancementType[]
+): Promise<Partial<ScrapedData>>
 ```
-
-### EnhancerBuilder Methods
-
-| Method | Description |
-|--------|-------------|
-| `.summarize()` | Add summarization |
-| `.extractEntities()` | Add entity extraction |
-| `.classify(categories)` | Add classification |
-| `.extractStructured(schema)` | Add structured extraction |
 
 ### Example
 
 ```typescript
-import { createOpenAI, createEnhancer } from 'scrapex/llm';
+import { scrape } from 'scrapex';
+import { createOpenAI, enhance } from 'scrapex/llm';
 
 const provider = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const data = await scrape('https://example.com');
 
-const enhancer = createEnhancer(provider)
-  .summarize()
-  .extractEntities()
-  .classify(['tech', 'business', 'science']);
+const result = await enhance(data, provider, ['summarize', 'entities']);
 ```
 
 ## ask()
@@ -251,63 +260,16 @@ const products = await extract<Product[]>(data, provider, {
 
 ## Enhancement Types
 
-### Summarization
+Use these values in `enhance` when calling `scrape()`:
 
 ```typescript
-.summarize()
+type EnhancementType = 'summarize' | 'tags' | 'entities' | 'classify';
 ```
 
-Adds a `summary` field to the result with a concise summary of the content.
-
-### Entity Extraction
-
-```typescript
-.extractEntities()
-```
-
-Adds an `entities` field with categorized entities:
-
-```typescript
-{
-  people: string[];
-  organizations: string[];
-  locations: string[];
-  technologies: string[];
-  // ... other categories
-}
-```
-
-### Classification
-
-```typescript
-.classify(categories: string[])
-```
-
-Adds a `categories` field with matching categories from the provided list.
-
-### Structured Extraction
-
-```typescript
-.extractStructured(schema: JSONSchema)
-```
-
-Adds a `structured` field with data matching the provided JSON schema.
-
-## Using Enhancers
-
-```typescript
-import { scrape } from 'scrapex';
-
-const result = await scrape('https://example.com', {
-  enhancer,
-});
-
-// Access enhanced data
-console.log(result.summary);
-console.log(result.entities);
-console.log(result.categories);
-console.log(result.structured);
-```
+- `summarize` → `summary`
+- `tags` → `suggestedTags`
+- `entities` → `entities`
+- `classify` → updates `contentType` when confidence is high
 
 ## See Also
 

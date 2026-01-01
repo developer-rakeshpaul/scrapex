@@ -20,8 +20,8 @@ try {
   if (error instanceof ScrapeError) {
     console.log('Code:', error.code);
     console.log('Message:', error.message);
-    console.log('URL:', error.url);
     console.log('Status:', error.statusCode);
+    console.log('Retryable:', error.isRetryable());
   }
 }
 ```
@@ -30,13 +30,15 @@ try {
 
 | Code | Description | Common Causes |
 |------|-------------|---------------|
-| `FETCH_ERROR` | Failed to fetch URL | Network issues, DNS failure |
+| `FETCH_FAILED` | Failed to fetch URL | Network issues, DNS failure |
 | `TIMEOUT` | Request timed out | Slow server, network issues |
-| `HTTP_ERROR` | Non-2xx HTTP response | 404, 500, rate limiting |
+| `BLOCKED` | Access denied | 403 Forbidden, WAF blocking |
+| `NOT_FOUND` | Page not found | 404 response |
 | `PARSE_ERROR` | Failed to parse HTML | Malformed HTML |
 | `ROBOTS_BLOCKED` | Blocked by robots.txt | `respectRobots: true` and disallowed |
 | `INVALID_URL` | Invalid URL provided | Malformed URL string |
-| `CONTENT_TOO_LARGE` | Response too large | Exceeds size limits |
+| `LLM_ERROR` | LLM provider failed | API error, rate limit, invalid key |
+| `VALIDATION_ERROR` | Validation failed | Schema mismatch, invalid response |
 
 ## Handling Specific Errors
 
@@ -56,17 +58,17 @@ async function safeScrape(url: string) {
         console.log(`Timeout scraping ${url}, retrying...`);
         return await scrape(url, { timeout: 30000 });
 
-      case 'HTTP_ERROR':
+      case 'BLOCKED':
         if (error.statusCode === 429) {
           console.log('Rate limited, waiting...');
           await sleep(5000);
           return await scrape(url);
         }
-        if (error.statusCode === 404) {
-          console.log('Page not found');
-          return null;
-        }
         throw error;
+
+      case 'NOT_FOUND':
+        console.log('Page not found');
+        return null;
 
       case 'ROBOTS_BLOCKED':
         console.log('Blocked by robots.txt, skipping');
@@ -95,8 +97,9 @@ async function scrapeWithRetry(
     } catch (error) {
       if (!(error instanceof ScrapeError)) throw error;
 
-      const isRetryable = ['FETCH_ERROR', 'TIMEOUT'].includes(error.code) ||
-                          (error.code === 'HTTP_ERROR' && error.statusCode === 429);
+      // Use built-in isRetryable() or check specific codes
+      const isRetryable = error.isRetryable() ||
+                          (error.code === 'BLOCKED' && error.statusCode === 429);
 
       if (!isRetryable || attempt === maxRetries - 1) {
         throw error;
@@ -145,14 +148,12 @@ async function scrapeBatch(urls: string[]) {
 Create a structured error logger:
 
 ```typescript
-function logScrapeError(error: ScrapeError) {
+function logScrapeError(error: ScrapeError, url: string) {
+  // Use toJSON() for structured logging
   const entry = {
     timestamp: new Date().toISOString(),
-    code: error.code,
-    url: error.url,
-    message: error.message,
-    statusCode: error.statusCode,
-    stack: error.stack,
+    url,
+    ...error.toJSON(),
   };
 
   console.error(JSON.stringify(entry));
@@ -167,7 +168,7 @@ Return partial results when possible:
 ```typescript
 async function scrapeWithFallback(url: string) {
   try {
-    return await scrape(url, { enhancer });
+    return await scrape(url, { llm: provider, enhance: ['summarize'] });
   } catch (error) {
     if (error instanceof ScrapeError && error.code === 'LLM_ERROR') {
       // LLM enhancement failed, try without it
@@ -188,13 +189,13 @@ import { isValidUrl, scrape, ScrapeError } from 'scrapex';
 
 async function validateAndScrape(url: string) {
   if (!isValidUrl(url)) {
-    throw new ScrapeError('INVALID_URL', `Invalid URL: ${url}`, url);
+    throw new ScrapeError(`Invalid URL: ${url}`, 'INVALID_URL');
   }
 
   // Optionally check robots.txt first
   const robotsCheck = await checkRobotsTxt(url);
   if (!robotsCheck.allowed) {
-    throw new ScrapeError('ROBOTS_BLOCKED', 'Blocked by robots.txt', url);
+    throw new ScrapeError('Blocked by robots.txt', 'ROBOTS_BLOCKED');
   }
 
   return await scrape(url);

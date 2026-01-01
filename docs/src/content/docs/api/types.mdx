@@ -13,38 +13,53 @@ The main result type returned by `scrape()` and `scrapeHtml()`.
 
 ```typescript
 interface ScrapedData {
-  // Basic metadata
+  // Identity
   url: string;
+  canonicalUrl: string;
+  domain: string;
+
+  // Basic metadata
   title: string;
-  description?: string;
-  author?: string;
-  publishedDate?: string;
+  description: string;
+  image?: string;
+  favicon?: string;
 
   // Content
-  content: string;         // HTML content
-  textContent: string;     // Plain text content
-  excerpt?: string;
+  content: string;      // Markdown content
+  textContent: string;  // Plain text content
+  excerpt: string;
+  wordCount: number;
 
-  // Site information
+  // Context
+  author?: string;
+  publishedAt?: string;
+  modifiedAt?: string;
   siteName?: string;
-  favicon?: string;
-  image?: string;
   language?: string;
 
-  // Links
-  links: LinkInfo[];
-
   // Classification
-  contentType?: string;
+  contentType: ContentType;
+  keywords: string[];
+
+  // Structured data
+  jsonLd?: Record<string, unknown>[];
+
+  // Links
+  links?: ExtractedLink[];
+
+  // LLM-enhanced fields
+  summary?: string;
+  suggestedTags?: string[];
+  entities?: ExtractedEntities;
+  extracted?: Record<string, unknown>;
 
   // Custom extractor data
   custom?: Record<string, unknown>;
 
-  // LLM-enhanced fields
-  summary?: string;
-  entities?: Record<string, string[]>;
-  categories?: string[];
-  structured?: unknown;
+  // Meta
+  scrapedAt: string;
+  scrapeTimeMs: number;
+  error?: string;
 }
 ```
 
@@ -56,28 +71,63 @@ Options for the `scrape()` and `scrapeHtml()` functions.
 interface ScrapeOptions {
   // HTTP options (scrape() only)
   timeout?: number;
-  headers?: Record<string, string>;
   userAgent?: string;
 
   // Behavior
-  respectRobots?: boolean;
+  extractContent?: boolean;
   maxContentLength?: number;
+  respectRobots?: boolean;
 
   // Pipeline customization
+  fetcher?: Fetcher;
   extractors?: Extractor[];
-  enhancer?: Enhancer;
+  replaceDefaultExtractors?: boolean;
+
+  // LLM integration
+  llm?: LLMProvider;
+  enhance?: EnhancementType[];
+  extract?: ExtractionSchema;
 }
 ```
 
-### LinkInfo
+### ContentType
+
+Content type classification for scraped URLs.
+
+```typescript
+type ContentType =
+  | 'article'
+  | 'repo'
+  | 'docs'
+  | 'package'
+  | 'video'
+  | 'tool'
+  | 'product'
+  | 'unknown';
+```
+
+### ExtractedEntities
+
+Entities extracted by LLM enhancement.
+
+```typescript
+interface ExtractedEntities {
+  people: string[];
+  organizations: string[];
+  technologies: string[];
+  locations: string[];
+  concepts: string[];
+}
+```
+
+### ExtractedLink
 
 Information about an extracted link.
 
 ```typescript
-interface LinkInfo {
+interface ExtractedLink {
   url: string;
   text: string;
-  rel?: string;
   isExternal: boolean;
 }
 ```
@@ -91,9 +141,8 @@ Interface for content extractors.
 ```typescript
 interface Extractor {
   readonly name: string;
-  readonly priority: number;
+  readonly priority?: number;
 
-  canHandle?(context: ExtractionContext): boolean;
   extract(context: ExtractionContext): Promise<Partial<ScrapedData>>;
 }
 ```
@@ -104,28 +153,46 @@ Context passed to extractors.
 
 ```typescript
 interface ExtractionContext {
-  $: CheerioAPI;
   url: string;
-  document: Document;
+  finalUrl: string;
+  html: string;
+  $: CheerioAPI;
+  getDocument(): Document;
+  results: Partial<ScrapedData>;
   options: ScrapeOptions;
 }
 ```
 
-### Document
+## Fetcher Types
 
-Readability parsed document.
+### Fetcher
 
 ```typescript
-interface Document {
-  title: string;
-  content: string;
-  textContent: string;
-  length: number;
-  excerpt: string;
-  byline: string | null;
-  dir: string | null;
-  siteName: string | null;
-  lang: string | null;
+interface Fetcher {
+  readonly name: string;
+  fetch(url: string, options: FetchOptions): Promise<FetchResult>;
+}
+```
+
+### FetchOptions
+
+```typescript
+interface FetchOptions {
+  timeout?: number;
+  userAgent?: string;
+  headers?: Record<string, string>;
+}
+```
+
+### FetchResult
+
+```typescript
+interface FetchResult {
+  html: string;
+  finalUrl: string;
+  statusCode: number;
+  contentType: string;
+  headers?: Record<string, string>;
 }
 ```
 
@@ -137,7 +204,9 @@ Interface for LLM providers.
 
 ```typescript
 interface LLMProvider {
+  readonly name: string;
   complete(prompt: string, options?: CompletionOptions): Promise<string>;
+  completeJSON<T>(prompt: string, schema: unknown): Promise<T>;
 }
 ```
 
@@ -153,52 +222,27 @@ interface CompletionOptions {
 }
 ```
 
-### OpenAIOptions
+### OpenAICompatibleConfig
 
-Options for `createOpenAI()`.
+Options for `createOpenAI()`, `createOllama()`, and `createLMStudio()`.
 
 ```typescript
-interface OpenAIOptions {
+interface OpenAICompatibleConfig {
   apiKey?: string;
-  baseURL?: string;
   model?: string;
-  maxTokens?: number;
-  temperature?: number;
+  baseUrl?: string;
 }
 ```
 
-### AnthropicOptions
+### AnthropicConfig
 
 Options for `AnthropicProvider`.
 
 ```typescript
-interface AnthropicOptions {
+interface AnthropicConfig {
   apiKey?: string;
   model?: string;
-  maxTokens?: number;
-}
-```
-
-### Enhancer
-
-LLM enhancement pipeline.
-
-```typescript
-interface Enhancer {
-  enhance(data: ScrapedData): Promise<Partial<ScrapedData>>;
-}
-```
-
-### EnhancerBuilder
-
-Builder for creating enhancers.
-
-```typescript
-interface EnhancerBuilder extends Enhancer {
-  summarize(): EnhancerBuilder;
-  extractEntities(): EnhancerBuilder;
-  classify(categories: string[]): EnhancerBuilder;
-  extractStructured(schema: JSONSchema): EnhancerBuilder;
+  baseUrl?: string;
 }
 ```
 
@@ -231,27 +275,41 @@ type ExtractionSchemaType =
 type ExtractionSchema = Record<string, ExtractionSchemaType>;
 ```
 
+### EnhancementType
+
+Supported enhancement types for `scrape()`:
+
+```typescript
+type EnhancementType = 'summarize' | 'tags' | 'entities' | 'classify';
+```
+
 ## Parser Types
 
-### MarkdownParseResult
+### ParsedMarkdown
 
 Result from `MarkdownParser.parse()`.
 
 ```typescript
-interface MarkdownParseResult {
-  headings: Heading[];
+interface ParsedMarkdown {
+  title?: string;
+  description?: string;
+  sections: MarkdownSection[];
   links: MarkdownLink[];
+  codeBlocks: CodeBlock[];
+  frontmatter?: Record<string, unknown>;
 }
 ```
 
-### Heading
+### MarkdownSection
 
-A Markdown heading.
+A Markdown section (heading + content).
 
 ```typescript
-interface Heading {
+interface MarkdownSection {
   level: number;
-  text: string;
+  title: string;
+  content: string;
+  links: MarkdownLink[];
 }
 ```
 
@@ -263,7 +321,20 @@ A link extracted from Markdown.
 interface MarkdownLink {
   url: string;
   text: string;
-  description: string;
+  title?: string;
+  context?: string;
+}
+```
+
+### CodeBlock
+
+A code block extracted from Markdown.
+
+```typescript
+interface CodeBlock {
+  language?: string;
+  code: string;
+  meta?: string;
 }
 ```
 
@@ -271,29 +342,34 @@ interface MarkdownLink {
 
 ### ScrapeError
 
-Custom error class.
+Custom error class for scraping failures.
 
 ```typescript
 class ScrapeError extends Error {
-  readonly code: ErrorCode;
-  readonly url?: string;
+  readonly code: ScrapeErrorCode;
   readonly statusCode?: number;
+
+  static from(error: unknown, code?: ScrapeErrorCode): ScrapeError;
+  isRetryable(): boolean;
+  toJSON(): Record<string, unknown>;
 }
 ```
 
-### ErrorCode
+### ScrapeErrorCode
 
 Possible error codes.
 
 ```typescript
-type ErrorCode =
-  | 'FETCH_ERROR'
+type ScrapeErrorCode =
+  | 'FETCH_FAILED'
   | 'TIMEOUT'
-  | 'HTTP_ERROR'
-  | 'PARSE_ERROR'
-  | 'ROBOTS_BLOCKED'
   | 'INVALID_URL'
-  | 'CONTENT_TOO_LARGE';
+  | 'BLOCKED'
+  | 'NOT_FOUND'
+  | 'ROBOTS_BLOCKED'
+  | 'PARSE_ERROR'
+  | 'LLM_ERROR'
+  | 'VALIDATION_ERROR';
 ```
 
 ## Importing Types
@@ -303,7 +379,9 @@ type ErrorCode =
 import type {
   ScrapedData,
   ScrapeOptions,
-  LinkInfo,
+  ExtractedLink,
+  EnhancementType,
+  ExtractionSchema,
 } from 'scrapex';
 
 // Extractor types
@@ -316,14 +394,15 @@ import type {
 import type {
   LLMProvider,
   CompletionOptions,
-  Enhancer,
-  EnhancerBuilder,
   AskOptions,
 } from 'scrapex/llm';
 
 // Parser types
 import type {
-  MarkdownParseResult,
+  ParsedMarkdown,
+  MarkdownSection,
+  MarkdownLink,
+  CodeBlock,
 } from 'scrapex/parsers';
 ```
 

@@ -1,37 +1,160 @@
 ---
 title: Parsers
-description: API reference for Markdown parsers.
+description: API reference for Markdown and RSS/Atom parsers.
 ---
 
-Parsers extract structured data from Markdown content.
+Parsers extract structured data from Markdown and feed content.
 
-## MarkdownParser
+## RSSParser
 
-Parses Markdown content to extract headings and links.
+Parses RSS 2.0, RSS 1.0 (RDF), and Atom 1.0 feeds. Only `https` URLs are emitted; other schemes are dropped.
 
 ```typescript
-class MarkdownParser {
-  parse(markdown: string): MarkdownParseResult;
+class RSSParser {
+  constructor(options?: RSSParserOptions);
+  canParse(content: string): boolean;
+  parse(content: string, url?: string): ParserResult<ParsedFeed, FeedMeta>;
+}
+
+interface RSSParserOptions {
+  customFields?: Record<string, string>;
 }
 ```
 
-### MarkdownParseResult
+### ParsedFeed
 
 ```typescript
-interface MarkdownParseResult {
-  headings: Heading[];
-  links: MarkdownLink[];
+interface ParsedFeed {
+  format: 'rss2' | 'rss1' | 'atom';
+  title: string;
+  description?: string;
+  link: string;
+  next?: string;              // Pagination link (Atom)
+  language?: string;
+  lastBuildDate?: string;     // ISO 8601
+  copyright?: string;
+  items: FeedItem[];
+  customFields?: Record<string, string>;
+}
+```
+
+### FeedItem
+
+```typescript
+interface FeedItem {
+  id: string;
+  title: string;
+  link: string;
+  description?: string;
+  content?: string;
+  author?: string;
+  publishedAt?: string;       // ISO 8601
+  rawPublishedAt?: string;    // Original date string
+  updatedAt?: string;         // Atom only
+  categories: string[];
+  enclosure?: FeedEnclosure;
+  customFields?: Record<string, string>;
 }
 
-interface Heading {
-  level: number;  // 1-6
-  text: string;
+interface FeedEnclosure {
+  url: string;
+  type?: string;              // MIME type
+  length?: number;            // bytes
+}
+```
+
+### FeedMeta
+
+```typescript
+interface FeedMeta {
+  generator?: string;
+  ttl?: number;               // Refresh interval (minutes)
+  image?: {
+    url: string;
+    title?: string;
+    link?: string;
+  };
+  categories?: string[];
+}
+```
+
+### Example
+
+```typescript
+import { RSSParser } from 'scrapex';
+
+const parser = new RSSParser();
+const result = parser.parse(feedXml, 'https://example.com/feed.xml');
+
+console.log(result.data.format);  // 'rss2'
+console.log(result.data.title);   // 'My Blog'
+
+for (const item of result.data.items) {
+  console.log(item.title);        // 'Article Title'
+  console.log(item.publishedAt);  // '2024-09-06T16:45:00.000Z'
+  console.log(item.categories);   // ['Tech', 'News']
+}
+```
+
+### Custom Fields
+
+Extract namespace fields (iTunes, Media RSS):
+
+```typescript
+const parser = new RSSParser({
+  customFields: {
+    duration: 'itunes\\:duration',
+    explicit: 'itunes\\:explicit',
+  },
+});
+
+const result = parser.parse(podcastXml);
+console.log(result.data.items[0].customFields?.duration);
+// '10:00'
+```
+
+---
+
+## MarkdownParser
+
+Parses Markdown content to extract structure, links, and code blocks.
+
+```typescript
+class MarkdownParser {
+  parse(markdown: string): ParserResult<ParsedMarkdown>;
+}
+```
+
+### ParsedMarkdown
+
+```typescript
+interface ParsedMarkdown {
+  title?: string;
+  description?: string;
+  sections: MarkdownSection[];
+  links: MarkdownLink[];
+  codeBlocks: CodeBlock[];
+  frontmatter?: Record<string, unknown>;
+}
+
+interface MarkdownSection {
+  level: number;
+  title: string;
+  content: string;
+  links: MarkdownLink[];
 }
 
 interface MarkdownLink {
   url: string;
   text: string;
-  description: string;
+  title?: string;
+  context?: string;
+}
+
+interface CodeBlock {
+  language?: string;
+  code: string;
+  meta?: string;
 }
 ```
 
@@ -49,104 +172,17 @@ Some text with a [link](https://example.com).
 
 ## Section
 
-- [Item 1](https://one.com) - First item
-- [Item 2](https://two.com) - Second item
+- [Item 1](https://one.com)
+- [Item 2](https://two.com)
 `);
 
-console.log(result.headings);
-// [
-//   { level: 1, text: 'Title' },
-//   { level: 2, text: 'Section' },
-// ]
-
-console.log(result.links);
-// [
-//   { url: 'https://example.com', text: 'link', description: '' },
-//   { url: 'https://one.com', text: 'Item 1', description: 'First item' },
-//   { url: 'https://two.com', text: 'Item 2', description: 'Second item' },
-// ]
-```
-
-### Link Description Patterns
-
-The parser extracts descriptions from these patterns:
-
-```markdown
-- [Link](url) - Description with dash
-- [Link](url): Description with colon
-- [Link](url) — Description with em dash
-```
-
-## GithubMarkdownParser
-
-Extended parser for GitHub-flavored Markdown.
-
-```typescript
-class GithubMarkdownParser extends MarkdownParser {
-  parseGithubReadme(markdown: string): GithubReadmeResult;
-}
-```
-
-### GithubReadmeResult
-
-```typescript
-interface GithubReadmeResult extends MarkdownParseResult {
-  badges: Badge[];
-  tableOfContents: TOCEntry[];
-}
-
-interface Badge {
-  alt: string;
-  url: string;
-  link?: string;
-}
-
-interface TOCEntry {
-  text: string;
-  anchor: string;
-  level: number;
-}
-```
-
-### Example
-
-```typescript
-import { GithubMarkdownParser } from 'scrapex/parsers';
-
-const parser = new GithubMarkdownParser();
-
-const result = parser.parseGithubReadme(`
-# My Project
-
-[![npm](https://img.shields.io/npm/v/my-project)](https://npmjs.com/package/my-project)
-[![CI](https://github.com/user/repo/actions/workflows/ci.yml/badge.svg)](https://github.com/user/repo/actions)
-
-## Contents
-
-- [Installation](#installation)
-- [Usage](#usage)
-
-## Installation
-
-\`\`\`bash
-npm install my-project
-\`\`\`
-`);
-
-console.log(result.badges);
-// [
-//   { alt: 'npm', url: 'https://img.shields.io/npm/v/my-project', link: 'https://npmjs.com/package/my-project' },
-//   { alt: 'CI', url: '...badge.svg', link: '...actions' },
-// ]
-
-console.log(result.tableOfContents);
-// [
-//   { text: 'Installation', anchor: 'installation', level: 2 },
-//   { text: 'Usage', anchor: 'usage', level: 2 },
-// ]
+console.log(result.data.sections[0].title);
+console.log(result.data.links.length);
+console.log(result.data.codeBlocks.length);
 ```
 
 ## See Also
 
-- [Markdown Parsing Guide](/guides/markdown-parsing) - Detailed usage guide
+- [RSS/Atom Parsing Guide](/guides/rss-parsing) - RSS feed parsing guide
+- [Markdown Parsing Guide](/guides/markdown-parsing) - Markdown parsing guide
 - [Types Reference](/api/types) - Full type definitions

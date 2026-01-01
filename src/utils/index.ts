@@ -1,4 +1,13 @@
 export {
+  fetchFeed,
+  discoverFeeds,
+  filterByDate,
+  feedToMarkdown,
+  feedToText,
+  paginateFeed,
+} from './feed.js';
+
+export {
   extractDomain,
   getPath,
   getProtocol,

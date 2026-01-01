@@ -46,35 +46,37 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Determine npm tag
+        id: npm-tag
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          if [[ "$TAG" == *"-alpha"* ]]; then
+            echo "tag=alpha" >> $GITHUB_OUTPUT
+          elif [[ "$TAG" == *"-beta"* ]]; then
+            echo "tag=beta" >> $GITHUB_OUTPUT
+          elif [[ "$TAG" == *"-rc"* ]]; then
+            echo "tag=next" >> $GITHUB_OUTPUT
+          else
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          fi
+          echo "Publishing with npm tag: $(cat $GITHUB_OUTPUT | grep tag | cut -d= -f2)"
+
       - name: Publish to npm (with provenance)
         id: publish
         continue-on-error: true
-        run: |
-          TAG="${{ github.event.release.tag_name }}"
-          IS_PRERELEASE="${{ github.event.release.prerelease }}"
-
-          if [[ "$IS_PRERELEASE" == "true" || "$TAG" == *-* ]]; then
-            npm publish --provenance --access public --tag alpha
-          else
-            npm publish --provenance --access public
-          fi
+        run: npm publish --provenance --access public --tag ${{ steps.npm-tag.outputs.tag }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to npm (token fallback)
         if: steps.publish.outcome == 'failure'
         run: |
-          TAG="${{ github.event.release.tag_name }}"
-          IS_PRERELEASE="${{ github.event.release.prerelease }}"
-
           if [[ -z "$NODE_AUTH_TOKEN" ]]; then
             echo "::error::Provenance publishing failed and NPM_TOKEN is not set"
             exit 1
           fi
 
           echo "Provenance publishing failed, falling back to token auth..."
-          if [[ "$IS_PRERELEASE" == "true" || "$TAG" == *-* ]]; then
-            npm publish --access public --tag alpha
-          else
-            npm publish --access public
-          fi
+          npm publish --access public --tag ${{ steps.npm-tag.outputs.tag }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

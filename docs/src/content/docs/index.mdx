@@ -55,14 +55,14 @@ console.log(result.links);       // Extracted links
 
 ```typescript
 import { scrape } from 'scrapex';
-import { createOpenAI, createEnhancer } from 'scrapex/llm';
+import { createOpenAI } from 'scrapex/llm';
 
 const provider = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const enhancer = createEnhancer(provider)
-  .summarize()
-  .extractEntities();
 
-const result = await scrape('https://example.com', { enhancer });
+const result = await scrape('https://example.com', {
+  llm: provider,
+  enhance: ['summarize', 'entities'],
+});
 
 console.log(result.summary);   // AI-generated summary
 console.log(result.entities);  // Extracted entities

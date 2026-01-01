@@ -50,8 +50,11 @@ export {
   NativeFetcher,
   type RobotsCheckResult,
 } from './fetchers/index.js';
-// URL utilities
+// Parsers
+export { RSSParser } from './parsers/index.js';
+// Utilities (URL + Feed)
 export {
+  // URL utilities
   extractDomain,
   getPath,
   getProtocol,
@@ -60,4 +63,11 @@ export {
   matchesUrlPattern,
   normalizeUrl,
   resolveUrl,
+  // Feed utilities
+  fetchFeed,
+  discoverFeeds,
+  filterByDate,
+  feedToMarkdown,
+  feedToText,
+  paginateFeed,
 } from './utils/index.js';

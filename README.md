@@ -2,7 +2,7 @@
 
 Modern web scraper with LLM-enhanced extraction, extensible pipeline, and pluggable parsers.
 
-> **Alpha Release**: v1.0.0 is currently in alpha. The API may change before the stable release.
+> **Beta Release**: v1.0.0 is currently in beta. The API is stable but minor changes may occur before the stable release.
 
 ## Features
 
@@ -11,13 +11,14 @@ Modern web scraper with LLM-enhanced extraction, extensible pipeline, and plugga
 - **Extensible Pipeline** - Pluggable extractors with priority-based execution
 - **Smart Extraction** - Uses Mozilla Readability for content, Cheerio for metadata
 - **Markdown Parsing** - Parse markdown content, awesome lists, and GitHub repos
+- **RSS/Atom Feeds** - Parse RSS 2.0, RSS 1.0 (RDF), and Atom feeds with pagination support
 - **TypeScript First** - Full type safety with comprehensive type exports
 - **Dual Format** - ESM and CommonJS builds
 
 ## Installation
 
 ```bash
-npm install scrapex@alpha
+npm install scrapex@beta
 ```
 
 ### Optional Peer Dependencies
@@ -278,6 +279,129 @@ parseGitHubUrl('https://github.com/facebook/react');
 toRawUrl('https://github.com/owner/repo');
 // 'https://raw.githubusercontent.com/owner/repo/main/README.md'
 ```
+
+## RSS/Atom Feed Parsing
+
+Parse RSS 2.0, RSS 1.0 (RDF), and Atom 1.0 feeds:
+
+```typescript
+import { RSSParser } from 'scrapex';
+
+const parser = new RSSParser();
+const result = parser.parse(feedXml, 'https://example.com/feed.xml');
+
+console.log(result.data.format);  // 'rss2' | 'rss1' | 'atom'
+console.log(result.data.title);   // Feed title
+console.log(result.data.items);   // Array of feed items
+```
+
+**Supported formats:**
+- `rss2` - RSS 2.0 (most common format)
+- `rss1` - RSS 1.0 (RDF-based, older format)
+- `atom` - Atom 1.0 (modern format with better semantics)
+
+### Feed Item Structure
+
+```typescript
+interface FeedItem {
+  id: string;
+  title: string;
+  link: string;
+  description?: string;
+  content?: string;
+  author?: string;
+  publishedAt?: string;      // ISO 8601
+  rawPublishedAt?: string;   // Original date string
+  updatedAt?: string;        // Atom only
+  categories: string[];
+  enclosure?: FeedEnclosure; // Podcast/media attachments
+  customFields?: Record<string, string>;
+}
+```
+
+### Fetching and Parsing Feeds
+
+```typescript
+import { fetchFeed, paginateFeed } from 'scrapex';
+
+// Fetch and parse in one call
+const result = await fetchFeed('https://example.com/feed.xml');
+console.log(result.data.items);
+
+// Paginate through feeds with rel="next" links (Atom)
+for await (const page of paginateFeed('https://example.com/atom')) {
+  console.log(`Page with ${page.data.items.length} items`);
+}
+```
+
+### Discovering Feeds in HTML
+
+```typescript
+import { discoverFeeds } from 'scrapex';
+
+const html = await fetch('https://example.com').then(r => r.text());
+const feedUrls = discoverFeeds(html, 'https://example.com');
+// ['https://example.com/feed.xml', 'https://example.com/atom.xml']
+```
+
+### Filtering by Date
+
+```typescript
+import { RSSParser, filterByDate } from 'scrapex';
+
+const parser = new RSSParser();
+const result = parser.parse(feedXml);
+
+const recentItems = filterByDate(result.data.items, {
+  after: new Date('2024-01-01'),
+  before: new Date('2024-12-31'),
+  includeUndated: false,
+});
+```
+
+### Converting to Markdown/Text
+
+```typescript
+import { RSSParser, feedToMarkdown, feedToText } from 'scrapex';
+
+const parser = new RSSParser();
+const result = parser.parse(feedXml);
+
+// Convert to markdown (great for LLM consumption)
+const markdown = feedToMarkdown(result.data, { maxItems: 10 });
+
+// Convert to plain text
+const text = feedToText(result.data);
+```
+
+### Custom Fields (Podcast/Media)
+
+Extract custom namespace fields like iTunes podcast tags:
+
+```typescript
+const parser = new RSSParser({
+  customFields: {
+    duration: 'itunes\\:duration',
+    explicit: 'itunes\\:explicit',
+    rating: 'media\\:rating',
+  },
+});
+
+const result = parser.parse(podcastXml);
+const item = result.data.items[0];
+
+console.log(item.customFields?.duration);  // '10:00'
+console.log(item.customFields?.explicit);  // 'no'
+```
+
+### Security
+
+The RSS parser enforces strict URL security:
+
+- **HTTPS-only URLs (RSS parser only)**: The RSS/Atom parser (`RSSParser`) resolves all links to HTTPS only. Non-HTTPS URLs (http, javascript, data, file) are rejected and returned as empty strings. This is specific to feed parsing to prevent malicious links in untrusted feeds.
+- **XML Mode**: Feeds are parsed with Cheerio's `{ xml: true }` mode, which disables HTML entity processing and prevents XSS vectors.
+
+> **Note**: The public URL utilities (`resolveUrl`, `isValidUrl`, etc.) accept both `http:` and `https:` URLs. Protocol-relative URLs (e.g., `//example.com/path`) are resolved against the base URL's protocol by the standard `URL` constructor.
 
 ## URL Utilities
 

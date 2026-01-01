@@ -67,10 +67,20 @@ export class NativeFetcher implements Fetcher {
       }
 
       const contentType = response.headers.get('content-type') || '';
-
-      // Ensure we're getting HTML
-      if (!contentType.includes('text/html') && !contentType.includes('application/xhtml')) {
-        throw new ScrapeError(`Unexpected content type: ${contentType}`, 'PARSE_ERROR');
+      
+      // Validate content type
+      if (options.allowedContentTypes) {
+        const isAllowed = options.allowedContentTypes.some(type => 
+          contentType.toLowerCase().includes(type.toLowerCase())
+        );
+        if (!isAllowed) {
+          throw new ScrapeError(`Unexpected content type: ${contentType}`, 'PARSE_ERROR');
+        }
+      } else {
+        // Default behavior: Ensure we're getting HTML
+        if (!contentType.includes('text/html') && !contentType.includes('application/xhtml')) {
+          throw new ScrapeError(`Unexpected content type: ${contentType}`, 'PARSE_ERROR');
+        }
       }
 
       const html = await response.text();

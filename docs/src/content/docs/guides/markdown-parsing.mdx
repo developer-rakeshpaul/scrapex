@@ -1,15 +1,15 @@
 ---
 title: Markdown Parsing
-description: Parse Markdown files for link and heading extraction.
+description: Parse Markdown files for sections, links, and code blocks.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-scrapex includes powerful Markdown parsing capabilities for extracting structured data from Markdown content.
+scrapex includes Markdown parsing for sections, links, and code blocks.
 
 ## MarkdownParser
 
-The `MarkdownParser` class extracts headings and links from Markdown content:
+The `MarkdownParser` class extracts sections, links, and code blocks from Markdown content:
 
 ```typescript
 import { MarkdownParser } from 'scrapex/parsers';
@@ -36,35 +36,29 @@ const result = parser.parse(markdown);
 ### Parsed Output
 
 ```typescript
-console.log(result.headings);
+console.log(result.data.sections);
 // [
-//   { level: 1, text: 'My Document' },
-//   { level: 2, text: 'Section One' },
-//   { level: 2, text: 'Section Two' },
+//   { level: 1, title: 'My Document', content: 'Check out Example for more info.', links: [...] },
+//   { level: 2, title: 'Section One', content: '', links: [...] },
+//   { level: 2, title: 'Section Two', content: 'More content with another link.', links: [...] },
 // ]
 
-console.log(result.links);
+console.log(result.data.links);
 // [
-//   { url: 'https://example.com', text: 'Example', description: '' },
-//   { url: 'https://one.com', text: 'Link 1', description: 'First link' },
-//   { url: 'https://two.com', text: 'Link 2', description: 'Second link' },
-//   { url: 'https://three.com', text: 'another link', description: '' },
+//   { url: 'https://example.com', text: 'Example', context: 'My Document' },
+//   { url: 'https://one.com', text: 'Link 1', context: 'Section One' },
+//   { url: 'https://two.com', text: 'Link 2', context: 'Section One' },
+//   { url: 'https://three.com', text: 'another link', context: 'Section Two' },
 // ]
 ```
 
-## Link Description Extraction
+## Code Blocks
 
-The parsers extract descriptions from common patterns:
+`MarkdownParser` also extracts fenced code blocks:
 
-```markdown
-- [Link](url) - Description after dash
-- [Link](url): Description after colon
-- [Link](url) — Description after em dash
-```
-
-All produce:
 ```typescript
-{ text: 'Link', url: 'url', description: 'Description after...' }
+console.log(result.data.codeBlocks);
+// [{ language: 'bash', code: 'npm install ...', meta: undefined }]
 ```
 
 ## Filtering Links
@@ -79,12 +73,12 @@ const parser = new MarkdownParser();
 const result = parser.parse(markdown);
 
 // Only GitHub links
-const githubLinks = result.links.filter(
+const githubLinks = result.data.links.filter(
   link => extractDomain(link.url) === 'github.com'
 );
 
 // Only npm packages
-const npmLinks = result.links.filter(
+const npmLinks = result.data.links.filter(
   link => link.url.includes('npmjs.com/package/')
 );
 ```

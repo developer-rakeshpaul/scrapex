@@ -1,6 +1,6 @@
 ---
 title: Utilities
-description: API reference for URL and text utility functions.
+description: API reference for URL, text, and feed utility functions.
 ---
 
 scrapex provides utility functions for common operations.
@@ -31,7 +31,7 @@ isValidUrl('');                        // false
 Extract the domain from a URL.
 
 ```typescript
-function extractDomain(url: string): string | null
+function extractDomain(url: string): string
 ```
 
 #### Example
@@ -42,7 +42,7 @@ import { extractDomain } from 'scrapex';
 extractDomain('https://www.example.com/page');     // 'example.com'
 extractDomain('https://blog.example.com/post');    // 'blog.example.com'
 extractDomain('https://example.com:8080/api');     // 'example.com'
-extractDomain('invalid');                          // null
+extractDomain('invalid');                          // ''
 ```
 
 ### normalizeUrl()
@@ -54,10 +54,8 @@ function normalizeUrl(url: string): string
 ```
 
 Normalization includes:
-- Lowercasing the hostname
-- Removing default ports (80, 443)
-- Removing trailing slashes
-- Sorting query parameters
+- Removing common tracking parameters
+- Removing trailing slashes (except root)
 
 #### Example
 
@@ -65,13 +63,13 @@ Normalization includes:
 import { normalizeUrl } from 'scrapex';
 
 normalizeUrl('HTTPS://Example.COM/');
-// 'https://example.com'
+// 'HTTPS://Example.COM/'
 
 normalizeUrl('https://example.com:443/page');
-// 'https://example.com/page'
+// 'https://example.com:443/page'
 
-normalizeUrl('https://example.com?b=2&a=1');
-// 'https://example.com?a=1&b=2'
+normalizeUrl('https://example.com?b=2&a=1&utm_source=site');
+// 'https://example.com?b=2&a=1'
 ```
 
 ### resolveUrl()
@@ -79,7 +77,7 @@ normalizeUrl('https://example.com?b=2&a=1');
 Resolve a relative URL against a base URL.
 
 ```typescript
-function resolveUrl(base: string, relative: string): string
+function resolveUrl(url: string | undefined | null, baseUrl: string): string | undefined
 ```
 
 #### Example
@@ -87,13 +85,13 @@ function resolveUrl(base: string, relative: string): string
 ```typescript
 import { resolveUrl } from 'scrapex';
 
-resolveUrl('https://example.com/page/', '../other');
+resolveUrl('../other', 'https://example.com/page/');
 // 'https://example.com/other'
 
-resolveUrl('https://example.com/blog/post', '/about');
+resolveUrl('/about', 'https://example.com/blog/post');
 // 'https://example.com/about'
 
-resolveUrl('https://example.com', 'https://other.com');
+resolveUrl('https://other.com', 'https://example.com');
 // 'https://other.com'
 ```
 
@@ -118,6 +116,156 @@ isExternalUrl('https://example.com/page', 'https://example.com');
 
 isExternalUrl('/page', 'https://example.com');
 // false
+```
+
+## Feed Utilities
+
+### fetchFeed()
+
+Fetch and parse an RSS/Atom feed.
+
+```typescript
+function fetchFeed(
+  url: string,
+  options?: {
+    fetcher?: Fetcher;
+    timeout?: number;
+    userAgent?: string;
+    parserOptions?: RSSParserOptions;
+  }
+): Promise<ParserResult<ParsedFeed, FeedMeta>>
+```
+
+#### Example
+
+```typescript
+import { fetchFeed } from 'scrapex';
+
+const result = await fetchFeed('https://example.com/feed.xml');
+
+for (const item of result.data.items) {
+  console.log(item.title, item.publishedAt);
+}
+```
+
+### discoverFeeds()
+
+Find RSS/Atom feed URLs in HTML.
+
+```typescript
+function discoverFeeds(html: string, baseUrl: string): string[]
+```
+
+#### Example
+
+```typescript
+import { discoverFeeds } from 'scrapex';
+
+const feedUrls = discoverFeeds(html, 'https://example.com');
+// ['https://example.com/feed.xml', 'https://example.com/atom.xml']
+```
+
+### filterByDate()
+
+Filter feed items by date range.
+
+```typescript
+function filterByDate(
+  items: FeedItem[],
+  options: {
+    after?: Date;
+    before?: Date;
+    includeUndated?: boolean;
+  }
+): FeedItem[]
+```
+
+#### Example
+
+```typescript
+import { filterByDate } from 'scrapex';
+
+const recentItems = filterByDate(items, {
+  after: new Date('2024-01-01'),
+  includeUndated: false,
+});
+```
+
+### feedToMarkdown()
+
+Convert feed to Markdown for LLM consumption.
+
+```typescript
+function feedToMarkdown(
+  feed: ParsedFeed,
+  options?: {
+    includeContent?: boolean;
+    maxItems?: number;
+  }
+): string
+```
+
+#### Example
+
+```typescript
+import { feedToMarkdown } from 'scrapex';
+
+const markdown = feedToMarkdown(feed, { maxItems: 10 });
+// # Feed Title
+//
+// ## Article 1
+// *2024-09-06*
+//
+// Article description...
+// [Read more](https://example.com/article)
+```
+
+### feedToText()
+
+Convert feed to plain text.
+
+```typescript
+function feedToText(
+  feed: ParsedFeed,
+  options?: {
+    maxItems?: number;
+    separator?: string;
+  }
+): string
+```
+
+#### Example
+
+```typescript
+import { feedToText } from 'scrapex';
+
+const text = feedToText(feed, { maxItems: 5 });
+```
+
+### paginateFeed()
+
+Iterate through paginated Atom feeds using [RFC 5005](https://tools.ietf.org/html/rfc5005) (Feed Paging and Archiving). This follows `rel="next"` links to fetch subsequent pages.
+
+```typescript
+function paginateFeed(
+  url: string,
+  options?: {
+    fetcher?: Fetcher;
+    timeout?: number;
+    userAgent?: string;
+    maxPages?: number;
+  }
+): AsyncGenerator<ParsedFeed>
+```
+
+#### Example
+
+```typescript
+import { paginateFeed } from 'scrapex';
+
+for await (const page of paginateFeed(url, { maxPages: 5 })) {
+  console.log(`Page with ${page.items.length} items`);
+}
 ```
 
 ## Text Utilities
@@ -239,5 +387,6 @@ function createScrapeError(
 
 ## See Also
 
+- [RSS/Atom Parsing Guide](/guides/rss-parsing) - Feed parsing guide
 - [Error Handling Guide](/guides/error-handling) - Error handling patterns
 - [Types Reference](/api/types) - Full type definitions

@@ -39,6 +39,7 @@ export default defineConfig({
           label: 'Guides',
           items: [
             { label: 'Basic Scraping', slug: 'guides/basic-scraping' },
+            { label: 'RSS/Atom Parsing', slug: 'guides/rss-parsing' },
             { label: 'LLM Integration', slug: 'guides/llm-integration' },
             { label: 'Custom Extractors', slug: 'guides/custom-extractors' },
             { label: 'Markdown Parsing', slug: 'guides/markdown-parsing' },

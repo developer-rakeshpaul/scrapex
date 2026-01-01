@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Scrapex Atom Test</title>
+  <subtitle>Testing Atom parsing</subtitle>
+  <link href="https://example.com/atom" rel="self"/>
+  <link href="https://example.com/"/>
+  <link href="https://example.com/atom?page=2" rel="next"/>
+  <updated>2024-09-06T16:45:00Z</updated>
+  <author>
+    <name>Scrapex Team</name>
+  </author>
+  <id>urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6</id>
+
+  <entry>
+    <title>Atom Entry 1</title>
+    <link href="https://example.com/atom/1"/>
+    <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a</id>
+    <updated>2024-09-06T16:45:00Z</updated>
+    <published>2024-09-06T16:45:00Z</published>
+    <summary>Atom summary</summary>
+    <content type="html">&lt;p&gt;Atom content&lt;/p&gt;</content>
+    <category term="Atom"/>
+    <category term="Testing"/>
+  </entry>
+</feed>

@@ -40,9 +40,12 @@ Same options as `scrape()`, except network-related options are ignored.
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `extractors` | `Extractor[]` | `defaultExtractors` | Custom extractor pipeline |
-| `enhancer` | `Enhancer` | `undefined` | LLM enhancement pipeline |
-| `maxContentLength` | `number` | `undefined` | Max content length to process |
+| `extractors` | `Extractor[]` | `createDefaultExtractors()` | Custom extractor pipeline |
+| `replaceDefaultExtractors` | `boolean` | `false` | Replace default extractor set |
+| `maxContentLength` | `number` | `50000` | Max content length to process |
+| `llm` | `LLMProvider` | `undefined` | LLM provider for enhancements |
+| `enhance` | `EnhancementType[]` | `undefined` | LLM enhancement types |
+| `extract` | `ExtractionSchema` | `undefined` | LLM structured extraction schema |
 
 ## Returns
 
@@ -103,7 +106,7 @@ const result = await scrapeHtml(html, response.url);
 ### With Custom Extractors
 
 ```typescript
-import { scrapeHtml, defaultExtractors, type Extractor } from 'scrapex';
+import { scrapeHtml, createDefaultExtractors, type Extractor } from 'scrapex';
 
 class PriceExtractor implements Extractor {
   readonly name = 'price';
@@ -117,7 +120,7 @@ class PriceExtractor implements Extractor {
 }
 
 const result = await scrapeHtml(html, url, {
-  extractors: [...defaultExtractors, new PriceExtractor()],
+  extractors: [...createDefaultExtractors(), new PriceExtractor()],
 });
 ```
 
@@ -127,7 +130,7 @@ const result = await scrapeHtml(html, url, {
 
 ```typescript
 import { describe, it, expect } from 'vitest';
-import { scrapeHtml, defaultExtractors } from 'scrapex';
+import { scrapeHtml, createDefaultExtractors } from 'scrapex';
 import { MyExtractor } from './my-extractor';
 
 describe('MyExtractor', () => {
@@ -140,9 +143,9 @@ describe('MyExtractor', () => {
       </html>
     `;
 
-    const result = await scrapeHtml(html, 'https://example.com', {
-      extractors: [...defaultExtractors, new MyExtractor()],
-    });
+  const result = await scrapeHtml(html, 'https://example.com', {
+    extractors: [...createDefaultExtractors(), new MyExtractor()],
+  });
 
     expect(result.custom?.myData).toBe('Test Value');
   });

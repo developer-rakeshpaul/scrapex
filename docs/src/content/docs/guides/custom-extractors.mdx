@@ -16,9 +16,7 @@ import type { Extractor, ExtractionContext, ScrapedData } from 'scrapex';
 
 interface Extractor {
   readonly name: string;      // Unique identifier
-  readonly priority: number;  // Execution order (higher = earlier)
-
-  canHandle?(context: ExtractionContext): boolean;
+  readonly priority?: number; // Execution order (higher = earlier)
   extract(context: ExtractionContext): Promise<Partial<ScrapedData>>;
 }
 ```
@@ -29,9 +27,12 @@ The `ExtractionContext` provides access to:
 
 ```typescript
 interface ExtractionContext {
-  $: CheerioAPI;           // Cheerio instance for DOM queries
   url: string;             // Original URL
-  document: Document;      // Readability document
+  finalUrl: string;        // Final URL after redirects
+  html: string;            // Raw HTML
+  $: CheerioAPI;           // Cheerio instance for DOM queries
+  getDocument(): Document; // Lazy JSDOM document
+  results: Partial<ScrapedData>;
   options: ScrapeOptions;  // Scraping options
 }
 ```
@@ -49,14 +50,13 @@ interface ExtractionContext {
      readonly name = 'recipe';
      readonly priority = 60;
 
-     canHandle(context: ExtractionContext): boolean {
-       const { $ } = context;
-       // Only handle pages with recipe schema
-       return $('script[type="application/ld+json"]').text().includes('"Recipe"');
-     }
-
      async extract(context: ExtractionContext): Promise<Partial<ScrapedData>> {
        const { $ } = context;
+
+       // Only handle pages with recipe schema
+       if (!$('script[type="application/ld+json"]').text().includes('"Recipe"')) {
+         return {};
+       }
 
        // Extract recipe-specific data
        const ingredients = $('.ingredients li')
@@ -87,9 +87,9 @@ interface ExtractionContext {
 2. **Register the extractor**
 
    ```typescript
-   import { scrapeHtml, defaultExtractors } from 'scrapex';
+   import { scrapeHtml, createDefaultExtractors } from 'scrapex';
 
-   const extractors = [...defaultExtractors, new RecipeExtractor()];
+   const extractors = [...createDefaultExtractors(), new RecipeExtractor()];
 
    const result = await scrapeHtml(html, url, { extractors });
    ```
@@ -113,31 +113,32 @@ Extractors run in priority order (highest first). Built-in priorities:
 | Priority | Extractor | Purpose |
 |----------|-----------|---------|
 | 100 | MetaExtractor | Title, description, author |
-| 90 | ContentExtractor | Main content, Readability |
 | 80 | JsonLdExtractor | Structured data |
-| 70 | LinksExtractor | Link extraction |
+| 70 | FaviconExtractor | Favicon discovery |
+| 50 | ContentExtractor | Main content, Readability |
+| 30 | LinksExtractor | Link extraction |
 
 <Aside type="tip">
-  Use priority 50-69 for custom extractors that should run after core extraction but before finalization.
+  Use priority 40-60 for custom extractors that should run alongside core content extraction.
 </Aside>
 
 ## Conditional Extraction
 
-Use `canHandle()` to skip extraction for irrelevant pages:
+Check conditions inside `extract()` and return `{}` when not applicable:
 
 ```typescript
 class GitHubRepoExtractor implements Extractor {
   readonly name = 'github-repo';
   readonly priority = 55;
 
-  canHandle(context: ExtractionContext): boolean {
-    return context.url.includes('github.com') &&
-           !context.url.includes('/issues') &&
-           !context.url.includes('/pull');
-  }
-
   async extract(context: ExtractionContext): Promise<Partial<ScrapedData>> {
     const { $ } = context;
+
+    if (!context.url.includes('github.com') ||
+        context.url.includes('/issues') ||
+        context.url.includes('/pull')) {
+      return {};
+    }
 
     return {
       custom: {
@@ -200,20 +201,21 @@ if (product) {
 ## Full Example
 
 ```typescript
-import { scrape, defaultExtractors, type Extractor, type ExtractionContext, type ScrapedData } from 'scrapex';
+import { scrape, createDefaultExtractors, type Extractor, type ExtractionContext, type ScrapedData } from 'scrapex';
 
 class EcommerceExtractor implements Extractor {
   readonly name = 'ecommerce';
   readonly priority = 55;
 
-  canHandle(context: ExtractionContext): boolean {
-    const { $ } = context;
-    return $('[itemtype*="Product"]').length > 0 ||
-           $('.product-price, .price').length > 0;
-  }
-
   async extract(context: ExtractionContext): Promise<Partial<ScrapedData>> {
     const { $ } = context;
+
+    if (
+      $('[itemtype*="Product"]').length === 0 &&
+      $('.product-price, .price').length === 0
+    ) {
+      return {};
+    }
 
     const priceText = $('[itemprop="price"], .product-price, .price')
       .first()
@@ -245,7 +247,7 @@ class EcommerceExtractor implements Extractor {
 }
 
 // Usage
-const extractors = [...defaultExtractors, new EcommerceExtractor()];
+const extractors = [...createDefaultExtractors(), new EcommerceExtractor()];
 const result = await scrape('https://shop.example.com/product', { extractors });
 
 console.log(result.contentType); // 'product'
