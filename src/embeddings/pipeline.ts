@@ -171,28 +171,17 @@ export async function generateEmbeddings(
       await semaphore.execute(async () => {
         const { result } = await withResilience<EmbedResponse>(
           async (signal) => {
-            const response = await provider.embed([chunk.text], {
+            return provider.embed([chunk.text], {
               model,
               dimensions: options.output?.dimensions,
               signal,
             });
-
-            // Record success with circuit breaker
-            if (circuitBreaker) {
-              circuitBreaker.recordSuccess();
-            }
-
-            return response;
           },
           options.resilience,
-          undefined, // state - not using shared state here
+          { circuitBreaker: circuitBreaker ?? undefined, rateLimiter: undefined, semaphore: undefined },
           {
             onRetry: () => {
               retryCount++;
-              // Record failure with circuit breaker
-              if (circuitBreaker) {
-                circuitBreaker.recordFailure();
-              }
             },
           }
         );

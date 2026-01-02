@@ -487,5 +487,27 @@ describe('Embedding Pipeline', () => {
 
       expect(result.status).toBe('success');
     });
+
+    it('should use textContent input type', async () => {
+      const { provider, calls } = createTrackingProvider();
+
+      await embedScrapedData(mockData as ScrapedData, {
+        provider: { type: 'custom', provider },
+        input: { type: 'textContent' },
+      });
+
+      expect(calls[0]?.[0]).toContain('This is some sample content');
+    });
+
+    it('should use custom input type', async () => {
+      const { provider, calls } = createTrackingProvider();
+
+      await embedScrapedData(mockData as ScrapedData, {
+        provider: { type: 'custom', provider },
+        input: { type: 'custom', customText: 'Custom embed text.' },
+      });
+
+      expect(calls[0]?.[0]).toBe('Custom embed text.');
+    });
   });
 });

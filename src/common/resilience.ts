@@ -543,6 +543,15 @@ export class Semaphore {
 
 /**
  * Execute a function with all resilience features.
+ *
+ * @param fn - The async function to execute with resilience
+ * @param config - Configuration for retry and timeout behavior
+ * @param state - Pre-instantiated resilience primitives for stateful features.
+ *   Circuit breaker, rate limiter, and semaphore must be instantiated by the caller
+ *   and passed via state to enable those features. This allows sharing state across
+ *   multiple calls for proper circuit breaker tracking and rate limiting.
+ *   The config parameter is only used for retry and timeout settings.
+ * @param callbacks - Optional callbacks for retry events
  */
 export async function withResilience<T>(
   fn: (signal: AbortSignal) => Promise<T>,

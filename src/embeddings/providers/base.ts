@@ -41,14 +41,21 @@ export function validateEmbedResponse(response: unknown, expectedCount: number):
     embeddings = resp.embeddings;
   } else if (Array.isArray(resp.data)) {
     // OpenAI format: { data: [{ embedding: [...] }] }
-    embeddings = resp.data.map((item: { embedding?: number[] }) => {
-      if (!Array.isArray(item.embedding)) {
+    embeddings = resp.data.map((item: unknown) => {
+      if (typeof item !== 'object' || item === null) {
+        throw new ScrapeError(
+          'Invalid embedding response: data item is not an object',
+          'VALIDATION_ERROR'
+        );
+      }
+      const embedding = (item as Record<string, unknown>).embedding;
+      if (!Array.isArray(embedding)) {
         throw new ScrapeError(
           'Invalid embedding response: missing embedding in data item',
           'VALIDATION_ERROR'
         );
       }
-      return item.embedding;
+      return embedding as number[];
     });
   } else if (Array.isArray(resp.embedding)) {
     // Single embedding format: { embedding: [...] }

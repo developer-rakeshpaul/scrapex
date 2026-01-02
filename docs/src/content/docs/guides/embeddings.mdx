@@ -86,7 +86,7 @@ if (result.embeddings?.status === 'success') {
           type: 'custom',
           provider: createTransformersEmbedding(transformers, {
             model: 'Xenova/all-MiniLM-L6-v2',
-            // cacheDir is applied during pipeline init and then restored
+            // cacheDir sets the pipeline's model cache location (env is restored after init)
             cacheDir: '/tmp/transformers-cache',
           }),
         },
@@ -179,6 +179,9 @@ const result = await scrape(url, {
 
 <Aside type="note">
   `tokenizer: 'tiktoken'` currently falls back to heuristic counting. For accurate token counts, pass a custom tokenizer that wraps a pre-initialized encoder.
+</Aside>
+<Aside type="note">
+  For stability, keep chunk sizes comfortably larger than overlap (for example, `size` at least 2x `overlap`) to avoid producing excessive tiny chunks.
 </Aside>
 
 ## Vector Aggregation

@@ -178,6 +178,8 @@ console.log(result.custom?.topic);
 | `OPENAI_API_KEY` | OpenAI API key for LLM features |
 | `ANTHROPIC_API_KEY` | Anthropic API key (alternative) |
 | `GITHUB_TOKEN` | GitHub token for repo metadata (optional) |
+| `OLLAMA_EMBEDDING_MODEL` | Ollama embedding model name (optional) |
+| `OLLAMA_EMBEDDING_URL` | Ollama embedding endpoint URL (optional) |
 
 ## Learn More
 
