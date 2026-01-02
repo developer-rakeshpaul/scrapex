@@ -56,6 +56,11 @@ interface ScrapedData {
   // Embedding result
   embeddings?: EmbeddingResult;
 
+  // Normalized text
+  normalizedText?: string;
+  normalizationMeta?: NormalizationMeta;
+  normalizedBlocks?: ContentBlock[];
+
   // Custom extractor data
   custom?: Record<string, unknown>;
 
@@ -93,6 +98,9 @@ interface ScrapeOptions {
 
   // Embeddings
   embeddings?: EmbeddingOptions;
+
+  // Normalization
+  normalize?: NormalizeOptions;
 }
 ```
 
@@ -135,6 +143,88 @@ interface ExtractedLink {
   url: string;
   text: string;
   isExternal: boolean;
+}
+```
+
+### NormalizeOptions
+
+Options for `scrape()` normalization.
+
+```typescript
+interface NormalizeOptions {
+  mode?: 'summary' | 'full';
+  maxChars?: number;
+  minChars?: number;
+  maxBlocks?: number;
+  truncate?: 'sentence' | 'word' | 'char';
+  dropSelectors?: string[];
+  removeBoilerplate?: boolean;
+  decodeEntities?: boolean;
+  normalizeUnicode?: boolean;
+  preserveLineBreaks?: boolean;
+  stripLinks?: boolean;
+  includeHtml?: boolean;
+  languageHint?: string;
+  blockClassifier?: ContentBlockClassifier;
+  debug?: boolean;
+}
+```
+
+### ContentBlock
+
+Classified content block used by normalization.
+
+```typescript
+interface ContentBlock {
+  type: BlockType;
+  text: string;
+  level?: 1 | 2 | 3 | 4 | 5 | 6;
+  html?: string;
+  attrs?: Record<string, string>;
+  context?: {
+    parentTags?: string[];
+    depth?: number;
+  };
+}
+```
+
+### ContentBlockClassifier
+
+```typescript
+type ContentBlockClassifier = (
+  block: ContentBlock,
+  context: ClassifierContext
+) => ClassifierResult | Promise<ClassifierResult>;
+```
+
+### ClassifierContext
+
+```typescript
+interface ClassifierContext {
+  index: number;
+  totalBlocks: number;
+  url?: string;
+  parentTags?: string[];
+  depth?: number;
+}
+```
+
+### NormalizationMeta
+
+Metadata returned when normalization is enabled.
+
+```typescript
+interface NormalizationMeta {
+  charCount: number;
+  tokenEstimate: number;
+  language: string;
+  boilerplateRemoved: boolean;
+  classifierUsed: boolean;
+  hash: string;
+  extractionTimeMs: number;
+  blocksTotal: number;
+  blocksAccepted: number;
+  truncated: boolean;
 }
 ```
 

@@ -76,6 +76,24 @@ describe('Input Selection', () => {
       const input = selectInput(dataWithBadWhitespace);
       expect(input).toBe('Hello world.\n\nNew paragraph.');
     });
+
+    it('should prefer normalizedText when available', () => {
+      const dataWithNormalized = {
+        normalizedText: 'Normalized content wins.',
+        textContent: 'Original text content.',
+      };
+      const input = selectInput(dataWithNormalized);
+      expect(input).toBe('Normalized content wins.');
+    });
+
+    it('should ignore normalizedText when preferNormalized is false', () => {
+      const dataWithNormalized = {
+        normalizedText: 'Normalized content wins.',
+        textContent: 'Original text content.',
+      };
+      const input = selectInput(dataWithNormalized, { type: 'textContent' }, false);
+      expect(input).toBe('Original text content.');
+    });
   });
 
   describe('validateInput', () => {

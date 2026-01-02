@@ -58,7 +58,7 @@ export async function generateEmbeddings(
     const model = getEffectiveModel(options.provider, options.model);
 
     // Step 2: Select input text
-    const rawInput = selectInput(data, options.input);
+    const rawInput = selectInput(data, options.input, options.preferNormalized);
     const validation = validateInput(rawInput, options.safety?.minTextLength ?? 10);
 
     if (!validation.valid) {

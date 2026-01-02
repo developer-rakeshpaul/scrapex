@@ -312,6 +312,8 @@ export interface EmbeddingOptions {
   provider: EmbeddingProviderConfig;
   /** Model identifier (overrides provider default) */
   model?: string;
+  /** Prefer normalizedText when available (default: true) */
+  preferNormalized?: boolean;
   /** Input text configuration */
   input?: EmbeddingInputConfig;
   /** Chunking and tokenization settings */

@@ -10,17 +10,22 @@ import type { EmbeddingInputConfig } from './types.js';
  */
 export function selectInput(
   data: Partial<ScrapedData>,
-  config?: EmbeddingInputConfig
+  config?: EmbeddingInputConfig,
+  preferNormalized = true
 ): string | undefined {
+  if (preferNormalized && data.normalizedText?.trim()) {
+    return cleanText(data.normalizedText);
+  }
+
   // If transform function is provided, use it directly
   if (config?.transform) {
     const transformed = config.transform(data);
-    return normalizeText(transformed);
+    return cleanText(transformed);
   }
 
   // If custom text is provided and type is 'custom', use it
   if (config?.type === 'custom' && config.customText) {
-    return normalizeText(config.customText);
+    return cleanText(config.customText);
   }
 
   // Select based on type
@@ -50,20 +55,20 @@ export function selectInput(
  */
 function selectTextContent(data: Partial<ScrapedData>): string | undefined {
   if (data.textContent) {
-    return normalizeText(data.textContent);
+      return cleanText(data.textContent);
   }
 
   // Fallback chain: content (markdown) -> excerpt -> description
   if (data.content) {
-    return normalizeText(stripMarkdown(data.content));
+    return cleanText(stripMarkdown(data.content));
   }
 
   if (data.excerpt) {
-    return normalizeText(data.excerpt);
+    return cleanText(data.excerpt);
   }
 
   if (data.description) {
-    return normalizeText(data.description);
+    return cleanText(data.description);
   }
 
   return undefined;
@@ -94,7 +99,7 @@ function selectTitleSummary(data: Partial<ScrapedData>): string | undefined {
     return undefined;
   }
 
-  return normalizeText(parts.join('\n\n'));
+  return cleanText(parts.join('\n\n'));
 }
 
 /**
@@ -103,7 +108,7 @@ function selectTitleSummary(data: Partial<ScrapedData>): string | undefined {
  * - Trim leading/trailing whitespace
  * - Remove control characters
  */
-function normalizeText(text: string): string {
+function cleanText(text: string): string {
   if (!text) {
     return '';
   }

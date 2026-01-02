@@ -148,6 +148,19 @@ describe('Core Scraping (from docs & real-world)', () => {
       expect(result.textContent).not.toContain('document.write');
     });
 
+    it('produces normalized text when enabled', async () => {
+      const result = await scrapeHtml(messyBlogPost, 'https://example.com/blog/messy', {
+        normalize: {
+          mode: 'full',
+          removeBoilerplate: true,
+        },
+      });
+
+      expect(result.normalizedText).toContain('This is the primary content of the article');
+      expect(result.normalizedText).not.toContain('Related Posts');
+      expect(result.normalizationMeta?.blocksAccepted).toBeGreaterThan(0);
+    });
+
     it('resolves relative links in the main content', async () => {
       const result = await scrapeHtml(messyBlogPost, 'https://example.com/blog/messy');
 

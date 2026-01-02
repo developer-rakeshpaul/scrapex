@@ -1,4 +1,5 @@
 import type { CheerioAPI } from 'cheerio';
+import type { ContentBlock, NormalizeOptions, NormalizationMeta } from '../content/types.js';
 import type { EmbeddingOptions, EmbeddingResult } from '../embeddings/types.js';
 
 /**
@@ -83,6 +84,11 @@ export interface ScrapedData {
 
   // Embeddings (optional)
   embeddings?: EmbeddingResult;
+
+  // Normalized text (optional)
+  normalizedText?: string;
+  normalizationMeta?: NormalizationMeta;
+  normalizedBlocks?: ContentBlock[];
 
   // Meta
   scrapedAt: string;
@@ -215,4 +221,7 @@ export interface ScrapeOptions {
 
   /** Embedding generation options */
   embeddings?: EmbeddingOptions;
+
+  /** Text normalization options */
+  normalize?: NormalizeOptions;
 }

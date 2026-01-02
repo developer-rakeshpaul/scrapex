@@ -67,6 +67,22 @@ const result = await scrape(url, {
 });
 ```
 
+### Normalization
+
+Generate clean, boilerplate-free text:
+
+```typescript
+const result = await scrape(url, {
+  normalize: {
+    mode: 'full',
+    removeBoilerplate: true,
+  },
+});
+
+console.log(result.normalizedText);
+console.log(result.normalizationMeta);
+```
+
 ## Content Types
 
 scrapex automatically classifies content:

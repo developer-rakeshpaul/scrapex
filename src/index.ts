@@ -31,6 +31,24 @@ export {
   scrape,
   scrapeHtml,
 } from './core/index.js';
+// Content normalization
+export {
+  combineClassifiers,
+  defaultBlockClassifier,
+  parseBlocks,
+  normalizeText,
+} from './content/index.js';
+export type {
+  BlockType,
+  ClassifierContext,
+  ClassifierResult,
+  ContentBlock,
+  ContentBlockClassifier,
+  NormalizeOptions,
+  NormalizeResult,
+  NormalizationMeta,
+  TruncateStrategy,
+} from './content/index.js';
 export type {
   ChunkingConfig,
   // Cache
