@@ -1,4 +1,5 @@
 import type { CheerioAPI } from 'cheerio';
+import * as cheerio from 'cheerio';
 import type { BlockType, ContentBlock } from './types.js';
 
 /**
@@ -52,13 +53,16 @@ export function parseBlocks(
   const { dropSelectors = [], maxBlocks = 2000, includeHtml = false } = options;
   const blocks: ContentBlock[] = [];
 
+  const rootHtml = $.root().html() || '';
+  const $root = cheerio.load(rootHtml);
+
   // Remove unwanted elements
   const allDropSelectors = [...DEFAULT_DROP_SELECTORS, ...dropSelectors];
-  $(allDropSelectors.join(', ')).remove();
+  $root(allDropSelectors.join(', ')).remove();
 
   // Find content container
-  const contentArea = $('article, main, [role="main"], .content, #content').first();
-  const container = contentArea.length > 0 ? contentArea : $('body');
+  const contentArea = $root('article, main, [role="main"], .content, #content').first();
+  const container = contentArea.length > 0 ? contentArea : $root('body');
 
   // Process block-level elements.
   // Note: find('*') can be expensive on very large DOMs; maxBlocks provides a hard stop.
@@ -66,7 +70,7 @@ export function parseBlocks(
     if (blocks.length >= maxBlocks) {
       return false;
     }
-    const $el = $(el);
+    const $el = $root(el);
     const tagName = el.tagName?.toLowerCase();
 
     if (!tagName) {
@@ -142,6 +146,14 @@ export function parseBlocks(
           alt: img.attr('alt') || '',
           src: img.attr('src') || '',
         };
+      } else {
+        const video = $el.is('video') ? $el : $el.find('video').first();
+        if (video.length) {
+          block.attrs = {
+            src: video.attr('src') || video.find('source').first().attr('src') || '',
+            poster: video.attr('poster') || '',
+          };
+        }
       }
     }
 
