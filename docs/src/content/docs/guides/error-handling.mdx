@@ -199,6 +199,10 @@ async function validateAndScrape(url: string) {
       throw new ScrapeError('Blocked by robots.txt', 'ROBOTS_BLOCKED');
     }
   } catch (error) {
+    // Re-throw explicit blocks; only be permissive for infrastructure failures
+    if (error instanceof ScrapeError && error.code === 'ROBOTS_BLOCKED') {
+      throw error;
+    }
     // If robots.txt check fails, you can either:
     // 1. Proceed with scraping (permissive)
     // 2. Fail the request (strict)

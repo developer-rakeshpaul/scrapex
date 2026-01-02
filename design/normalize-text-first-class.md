@@ -220,7 +220,7 @@ import type { ContentBlock, ContentBlockClassifier, ClassifierResult } from './t
  */
 export const defaultBlockClassifier: ContentBlockClassifier = (block): ClassifierResult => {
   const text = (block.text || '').trim();
-  const lowerText = text.toLowerCase().slice(0, 1000);
+  const lowerText = text.toLowerCase().slice(0, 1000); // limit regex input
 
   // Empty blocks
   if (!text) {
@@ -255,7 +255,7 @@ export const defaultBlockClassifier: ContentBlockClassifier = (block): Classifie
   }
 
   // Media credits/captions
-  if (/\b(photo by|image:|credit:|source:)\b/i.test(lowerText) && text.length < 120) {
+  if (/\b(photo by|image:|credit:|source:)\b/i.test(lowerText.slice(0, 1000)) && text.length < 120) {
     return { accept: false, label: 'media-credit' };
   }
 
@@ -383,7 +383,8 @@ export function parseBlocks(
   const contentArea = $('article, main, [role="main"], .content, #content').first();
   const container = contentArea.length > 0 ? contentArea : $('body');
 
-  // Process block-level elements
+  // Process block-level elements.
+  // Note: find('*') can be expensive on very large DOMs; maxBlocks provides a hard stop.
   container.find('*').each((_, el) => {
     if (blocks.length >= maxBlocks) {
       return false;
@@ -567,9 +568,10 @@ function truncateText(
 
 /**
  * Generate content hash for deduplication.
+ * Use at least 128-bit output to reduce collision risk at scale.
  */
 function generateHash(text: string): string {
-  return createHash('sha256').update(text).digest('hex').slice(0, 16);
+  return createHash('sha256').update(text).digest('hex').slice(0, 32);
 }
 
 /**
