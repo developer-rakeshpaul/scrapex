@@ -61,22 +61,6 @@ jobs:
           fi
           echo "Publishing with npm tag: $(cat $GITHUB_OUTPUT | grep tag | cut -d= -f2)"
 
-      - name: Publish to npm (with provenance)
-        id: publish
-        continue-on-error: true
+      - name: Publish to npm
         run: npm publish --provenance --access public --tag ${{ steps.npm-tag.outputs.tag }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish to npm (token fallback)
-        if: steps.publish.outcome == 'failure'
-        run: |
-          if [[ -z "$NODE_AUTH_TOKEN" ]]; then
-            echo "::error::Provenance publishing failed and NPM_TOKEN is not set"
-            exit 1
-          fi
-
-          echo "Provenance publishing failed, falling back to token auth..."
-          npm publish --access public --tag ${{ steps.npm-tag.outputs.tag }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # Uses OIDC trusted publishing - no NPM_TOKEN needed
