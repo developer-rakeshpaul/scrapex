@@ -10,6 +10,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      attestations: write
 
     steps:
       - name: Checkout
@@ -21,6 +22,12 @@ jobs:
           node-version: 22
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify npm version
+        run: |
+          echo "Node version: $(node -v)"
+          echo "npm version: $(npm -v)"
+          # OIDC trusted publishing requires npm 11.5+
 
       - name: Install dependencies
         run: npm ci
@@ -61,6 +68,12 @@ jobs:
           fi
           echo "Publishing with npm tag: $(cat $GITHUB_OUTPUT | grep tag | cut -d= -f2)"
 
+      - name: Debug npm config
+        run: |
+          echo "Registry: $(npm config get registry)"
+          echo "GitHub Repository: ${{ github.repository }}"
+          echo "GitHub Actor: ${{ github.actor }}"
+          cat ~/.npmrc 2>/dev/null || echo "No .npmrc found"
+
       - name: Publish to npm
         run: npm publish --provenance --access public --tag ${{ steps.npm-tag.outputs.tag }}
-        # Uses OIDC trusted publishing - no NPM_TOKEN needed
