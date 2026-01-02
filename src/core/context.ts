@@ -79,7 +79,7 @@ export function mergeResults(
       // Merge custom fields if both exist
       custom:
         filtered.custom || context.results.custom
-          ? { ...context.results.custom, ...filtered.custom }
+          ? { ...(context.results.custom || {}), ...(filtered.custom || {}) }
           : undefined,
     },
   };

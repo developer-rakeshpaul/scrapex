@@ -7,6 +7,34 @@ import { createExtractionContext, mergeResults, preloadJsdom } from './context.j
 import { ScrapeError } from './errors.js';
 import type { Extractor, ScrapedData, ScrapeOptions } from './types.js';
 
+async function applyLlmProcessing(result: ScrapedData, options: ScrapeOptions): Promise<void> {
+  // LLM Enhancement
+  if (options.llm && options.enhance && options.enhance.length > 0) {
+    try {
+      const enhanced = await enhance(result, options.llm, options.enhance);
+      Object.assign(result, enhanced);
+    } catch (error) {
+      console.error('LLM enhancement failed:', error);
+      result.error = result.error
+        ? `${result.error}; LLM: ${error instanceof Error ? error.message : String(error)}`
+        : `LLM: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+
+  // LLM Extraction
+  if (options.llm && options.extract) {
+    try {
+      const extracted = await extract(result, options.llm, options.extract);
+      result.extracted = extracted as Record<string, unknown>;
+    } catch (error) {
+      console.error('LLM extraction failed:', error);
+      result.error = result.error
+        ? `${result.error}; LLM extraction: ${error instanceof Error ? error.message : String(error)}`
+        : `LLM extraction: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+}
+
 /**
  * Scrape a URL and extract metadata and content.
  *
@@ -116,31 +144,8 @@ export async function scrape(url: string, options: ScrapeOptions = {}): Promise<
     error: context.results.error,
   };
 
-  // LLM Enhancement
-  if (options.llm && options.enhance && options.enhance.length > 0) {
-    try {
-      const enhanced = await enhance(intermediateResult, options.llm, options.enhance);
-      Object.assign(intermediateResult, enhanced);
-    } catch (error) {
-      console.error('LLM enhancement failed:', error);
-      intermediateResult.error = intermediateResult.error
-        ? `${intermediateResult.error}; LLM: ${error instanceof Error ? error.message : String(error)}`
-        : `LLM: ${error instanceof Error ? error.message : String(error)}`;
-    }
-  }
-
-  // LLM Extraction
-  if (options.llm && options.extract) {
-    try {
-      const extracted = await extract(intermediateResult, options.llm, options.extract);
-      intermediateResult.extracted = extracted as Record<string, unknown>;
-    } catch (error) {
-      console.error('LLM extraction failed:', error);
-      intermediateResult.error = intermediateResult.error
-        ? `${intermediateResult.error}; LLM extraction: ${error instanceof Error ? error.message : String(error)}`
-        : `LLM extraction: ${error instanceof Error ? error.message : String(error)}`;
-    }
-  }
+  // LLM Enhancement and Extraction
+  await applyLlmProcessing(intermediateResult, options);
 
   // Embedding Generation (after LLM enhancement so summary/entities are available)
   // Note: generateEmbeddings never throws - it returns EmbeddingSkipped on errors
@@ -256,31 +261,8 @@ export async function scrapeHtml(
     error: context.results.error,
   };
 
-  // LLM Enhancement
-  if (options.llm && options.enhance && options.enhance.length > 0) {
-    try {
-      const enhanced = await enhance(intermediateResult, options.llm, options.enhance);
-      Object.assign(intermediateResult, enhanced);
-    } catch (error) {
-      console.error('LLM enhancement failed:', error);
-      intermediateResult.error = intermediateResult.error
-        ? `${intermediateResult.error}; LLM: ${error instanceof Error ? error.message : String(error)}`
-        : `LLM: ${error instanceof Error ? error.message : String(error)}`;
-    }
-  }
-
-  // LLM Extraction
-  if (options.llm && options.extract) {
-    try {
-      const extracted = await extract(intermediateResult, options.llm, options.extract);
-      intermediateResult.extracted = extracted as Record<string, unknown>;
-    } catch (error) {
-      console.error('LLM extraction failed:', error);
-      intermediateResult.error = intermediateResult.error
-        ? `${intermediateResult.error}; LLM extraction: ${error instanceof Error ? error.message : String(error)}`
-        : `LLM extraction: ${error instanceof Error ? error.message : String(error)}`;
-    }
-  }
+  // LLM Enhancement and Extraction
+  await applyLlmProcessing(intermediateResult, options);
 
   // Embedding Generation (after LLM enhancement so summary/entities are available)
   // Note: generateEmbeddings never throws - it returns EmbeddingSkipped on errors

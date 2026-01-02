@@ -33,9 +33,9 @@ npm install scrapex
 
     const result = parser.parse(markdown);
 
-    expect(result.data.sections.length).toBeGreaterThanOrEqual(3);
+    expect(result.data.sections.length).toBe(3);
     expect(result.data.sections[0]?.title).toBe('My Document');
-    expect(result.data.links.length).toBeGreaterThanOrEqual(4);
+    expect(result.data.links.length).toBe(4);
     expect(result.data.codeBlocks.length).toBe(1);
     expect(result.data.codeBlocks[0]?.language).toBe('bash');
   });
@@ -54,8 +54,8 @@ npm install scrapex
     const githubLinks = result.data.links.filter(
       (link) => extractDomain(link.url) === 'github.com'
     );
-    const npmLinks = result.data.links.filter((link) =>
-      link.url.includes('npmjs.com/package/')
+    const npmLinks = result.data.links.filter(
+      (link) => extractDomain(link.url) === 'npmjs.com'
     );
 
     expect(githubLinks.length).toBe(1);

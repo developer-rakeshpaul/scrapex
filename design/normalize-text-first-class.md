@@ -849,7 +849,7 @@ embeddings: {
 
 ## File Structure
 
-```
+```plaintext
 src/
 ├── content/
 │   ├── index.ts           # Public exports
