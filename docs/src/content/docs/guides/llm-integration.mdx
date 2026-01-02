@@ -24,9 +24,9 @@ scrapex integrates with LLM providers to enhance scraped content with AI capabil
   <TabItem label="Anthropic">
     ```typescript
     import { scrape } from 'scrapex';
-    import { AnthropicProvider } from 'scrapex/llm';
+    import { createAnthropic } from 'scrapex/llm';
 
-    const anthropic = new AnthropicProvider({
+    const anthropic = createAnthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
       model: 'claude-3-5-haiku-20241022', // optional
     });
@@ -51,6 +51,176 @@ scrapex integrates with LLM providers to enhance scraped content with AI capabil
     ```
   </TabItem>
 </Tabs>
+
+## Local & Self-Hosted Models
+
+scrapex fully supports local LLM servers running in Docker or natively. Any server that exposes an OpenAI-compatible chat completions API works seamlessly.
+
+### Docker Model Runner (Recommended)
+
+[Docker Model Runner](https://docs.docker.com/ai/model-runner/) is the easiest way to run LLMs locally. It's built into Docker Desktop 4.40+ and provides an OpenAI-compatible API out of the box.
+
+```bash
+# Pull a model
+docker model pull ai/llama3.2
+
+# Run the model
+docker model run ai/llama3.2
+```
+
+```typescript
+import { createHttpLLM } from 'scrapex/llm';
+
+// From your host machine (requires TCP host access enabled)
+const provider = createHttpLLM({
+  baseUrl: 'http://localhost:12434/engines/llama.cpp/v1/chat/completions',
+  model: 'ai/llama3.2',
+  requireHttps: false,
+  allowPrivate: true,
+});
+
+const result = await scrape(url, {
+  llm: provider,
+  enhance: ['summarize'],
+});
+```
+
+<Aside type="tip">
+  Docker Model Runner is enabled by default in Docker Desktop 4.40+ on macOS Apple Silicon. Enable TCP host access in Docker Desktop settings to use `localhost:12434`.
+</Aside>
+
+#### Using from Docker Compose
+
+With Docker Compose v2.35+, you can define models directly in your `compose.yml`:
+
+```yaml
+services:
+  myapp:
+    build: .
+    depends_on:
+      - llm
+    environment:
+      - LLM_BASE_URL=http://model-runner.docker.internal/engines/llama.cpp/v1/chat/completions
+
+  llm:
+    provider:
+      type: model
+      options:
+        model: ai/llama3.2
+```
+
+```typescript
+// From within a container, use the internal DNS name
+const provider = createHttpLLM({
+  baseUrl: process.env.LLM_BASE_URL,
+  model: 'ai/llama3.2',
+  requireHttps: false,
+  allowPrivate: true,
+});
+```
+
+### Running Ollama in Docker
+
+[Ollama](https://ollama.ai) is another popular option for running local models:
+
+```bash
+# Start Ollama container
+docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+
+# Pull a model
+docker exec -it ollama ollama pull llama3.2
+```
+
+```typescript
+import { createOllama } from 'scrapex/llm';
+
+const provider = createOllama({
+  model: 'llama3.2',
+  baseUrl: 'http://localhost:11434/v1/chat/completions', // default
+});
+
+const result = await scrape(url, {
+  llm: provider,
+  enhance: ['summarize'],
+});
+```
+
+### Other OpenAI-Compatible Servers
+
+For other local servers like vLLM, LocalAI, or llama.cpp, use `createHttpLLM`:
+
+<Tabs>
+  <TabItem label="vLLM">
+    ```bash
+    docker run --runtime nvidia --gpus all \
+      -v ~/.cache/huggingface:/root/.cache/huggingface \
+      -p 8000:8000 \
+      vllm/vllm-openai:latest \
+      --model meta-llama/Llama-3.2-3B-Instruct
+    ```
+
+    ```typescript
+    import { createHttpLLM } from 'scrapex/llm';
+
+    const provider = createHttpLLM({
+      baseUrl: 'http://localhost:8000/v1/chat/completions',
+      model: 'meta-llama/Llama-3.2-3B-Instruct',
+      requireHttps: false,
+      allowPrivate: true,
+    });
+    ```
+  </TabItem>
+  <TabItem label="LocalAI">
+    ```bash
+    docker run -p 8080:8080 --name local-ai \
+      -v models:/models \
+      localai/localai:latest-cpu
+    ```
+
+    ```typescript
+    import { createHttpLLM } from 'scrapex/llm';
+
+    const provider = createHttpLLM({
+      baseUrl: 'http://localhost:8080/v1/chat/completions',
+      model: 'gpt-3.5-turbo',
+      requireHttps: false,
+      allowPrivate: true,
+    });
+    ```
+  </TabItem>
+  <TabItem label="llama.cpp">
+    ```bash
+    # Build and run llama.cpp server
+    ./llama-server -m models/llama-3.2-3b.gguf --port 8080
+    ```
+
+    ```typescript
+    import { createHttpLLM } from 'scrapex/llm';
+
+    const provider = createHttpLLM({
+      baseUrl: 'http://localhost:8080/v1/chat/completions',
+      model: 'llama-3.2-3b',
+      requireHttps: false,
+      allowPrivate: true,
+    });
+    ```
+  </TabItem>
+</Tabs>
+
+### Security Configuration
+
+When connecting to local servers, you need to configure security options:
+
+| Option | Default | Local Usage |
+|--------|---------|-------------|
+| `requireHttps` | `true` | Set to `false` for HTTP |
+| `allowPrivate` | `false` | Set to `true` for localhost/Docker |
+
+<Aside type="caution">
+  Only disable HTTPS and allow private IPs when connecting to servers you control. These settings bypass SSRF protection.
+</Aside>
+
+The built-in presets `createOllama()` and `createLMStudio()` automatically configure these options for local development.
 
 ## Enhancing Scraped Content
 

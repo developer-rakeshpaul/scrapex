@@ -1,0 +1,397 @@
+---
+title: Embeddings
+description: Generate vector embeddings from scraped content for semantic search, RAG, and similarity matching.
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+scrapex can generate vector embeddings from scraped content, enabling semantic search, RAG (Retrieval-Augmented Generation), and similarity matching.
+
+## Quick Start
+
+Add embeddings to any scrape operation:
+
+```typescript
+import { scrape } from 'scrapex';
+import { createOpenAIEmbedding } from 'scrapex/embeddings';
+
+const result = await scrape('https://example.com/article', {
+  embeddings: {
+    provider: { type: 'custom', provider: createOpenAIEmbedding() },
+    model: 'text-embedding-3-small',
+  },
+});
+
+if (result.embeddings?.status === 'success') {
+  console.log(result.embeddings.vector); // [0.023, -0.041, ...]
+}
+```
+
+## Choosing a Provider
+
+<Tabs>
+  <TabItem label="OpenAI">
+    ```typescript
+    import { createOpenAIEmbedding } from 'scrapex/embeddings';
+
+    const result = await scrape(url, {
+      embeddings: {
+        provider: { type: 'custom', provider: createOpenAIEmbedding() },
+        model: 'text-embedding-3-small', // or text-embedding-3-large
+      },
+    });
+    ```
+  </TabItem>
+  <TabItem label="Azure OpenAI">
+    ```typescript
+    import { createAzureEmbedding } from 'scrapex/embeddings';
+
+    const result = await scrape(url, {
+      embeddings: {
+        provider: {
+          type: 'custom',
+          provider: createAzureEmbedding({
+            endpoint: 'https://your-resource.openai.azure.com',
+            deploymentName: 'text-embedding-ada-002',
+            apiVersion: '2024-02-01',
+          }),
+        },
+      },
+    });
+    ```
+  </TabItem>
+  <TabItem label="Ollama">
+    ```typescript
+    import { createOllamaEmbedding } from 'scrapex/embeddings';
+
+    const result = await scrape(url, {
+      embeddings: {
+        provider: {
+          type: 'custom',
+          provider: createOllamaEmbedding({ model: 'nomic-embed-text' }),
+        },
+      },
+    });
+    ```
+  </TabItem>
+  <TabItem label="Transformers.js">
+    ```typescript
+    // Zero-cost, offline embeddings using Hugging Face models
+    import * as transformers from '@huggingface/transformers';
+    import { createTransformersEmbedding } from 'scrapex/embeddings';
+
+    const result = await scrape(url, {
+      embeddings: {
+        provider: {
+          type: 'custom',
+          provider: createTransformersEmbedding(transformers, {
+            model: 'Xenova/all-MiniLM-L6-v2',
+          }),
+        },
+      },
+    });
+    ```
+<Aside type="note">
+  Requires `@huggingface/transformers` and `onnxruntime-node`:
+  ```bash
+  npm install @huggingface/transformers onnxruntime-node
+  ```
+</Aside>
+  </TabItem>
+</Tabs>
+
+## Standalone Embedding Functions
+
+Use embeddings without scraping:
+
+```typescript
+import { embed, embedScrapedData, createOpenAIEmbedding } from 'scrapex/embeddings';
+
+const provider = createOpenAIEmbedding();
+
+// Embed raw text
+const result = await embed('Your text here', {
+  provider: { type: 'custom', provider },
+  model: 'text-embedding-3-small',
+});
+
+// Embed previously scraped data
+const scraped = await scrape('https://example.com');
+const embedResult = await embedScrapedData(scraped, {
+  provider: { type: 'custom', provider },
+});
+```
+
+## Input Selection
+
+Control what content gets embedded:
+
+```typescript
+import { createOpenAIEmbedding } from 'scrapex/embeddings';
+
+const provider = { type: 'custom', provider: createOpenAIEmbedding() };
+
+const result = await scrape(url, {
+  embeddings: {
+    provider,
+    // Choose input source
+    input: {
+      type: 'textContent', // Default: main text content
+      // type: 'title+summary', // Combine title with summary/excerpt
+      // type: 'custom', customText: 'Your custom text',
+    },
+  },
+});
+```
+
+Use a transform function for dynamic input:
+
+```typescript
+const result = await scrape(url, {
+  embeddings: {
+    provider,
+    input: {
+      transform: (data) => `${data.title}\n\n${data.description}\n\n${data.textContent}`,
+    },
+  },
+});
+```
+
+## Chunking Long Content
+
+For long documents, content is automatically chunked with overlap:
+
+```typescript
+const result = await scrape(url, {
+  embeddings: {
+    provider, // Using preset from above
+    chunking: {
+      size: 500,       // Target tokens per chunk (default: 500)
+      overlap: 50,     // Overlap tokens between chunks (default: 50)
+      tokenizer: 'heuristic', // 'heuristic' (fast) or 'tiktoken' (accurate)
+      maxInputLength: 100000, // Max chars before truncation
+    },
+  },
+});
+```
+
+## Vector Aggregation
+
+Choose how to combine chunk vectors:
+
+```typescript
+const result = await scrape(url, {
+  embeddings: {
+    provider, // Using preset from above
+    output: {
+      aggregation: 'average', // Default: average all chunk vectors
+      // aggregation: 'max',   // Element-wise maximum
+      // aggregation: 'first', // Use first chunk only
+      // aggregation: 'all',   // Return all chunk vectors
+    },
+  },
+});
+
+// With 'all' aggregation, result has vectors array instead of vector
+if (result.embeddings?.aggregation === 'all') {
+  console.log(result.embeddings.vectors); // number[][]
+}
+```
+
+## PII Redaction
+
+Automatically redact sensitive data before sending to embedding APIs:
+
+```typescript
+const result = await scrape(url, {
+  embeddings: {
+    provider, // Using preset from above
+    safety: {
+      piiRedaction: {
+        email: true,      // Redact email addresses
+        phone: true,      // Redact phone numbers
+        creditCard: true, // Redact credit card numbers
+        ssn: true,        // Redact SSN patterns
+        ipAddress: true,  // Redact IP addresses
+        customPatterns: [/API_KEY_\w+/g], // Custom patterns
+      },
+    },
+  },
+});
+```
+
+<Aside type="caution">
+  Always enable PII redaction when using third-party embedding APIs for GDPR/CCPA compliance.
+</Aside>
+
+<Aside type="note">
+  Default redaction patterns cover email, US phone formats, credit cards, SSN, and IPv4 addresses. Use `customPatterns` for additional coverage.
+</Aside>
+
+## Caching
+
+Cache embeddings to avoid redundant API calls:
+
+```typescript
+import { InMemoryEmbeddingCache, createOpenAIEmbedding } from 'scrapex/embeddings';
+
+const cache = new InMemoryEmbeddingCache({ maxEntries: 1000 });
+
+const result = await scrape(url, {
+  embeddings: {
+    provider: { type: 'custom', provider: createOpenAIEmbedding() },
+    cache: {
+      store: cache,
+      ttlMs: 3600000, // 1 hour TTL
+    },
+  },
+});
+
+// Check if result was from cache
+console.log(result.embeddings?.source.cached); // true/false
+```
+
+<Aside type="tip">
+  Caching is content-addressable: same content always produces the same cache key, regardless of URL. For custom providers or input transforms, set `cache.cacheKeySalt` to avoid collisions.
+</Aside>
+
+## Resilience
+
+Configure retry behavior and rate limiting:
+
+```typescript
+import { createOpenAIEmbedding } from 'scrapex/embeddings';
+
+const result = await scrape(url, {
+  embeddings: {
+    provider: { type: 'custom', provider: createOpenAIEmbedding() },
+    resilience: {
+      retry: {
+        maxAttempts: 3,
+        backoffMs: 1000,
+        backoffMultiplier: 2,
+      },
+      circuitBreaker: {
+        failureThreshold: 5,
+        resetTimeoutMs: 30000,
+      },
+      rateLimit: {
+        requestsPerMinute: 60,
+        tokensPerMinute: 100000,
+      },
+      timeoutMs: 30000,
+      concurrency: 1,
+    },
+  },
+});
+```
+
+<Aside type="tip">
+  Circuit breaker state is per call by default. To persist state across scrapes, pass a shared `resilience.state` with a reused circuit breaker/rate limiter.
+</Aside>
+
+## Custom Providers
+
+Implement the `EmbeddingProvider` interface for custom backends:
+
+```typescript
+import type { EmbeddingProvider, EmbedRequest, EmbedResponse } from 'scrapex/embeddings';
+
+const customProvider: EmbeddingProvider = {
+  name: 'my-provider',
+  async embed(texts: string[], options: EmbedRequest): Promise<EmbedResponse> {
+    const response = await fetch('https://my-api.com/embed', {
+      method: 'POST',
+      body: JSON.stringify({ texts, model: options.model }),
+    });
+    const data = await response.json();
+    return { embeddings: data.embeddings };
+  },
+};
+
+const result = await scrape(url, {
+  embeddings: {
+    provider: { type: 'custom', provider: customProvider },
+  },
+});
+```
+
+## Result Types
+
+Embedding results use a discriminated union for type safety:
+
+```typescript
+const result = await scrape(url, { embeddings: { provider } });
+
+if (result.embeddings?.status === 'success') {
+  if (result.embeddings.aggregation === 'all') {
+    // Multiple vectors
+    console.log(result.embeddings.vectors); // number[][]
+  } else {
+    // Single aggregated vector
+    console.log(result.embeddings.vector); // number[]
+  }
+  console.log(result.embeddings.source.chunks); // Number of chunks
+  console.log(result.embeddings.source.tokens); // Total tokens
+  console.log(result.embeddings.source.cached); // From cache?
+} else if (result.embeddings?.status === 'skipped') {
+  console.log('Skipped:', result.embeddings.reason);
+}
+```
+
+## Metrics and Observability
+
+Track embedding performance with callbacks:
+
+```typescript
+import { createOpenAIEmbedding } from 'scrapex/embeddings';
+
+const result = await scrape(url, {
+  embeddings: {
+    provider: { type: 'custom', provider: createOpenAIEmbedding() },
+    onChunk: (chunk, embedding) => {
+      console.log(`Chunk: ${chunk.slice(0, 50)}...`);
+      console.log(`Dimensions: ${embedding.length}`);
+    },
+    onMetrics: (metrics) => {
+      console.log(`Provider: ${metrics.provider}`);
+      console.log(`Latency: ${metrics.latencyMs}ms`);
+      console.log(`Tokens: ${metrics.inputTokens}`);
+      console.log(`Cached: ${metrics.cached}`);
+    },
+  },
+});
+```
+
+## Utility Functions
+
+Vector operations for similarity matching:
+
+```typescript
+import {
+  cosineSimilarity,
+  euclideanDistance,
+  dotProduct,
+  normalizeVector,
+} from 'scrapex/embeddings';
+
+const similarity = cosineSimilarity(vectorA, vectorB); // 0 to 1
+const distance = euclideanDistance(vectorA, vectorB);
+const dot = dotProduct(vectorA, vectorB);
+const normalized = normalizeVector(vector);
+```
+
+## Best Practices
+
+1. **Enable PII redaction** for third-party APIs
+2. **Use caching** to reduce API costs and latency
+3. **Choose appropriate chunk sizes** for your model's context window
+4. **Use `title+summary`** for short, semantic representations
+5. **Use `textContent`** for full document embedding
+6. **Use Transformers.js** for offline/air-gapped environments
+
+## Next Steps
+
+- [API Reference: Embeddings](/api/embeddings) - Full type definitions
+- [LLM Integration](/guides/llm-integration) - Combine with LLM enhancement
+- [Custom Extractors](/guides/custom-extractors) - Extract custom data for embeddings

@@ -1,0 +1,716 @@
+---
+title: Embeddings API
+description: Complete API reference for scrapex embedding generation.
+---
+
+Complete API reference for embedding generation in scrapex.
+
+## Functions
+
+### embed
+
+Generate embeddings from raw text.
+
+```typescript
+import { embed } from 'scrapex/embeddings';
+
+const result = await embed('text', options);
+```
+
+**Parameters:**
+- `text` - The text to embed
+- `options` - Embedding configuration (see [EmbeddingOptions](#embeddingoptions))
+
+**Returns:** [EmbeddingResult](#embeddingresult)
+
+### embedScrapedData
+
+Generate embeddings from scraped data.
+
+```typescript
+import { embedScrapedData } from 'scrapex/embeddings';
+
+const result = await embedScrapedData(data, options);
+```
+
+**Parameters:**
+- `data` - Scraped data object
+- `options` - Embedding configuration
+
+**Returns:** [EmbeddingResult](#embeddingresult)
+
+### generateEmbeddings
+
+Internal function used by `scrape()`. Prefer `embed()` or `embedScrapedData()` for standalone use.
+
+```typescript
+import { generateEmbeddings } from 'scrapex/embeddings';
+
+const result = await generateEmbeddings(data, options);
+```
+
+## Provider Factory Functions
+
+### createOpenAIEmbedding
+
+Create an OpenAI embedding provider.
+
+```typescript
+import { createOpenAIEmbedding } from 'scrapex/embeddings';
+
+const provider = createOpenAIEmbedding({
+  apiKey?: string,  // Defaults to OPENAI_API_KEY env var
+  baseUrl?: string, // Custom base URL
+});
+```
+
+### createAzureEmbedding
+
+Create an Azure OpenAI embedding provider.
+
+```typescript
+import { createAzureEmbedding } from 'scrapex/embeddings';
+
+const provider = createAzureEmbedding({
+  endpoint: string,   // Azure resource endpoint
+  apiVersion: string, // API version (e.g., '2024-02-01')
+  apiKey?: string,    // Defaults to AZURE_OPENAI_API_KEY env var
+});
+```
+
+### createHttpEmbedding
+
+Create a generic HTTP embedding provider.
+
+```typescript
+import { createHttpEmbedding } from 'scrapex/embeddings';
+
+const provider = createHttpEmbedding({
+  baseUrl: string,
+  model: string,
+  headers?: Record<string, string>,
+  responseMapper?: (response: unknown) => number[][],
+  requestBuilder?: (texts: string[], model: string) => unknown,
+  requireHttps?: boolean, // Default: true
+});
+```
+
+### createOllamaEmbedding
+
+Create an Ollama embedding provider for local models.
+
+```typescript
+import { createOllamaEmbedding } from 'scrapex/embeddings';
+
+const provider = createOllamaEmbedding({
+  model?: string,     // Default: 'nomic-embed-text'
+  baseUrl?: string,   // Default: 'http://localhost:11434/api/embeddings'
+});
+```
+
+### createHuggingFaceEmbedding
+
+Create a HuggingFace Inference API embedding provider.
+
+```typescript
+import { createHuggingFaceEmbedding } from 'scrapex/embeddings';
+
+const provider = createHuggingFaceEmbedding({
+  model: string,      // Required: Model ID on HuggingFace
+  apiKey?: string,    // Defaults to HF_TOKEN or HUGGINGFACE_API_KEY env var
+});
+```
+
+### createCohereEmbedding
+
+Create a Cohere embedding provider.
+
+```typescript
+import { createCohereEmbedding } from 'scrapex/embeddings';
+
+const provider = createCohereEmbedding({
+  apiKey?: string,    // Defaults to COHERE_API_KEY env var
+  model?: string,     // Default: 'embed-english-v3.0'
+});
+```
+
+### createTransformersEmbedding
+
+Create a Transformers.js embedding provider for local inference. Uses dependency injection - you provide the imported transformers module.
+
+```typescript
+import * as transformers from '@huggingface/transformers';
+import { createTransformersEmbedding } from 'scrapex/embeddings';
+
+const provider = createTransformersEmbedding(transformers, {
+  model?: string,      // Default: 'Xenova/all-MiniLM-L6-v2'
+  quantized?: boolean, // Default: true
+  pooling?: 'mean' | 'cls' | 'max', // Default: 'mean'
+  normalize?: boolean, // Default: true
+  cacheDir?: string,   // Model cache directory
+});
+```
+
+**Required dependencies:**
+```bash
+npm install @huggingface/transformers onnxruntime-node
+```
+
+## Utility Functions
+
+### cosineSimilarity
+
+Calculate cosine similarity between two vectors.
+
+```typescript
+import { cosineSimilarity } from 'scrapex/embeddings';
+
+const similarity = cosineSimilarity(a: number[], b: number[]): number;
+// Returns: 0 (orthogonal) to 1 (identical)
+```
+
+### euclideanDistance
+
+Calculate Euclidean distance between two vectors.
+
+```typescript
+import { euclideanDistance } from 'scrapex/embeddings';
+
+const distance = euclideanDistance(a: number[], b: number[]): number;
+```
+
+### dotProduct
+
+Calculate dot product of two vectors.
+
+```typescript
+import { dotProduct } from 'scrapex/embeddings';
+
+const product = dotProduct(a: number[], b: number[]): number;
+```
+
+### normalizeVector
+
+Normalize a vector to unit length.
+
+```typescript
+import { normalizeVector } from 'scrapex/embeddings';
+
+const normalized = normalizeVector(vector: number[]): number[];
+```
+
+### aggregateVectors
+
+Aggregate multiple vectors using a strategy.
+
+```typescript
+import { aggregateVectors } from 'scrapex/embeddings';
+
+const result = aggregateVectors(
+  vectors: number[][],
+  strategy: 'average' | 'max' | 'first' | 'all'
+): number[] | number[][];
+```
+
+## Cache
+
+### InMemoryEmbeddingCache
+
+In-memory LRU cache for embeddings.
+
+```typescript
+import { InMemoryEmbeddingCache } from 'scrapex/embeddings';
+
+const cache = new InMemoryEmbeddingCache({
+  maxEntries?: number, // Default: 1000
+});
+
+// Cache interface methods
+await cache.get(key: string): Promise<EmbeddingResult | undefined>;
+await cache.set(key: string, value: EmbeddingResult, options?: { ttlMs?: number }): Promise<void>;
+await cache.delete(key: string): Promise<boolean>;
+await cache.clear(): Promise<void>;
+```
+
+### generateCacheKey
+
+Generate a content-addressable cache key.
+
+```typescript
+import { generateCacheKey } from 'scrapex/embeddings';
+
+const key = generateCacheKey({
+  providerKey: string,
+  model?: string,
+  dimensions?: number,
+  aggregation?: 'average' | 'max' | 'first' | 'all',
+  input?: EmbeddingInputConfig,
+  chunking?: ChunkingConfig,
+  safety?: SafetyConfig,
+  cacheKeySalt?: string,
+  content: string,
+}): string;
+```
+
+### generateChecksum
+
+Generate a SHA-256 checksum for content validation.
+
+```typescript
+import { generateChecksum } from 'scrapex/embeddings';
+
+const checksum = generateChecksum(text: string): string;
+```
+
+## Safety Functions
+
+### redactPii
+
+Redact PII from text using default patterns.
+
+```typescript
+import { redactPii } from 'scrapex/embeddings';
+
+const result = redactPii(text: string): RedactionResult;
+
+interface RedactionResult {
+  text: string;
+  redacted: boolean;
+  redactionCount: number;
+  redactionsByType: Record<string, number>;
+}
+```
+
+### createPiiRedactor
+
+Create a custom PII redactor.
+
+```typescript
+import { createPiiRedactor } from 'scrapex/embeddings';
+
+const redactor = createPiiRedactor({
+  email?: boolean,
+  phone?: boolean,
+  creditCard?: boolean,
+  ssn?: boolean,
+  ipAddress?: boolean,
+  customPatterns?: RegExp[],
+});
+
+const result = redactor(text);
+```
+
+### containsPii
+
+Check if text contains PII.
+
+```typescript
+import { containsPii } from 'scrapex/embeddings';
+
+const hasPii = containsPii(text: string, config?: PiiRedactionConfig): boolean;
+```
+
+## Chunking Functions
+
+### chunkText
+
+Split text into overlapping chunks.
+
+```typescript
+import { chunkText } from 'scrapex/embeddings';
+
+const chunks = chunkText(text: string, config?: ChunkingConfig): TextChunk[];
+
+interface TextChunk {
+  text: string;
+  startIndex: number;
+  endIndex: number;
+  tokens: number;
+}
+```
+
+### estimateTokens
+
+Estimate token count for text.
+
+```typescript
+import { estimateTokens } from 'scrapex/embeddings';
+
+const count = estimateTokens(text: string, tokenizer?: 'heuristic' | 'tiktoken'): number;
+```
+
+### needsChunking
+
+Check if text exceeds chunk size.
+
+```typescript
+import { needsChunking } from 'scrapex/embeddings';
+
+const needsIt = needsChunking(text: string, maxTokens?: number): boolean;
+```
+
+## Input Functions
+
+### selectInput
+
+Select input text from scraped data.
+
+```typescript
+import { selectInput } from 'scrapex/embeddings';
+
+const text = selectInput(
+  data: Partial<ScrapedData>,
+  config?: EmbeddingInputConfig
+): string | undefined;
+```
+
+### validateInput
+
+Validate input text for embedding.
+
+```typescript
+import { validateInput } from 'scrapex/embeddings';
+
+const result = validateInput(text: string | undefined, minLength?: number): InputValidation;
+
+type InputValidation =
+  | { valid: false; reason: string }
+  | { valid: true; text: string; wordCount: number; charCount: number };
+```
+
+## Types
+
+### EmbeddingOptions
+
+Main configuration for embedding generation.
+
+```typescript
+interface EmbeddingOptions {
+  provider: EmbeddingProviderConfig;
+  model?: string;
+  input?: EmbeddingInputConfig;
+  chunking?: ChunkingConfig;
+  output?: OutputConfig;
+  safety?: SafetyConfig;
+  cache?: EmbeddingCacheConfig;
+  resilience?: ResilienceConfig;
+  onChunk?: (chunk: string, embedding: number[]) => void;
+  onMetrics?: (metrics: EmbeddingMetrics) => void;
+}
+```
+
+### EmbeddingProviderConfig
+
+Provider configuration (discriminated union). Use preset factory functions to create providers.
+
+```typescript
+type EmbeddingProviderConfig =
+  | { type: 'http'; config: HttpEmbeddingConfig }
+  | { type: 'custom'; provider: EmbeddingProvider };
+```
+
+**Example using presets:**
+
+```typescript
+import { createOpenAIEmbedding } from 'scrapex/embeddings';
+
+const result = await scrape(url, {
+  embeddings: {
+    provider: { type: 'custom', provider: createOpenAIEmbedding() },
+  },
+});
+```
+
+**Example using inline HTTP config:**
+
+```typescript
+const result = await scrape(url, {
+  embeddings: {
+    provider: {
+      type: 'http',
+      config: {
+        baseUrl: 'https://api.example.com/embed',
+        model: 'custom-model',
+        headers: { Authorization: 'Bearer ...' },
+      },
+    },
+  },
+});
+```
+
+### EmbeddingResult
+
+Result type (discriminated union).
+
+```typescript
+type EmbeddingResult =
+  | EmbeddingSuccessSingle
+  | EmbeddingSuccessMultiple
+  | EmbeddingSkipped;
+
+interface EmbeddingSuccessSingle {
+  status: 'success';
+  aggregation: 'average' | 'max' | 'first';
+  vector: number[];
+  source: EmbeddingSource;
+}
+
+interface EmbeddingSuccessMultiple {
+  status: 'success';
+  aggregation: 'all';
+  vectors: number[][];
+  source: EmbeddingSource;
+}
+
+interface EmbeddingSkipped {
+  status: 'skipped';
+  reason: string;
+  source: Partial<EmbeddingSource>;
+}
+```
+
+### EmbeddingSource
+
+Metadata about embedding generation.
+
+```typescript
+interface EmbeddingSource {
+  model: string;
+  chunks: number;
+  tokens: number;
+  checksum: string;
+  cached: boolean;
+  latencyMs: number;
+}
+```
+
+### EmbeddingProvider
+
+Interface for custom providers.
+
+```typescript
+interface EmbeddingProvider {
+  readonly name: string;
+  embed(texts: string[], options: EmbedRequest): Promise<EmbedResponse>;
+}
+
+interface EmbedRequest {
+  model?: string;
+  dimensions?: number;
+  signal?: AbortSignal;
+}
+
+interface EmbedResponse {
+  embeddings: number[][];
+  usage?: {
+    promptTokens: number;
+    totalTokens: number;
+  };
+}
+```
+
+### EmbeddingInputConfig
+
+Input selection configuration.
+
+```typescript
+interface EmbeddingInputConfig {
+  type?: 'textContent' | 'title+summary' | 'custom';
+  transform?: (data: Partial<ScrapedData>) => string;
+  customText?: string;
+}
+```
+
+### ChunkingConfig
+
+Chunking configuration.
+
+```typescript
+interface ChunkingConfig {
+  size?: number;           // Default: 500 tokens
+  overlap?: number;        // Default: 50 tokens
+  tokenizer?: 'heuristic' | 'tiktoken' | ((text: string) => number);
+  maxInputLength?: number; // Default: 100000 chars
+}
+```
+
+### OutputConfig
+
+Output configuration.
+
+```typescript
+interface OutputConfig {
+  aggregation?: 'average' | 'max' | 'first' | 'all';
+  dimensions?: number;
+}
+```
+
+### SafetyConfig
+
+Safety and compliance configuration.
+
+```typescript
+interface SafetyConfig {
+  piiRedaction?: PiiRedactionConfig;
+  minTextLength?: number;
+  maxTokens?: number;
+  allowSensitiveCallbacks?: boolean;
+}
+
+interface PiiRedactionConfig {
+  email?: boolean;
+  phone?: boolean;
+  creditCard?: boolean;
+  ssn?: boolean;
+  ipAddress?: boolean;
+  customPatterns?: RegExp[];
+}
+```
+
+Default patterns include email, phone (US formats), credit card, SSN, and IPv4 addresses. Provide `customPatterns` for additional redaction rules.
+
+### EmbeddingCacheConfig
+
+Cache configuration.
+
+```typescript
+interface EmbeddingCacheConfig {
+  store?: EmbeddingCache;
+  ttlMs?: number;
+  maxEntries?: number;
+  encryptAtRest?: boolean;
+  cacheKeySalt?: string;
+}
+
+interface EmbeddingCache {
+  get(key: string): Promise<EmbeddingResult | undefined>;
+  set(key: string, value: EmbeddingResult, options?: { ttlMs?: number }): Promise<void>;
+  delete(key: string): Promise<boolean>;
+  clear(): Promise<void>;
+}
+```
+
+### ResilienceConfig
+
+Resilience configuration.
+
+```typescript
+interface ResilienceConfig {
+  retry?: RetryConfig;
+  circuitBreaker?: CircuitBreakerConfig;
+  rateLimit?: RateLimitConfig;
+  state?: ResilienceState;
+  timeoutMs?: number;
+  concurrency?: number;
+}
+
+interface ResilienceState {
+  circuitBreaker?: {
+    isOpen(): boolean;
+    recordSuccess(): void;
+    recordFailure(): void;
+    getState?(): CircuitState;
+  };
+  rateLimiter?: {
+    acquire(): Promise<void>;
+  };
+  semaphore?: {
+    execute<T>(fn: () => Promise<T>): Promise<T>;
+  };
+}
+
+interface RetryConfig {
+  maxAttempts?: number;  // Default: 3
+  backoffMs?: number;    // Default: 1000
+  backoffMultiplier?: number; // Default: 2
+}
+
+interface CircuitBreakerConfig {
+  failureThreshold?: number; // Default: 5
+  resetTimeoutMs?: number;   // Default: 30000
+}
+
+interface RateLimitConfig {
+  requestsPerMinute?: number;
+  tokensPerMinute?: number;
+}
+```
+
+### EmbeddingMetrics
+
+Metrics for observability.
+
+```typescript
+interface EmbeddingMetrics {
+  provider: string;
+  model: string;
+  inputTokens: number;
+  outputDimensions: number;
+  chunks: number;
+  latencyMs: number;
+  cached: boolean;
+  retries: number;
+  piiRedacted: boolean;
+}
+```
+
+### HttpEmbeddingConfig
+
+Configuration for generic HTTP providers.
+
+```typescript
+interface HttpEmbeddingConfig<TRequest = unknown, TResponse = unknown, TError = unknown> {
+  baseUrl: string;
+  model: string;
+  headers?: Record<string, string>;
+  responseMapper?: (response: TResponse) => number[][];
+  requestBuilder?: (texts: string[], model: string) => TRequest;
+  errorMapper?: (response: TError) => string;
+  requireHttps?: boolean;
+  allowPrivate?: boolean;
+  resolveDns?: boolean;
+  allowRedirects?: boolean;
+  resilience?: ResilienceConfig;
+}
+```
+
+
+## Recommended Models
+
+### Transformers.js Models
+
+```typescript
+import { TRANSFORMERS_MODELS } from 'scrapex/embeddings';
+
+TRANSFORMERS_MODELS.DEFAULT      // 'Xenova/all-MiniLM-L6-v2' (384d, ~23MB)
+TRANSFORMERS_MODELS.QUALITY      // 'Xenova/all-mpnet-base-v2' (768d, ~110MB)
+TRANSFORMERS_MODELS.RETRIEVAL    // 'Xenova/bge-small-en-v1.5' (384d, ~33MB)
+TRANSFORMERS_MODELS.MULTILINGUAL // 'Xenova/multilingual-e5-small' (384d, ~118MB)
+```
+
+## Importing Types
+
+```typescript
+import type {
+  EmbeddingOptions,
+  EmbeddingResult,
+  EmbeddingProvider,
+  EmbeddingProviderConfig,
+  EmbeddingInputConfig,
+  EmbeddingSource,
+  EmbeddingMetrics,
+  EmbeddingCache,
+  ChunkingConfig,
+  SafetyConfig,
+  ResilienceConfig,
+  ResilienceState,
+  PiiRedactionConfig,
+  HttpEmbeddingConfig,
+} from 'scrapex/embeddings';
+```
+
+## See Also
+
+- [Guide: Embeddings](/guides/embeddings) - Usage guide and examples
+- [API Reference: scrape()](/api/scrape) - Main scrape function
+- [API Reference: Types](/api/types) - Core type definitions

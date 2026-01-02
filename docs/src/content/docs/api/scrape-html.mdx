@@ -46,6 +46,7 @@ Same options as `scrape()`, except network-related options are ignored.
 | `llm` | `LLMProvider` | `undefined` | LLM provider for enhancements |
 | `enhance` | `EnhancementType[]` | `undefined` | LLM enhancement types |
 | `extract` | `ExtractionSchema` | `undefined` | LLM structured extraction schema |
+| `embeddings` | `EmbeddingOptions` | `undefined` | Generate vector embeddings |
 
 ## Returns
 
@@ -121,6 +122,23 @@ class PriceExtractor implements Extractor {
 
 const result = await scrapeHtml(html, url, {
   extractors: [...createDefaultExtractors(), new PriceExtractor()],
+});
+```
+
+### With Embeddings
+
+```typescript
+import { scrapeHtml } from 'scrapex';
+import { createOpenAIEmbedding } from 'scrapex/embeddings';
+
+const result = await scrapeHtml(html, 'https://example.com', {
+  embeddings: {
+    provider: {
+      type: 'custom',
+      provider: createOpenAIEmbedding({ apiKey: process.env.OPENAI_API_KEY }),
+    },
+    model: 'text-embedding-3-small',
+  },
 });
 ```
 

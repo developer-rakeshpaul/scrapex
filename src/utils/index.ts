@@ -1,9 +1,9 @@
 export {
-  fetchFeed,
   discoverFeeds,
-  filterByDate,
   feedToMarkdown,
   feedToText,
+  fetchFeed,
+  filterByDate,
   paginateFeed,
 } from './feed.js';
 

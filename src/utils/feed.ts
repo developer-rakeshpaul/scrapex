@@ -1,13 +1,8 @@
-import * as cheerio from "cheerio";
-import { defaultFetcher } from "../fetchers/fetch.js";
-import type { Fetcher } from "../fetchers/types.js";
-import { RSSParser, type RSSParserOptions } from "../parsers/rss.js";
-import type {
-  FeedItem,
-  FeedMeta,
-  ParsedFeed,
-  ParserResult,
-} from "../parsers/types.js";
+import * as cheerio from 'cheerio';
+import { defaultFetcher } from '../fetchers/fetch.js';
+import type { Fetcher } from '../fetchers/types.js';
+import { RSSParser, type RSSParserOptions } from '../parsers/rss.js';
+import type { FeedItem, FeedMeta, ParsedFeed, ParserResult } from '../parsers/types.js';
 
 /**
  * Fetch and parse an RSS/Atom feed from a URL.
@@ -28,12 +23,12 @@ export async function fetchFeed(
     timeout: options?.timeout,
     userAgent: options?.userAgent,
     allowedContentTypes: [
-      "application/rss+xml",
-      "application/atom+xml",
-      "application/rdf+xml",
-      "application/xml",
-      "text/xml",
-      "text/html", // Some feeds are served as HTML incorrectly
+      'application/rss+xml',
+      'application/atom+xml',
+      'application/rdf+xml',
+      'application/xml',
+      'text/xml',
+      'text/html', // Some feeds are served as HTML incorrectly
     ],
   });
 
@@ -56,10 +51,10 @@ export function discoverFeeds(html: string, baseUrl: string): string[] {
     'link[type="application/atom+xml"]',
     'link[type="application/rdf+xml"]',
     'link[rel="alternate"][type*="xml"]',
-  ].join(", ");
+  ].join(', ');
 
   $(selector).each((_, el) => {
-    const href = $(el).attr("href");
+    const href = $(el).attr('href');
     if (href) {
       try {
         const resolved = new URL(href, baseUrl).href;
@@ -110,10 +105,10 @@ export function feedToMarkdown(
   }
 ): string {
   const { includeContent = false, maxItems } = options || {};
-  const lines = [`# ${feed.title}`, ""];
+  const lines = [`# ${feed.title}`, ''];
 
   if (feed.description) {
-    lines.push(feed.description, "");
+    lines.push(feed.description, '');
   }
 
   const items = maxItems ? feed.items.slice(0, maxItems) : feed.items;
@@ -123,11 +118,11 @@ export function feedToMarkdown(
 
     if (item.publishedAt) {
       // Use ISO date format for consistency (YYYY-MM-DD)
-      const date = item.publishedAt.split("T")[0];
+      const date = item.publishedAt.split('T')[0];
       lines.push(`*${date}*`);
     }
 
-    lines.push("");
+    lines.push('');
 
     if (includeContent && item.content) {
       lines.push(item.content);
@@ -136,13 +131,13 @@ export function feedToMarkdown(
     }
 
     if (item.link) {
-      lines.push(`[Read more](${item.link})`, "");
+      lines.push(`[Read more](${item.link})`, '');
     } else {
-      lines.push("");
+      lines.push('');
     }
   }
 
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 /**
@@ -156,7 +151,7 @@ export function feedToText(
     separator?: string;
   }
 ): string {
-  const { maxItems, separator = "\n\n---\n\n" } = options || {};
+  const { maxItems, separator = '\n\n---\n\n' } = options || {};
   const items = maxItems ? feed.items.slice(0, maxItems) : feed.items;
 
   return items
@@ -164,7 +159,7 @@ export function feedToText(
       const parts = [item.title];
       if (item.description) parts.push(item.description);
       if (item.content) parts.push(item.content);
-      return parts.join("\n\n");
+      return parts.join('\n\n');
     })
     .join(separator);
 }

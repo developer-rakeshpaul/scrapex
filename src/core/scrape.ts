@@ -1,3 +1,4 @@
+import { generateEmbeddings } from '@/embeddings/pipeline.js';
 import { createDefaultExtractors, sortExtractors } from '@/extractors/index.js';
 import { checkRobotsTxt, defaultFetcher } from '@/fetchers/index.js';
 import { enhance, extract } from '@/llm/enhancer.js';
@@ -141,6 +142,21 @@ export async function scrape(url: string, options: ScrapeOptions = {}): Promise<
     }
   }
 
+  // Embedding Generation (after LLM enhancement so summary/entities are available)
+  if (options.embeddings) {
+    try {
+      const embeddingResult = await generateEmbeddings(intermediateResult, options.embeddings);
+      intermediateResult.embeddings = embeddingResult;
+    } catch (error) {
+      // Never throw from embeddings - store skip result
+      intermediateResult.embeddings = {
+        status: 'skipped',
+        reason: error instanceof Error ? error.message : String(error),
+        source: {},
+      };
+    }
+  }
+
   // Build final result with timing
   const scrapeTimeMs = Date.now() - startTime;
 
@@ -212,10 +228,10 @@ export async function scrapeHtml(
     }
   }
 
-  const scrapeTimeMs = Date.now() - startTime;
   const domain = extractDomain(normalizedUrl);
 
-  const result: ScrapedData = {
+  // Build intermediate result
+  const intermediateResult: ScrapedData = {
     url: normalizedUrl,
     canonicalUrl: context.results.canonicalUrl || normalizedUrl,
     domain,
@@ -242,8 +258,31 @@ export async function scrapeHtml(
     extracted: context.results.extracted,
     custom: context.results.custom,
     scrapedAt: new Date().toISOString(),
-    scrapeTimeMs,
+    scrapeTimeMs: 0,
     error: context.results.error,
+  };
+
+  // Embedding Generation
+  if (options.embeddings) {
+    try {
+      const embeddingResult = await generateEmbeddings(intermediateResult, options.embeddings);
+      intermediateResult.embeddings = embeddingResult;
+    } catch (error) {
+      // Never throw from embeddings - store skip result
+      intermediateResult.embeddings = {
+        status: 'skipped',
+        reason: error instanceof Error ? error.message : String(error),
+        source: {},
+      };
+    }
+  }
+
+  // Build final result with timing
+  const scrapeTimeMs = Date.now() - startTime;
+
+  const result: ScrapedData = {
+    ...intermediateResult,
+    scrapeTimeMs,
   };
 
   return result;

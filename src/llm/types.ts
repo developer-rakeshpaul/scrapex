@@ -27,25 +27,6 @@ export interface LLMProvider {
 }
 
 /**
- * Provider configuration for Anthropic
- */
-export interface AnthropicConfig {
-  apiKey?: string; // Falls back to ANTHROPIC_API_KEY env var
-  model?: string; // Default: claude-3-haiku-20240307
-  baseUrl?: string;
-}
-
-/**
- * Provider configuration for OpenAI-compatible APIs
- * Works with: OpenAI, Ollama, LM Studio, LocalAI, vLLM, etc.
- */
-export interface OpenAICompatibleConfig {
-  apiKey?: string; // Falls back to OPENAI_API_KEY env var
-  model?: string; // Default: gpt-4o-mini
-  baseUrl?: string; // Default: https://api.openai.com/v1
-}
-
-/**
  * Enhancement result types
  */
 export interface SummaryResult {

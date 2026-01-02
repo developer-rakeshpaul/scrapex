@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 import { describe, expect, it } from 'vitest';
-import { LinksExtractor } from '@/extractors/links.js';
 import type { ExtractionContext } from '@/core/types.js';
+import { LinksExtractor } from '@/extractors/links.js';
 
 function createContext(html: string, url = 'https://example.com'): ExtractionContext {
   const $ = cheerio.load(html);
@@ -72,9 +72,7 @@ describe('LinksExtractor', () => {
           </body>
         </html>
       `;
-      const result = await extractor.extract(
-        createContext(html, 'https://example.com/page/')
-      );
+      const result = await extractor.extract(createContext(html, 'https://example.com/page/'));
       expect(result.links?.some((l) => l.url === 'https://example.com/relative/path')).toBe(true);
     });
 

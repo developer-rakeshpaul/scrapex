@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { scrape, scrapeHtml } from '@/core/scrape.js';
 import { ScrapeError } from '@/core/errors.js';
+import { scrape, scrapeHtml } from '@/core/scrape.js';
 import type { Fetcher, FetchResult } from '@/fetchers/types.js';
 
 // Sample HTML for testing
@@ -79,10 +79,7 @@ describe('scrapeHtml', () => {
   });
 
   it('should normalize the URL', async () => {
-    const result = await scrapeHtml(
-      sampleHtml,
-      'https://example.com/page?utm_source=test&valid=1'
-    );
+    const result = await scrapeHtml(sampleHtml, 'https://example.com/page?utm_source=test&valid=1');
     expect(result.url).not.toContain('utm_source');
     expect(result.url).toContain('valid=1');
   });
@@ -186,7 +183,8 @@ describe('scrape', () => {
 
 describe('scrapeHtml with minimal HTML', () => {
   it('should handle HTML without meta tags', async () => {
-    const minimalHtml = '<html><head><title>Simple</title></head><body><p>Content</p></body></html>';
+    const minimalHtml =
+      '<html><head><title>Simple</title></head><body><p>Content</p></body></html>';
     const result = await scrapeHtml(minimalHtml, 'https://example.com');
 
     expect(result.title).toBe('Simple');

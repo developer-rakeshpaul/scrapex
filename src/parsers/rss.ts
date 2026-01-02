@@ -1,5 +1,5 @@
-import * as cheerio from "cheerio";
-import type { Element } from "domhandler";
+import * as cheerio from 'cheerio';
+import type { Element } from 'domhandler';
 import type {
   FeedEnclosure,
   FeedItem,
@@ -7,7 +7,7 @@ import type {
   ParsedFeed,
   ParserResult,
   SourceParser,
-} from "./types.js";
+} from './types.js';
 
 export interface RSSParserOptions {
   /**
@@ -34,7 +34,7 @@ export interface RSSParserOptions {
  * ```
  */
 export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
-  readonly name = "rss";
+  readonly name = 'rss';
   private customFields: Record<string, string>;
 
   constructor(options?: RSSParserOptions) {
@@ -43,11 +43,7 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
 
   canParse(content: string): boolean {
     const lower = content.toLowerCase();
-    return (
-      lower.includes("<rss") ||
-      lower.includes("<feed") ||
-      lower.includes("<rdf:rdf")
-    );
+    return lower.includes('<rss') || lower.includes('<feed') || lower.includes('<rdf:rdf');
   }
 
   parse(content: string, url?: string): ParserResult<ParsedFeed, FeedMeta> {
@@ -56,52 +52,46 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
     const $ = cheerio.load(content, { xml: true });
 
     // Detect format and parse
-    if ($("feed").length > 0) {
+    if ($('feed').length > 0) {
       return this.parseAtom($, url);
-    } else if ($("rdf\\:RDF, RDF").length > 0) {
+    } else if ($('rdf\\:RDF, RDF').length > 0) {
       return this.parseRSS1($, url);
     } else {
       return this.parseRSS2($, url);
     }
   }
 
-  private parseRSS2(
-    $: cheerio.CheerioAPI,
-    baseUrl?: string
-  ): ParserResult<ParsedFeed, FeedMeta> {
-    const channel = $("channel");
-    const feedLink = channel.find("> link").text();
+  private parseRSS2($: cheerio.CheerioAPI, baseUrl?: string): ParserResult<ParsedFeed, FeedMeta> {
+    const channel = $('channel');
+    const feedLink = channel.find('> link').text();
     const resolveBase = baseUrl || feedLink;
 
-    const items: FeedItem[] = $("item")
+    const items: FeedItem[] = $('item')
       .map((_, el) => {
         const $item = $(el);
-        const itemLink = $item.find("link").text();
-        const guid = $item.find("guid").text();
-        const pubDate = $item.find("pubDate").text();
+        const itemLink = $item.find('link').text();
+        const guid = $item.find('guid').text();
+        const pubDate = $item.find('pubDate').text();
 
         // Resolve link with fallback to guid if it's a URL
         const resolvedLink = this.resolveLink(itemLink, guid, resolveBase);
 
         return {
           id: guid || itemLink,
-          title: $item.find("title").text(),
+          title: $item.find('title').text(),
           link: resolvedLink,
-          description: this.parseText($item.find("description")),
-          content: this.parseContentEncoded($item.find("content\\:encoded")),
-          author:
-            $item.find("author").text() ||
-            $item.find("dc\\:creator").text() ||
-            undefined,
+          description: this.parseText($item.find('description')),
+          content: this.parseContentEncoded($item.find('content\\:encoded')),
+          author: $item.find('author').text() || $item.find('dc\\:creator').text() || undefined,
           publishedAt: this.parseDate(pubDate),
           rawPublishedAt: pubDate || undefined,
           categories: this.parseCategories(
             $item
-              .find("category")
+              .find('category')
               .map((_, c) => $(c).text())
               .get()
           ),
-          enclosure: this.parseEnclosure($item.find("enclosure"), resolveBase),
+          enclosure: this.parseEnclosure($item.find('enclosure'), resolveBase),
           customFields: this.extractCustomFields($item),
         };
       })
@@ -109,23 +99,23 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
 
     return {
       data: {
-        format: "rss2",
-        title: channel.find("> title").text(),
-        description: channel.find("> description").text() || undefined,
+        format: 'rss2',
+        title: channel.find('> title').text(),
+        description: channel.find('> description').text() || undefined,
         link: this.resolveUrl(feedLink, resolveBase),
-        language: channel.find("> language").text() || undefined,
-        lastBuildDate: this.parseDate(channel.find("> lastBuildDate").text()),
-        copyright: channel.find("> copyright").text() || undefined,
+        language: channel.find('> language').text() || undefined,
+        lastBuildDate: this.parseDate(channel.find('> lastBuildDate').text()),
+        copyright: channel.find('> copyright').text() || undefined,
         items,
         customFields: this.extractCustomFields(channel),
       },
       meta: {
-        generator: channel.find("> generator").text() || undefined,
-        ttl: this.parseNumber(channel.find("> ttl").text()),
-        image: this.parseImage(channel.find("> image"), resolveBase),
+        generator: channel.find('> generator').text() || undefined,
+        ttl: this.parseNumber(channel.find('> ttl').text()),
+        image: this.parseImage(channel.find('> image'), resolveBase),
         categories: this.parseCategories(
           channel
-            .find("> category")
+            .find('> category')
             .map((_, c) => $(c).text())
             .get()
         ),
@@ -133,44 +123,37 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
     };
   }
 
-  private parseAtom(
-    $: cheerio.CheerioAPI,
-    baseUrl?: string
-  ): ParserResult<ParsedFeed, FeedMeta> {
-    const feed = $("feed");
-    const feedLink =
-      feed.find('> link[rel="alternate"], > link:not([rel])').attr("href") ||
-      "";
-    const nextLink = feed.find('> link[rel="next"]').attr("href");
+  private parseAtom($: cheerio.CheerioAPI, baseUrl?: string): ParserResult<ParsedFeed, FeedMeta> {
+    const feed = $('feed');
+    const feedLink = feed.find('> link[rel="alternate"], > link:not([rel])').attr('href') || '';
+    const nextLink = feed.find('> link[rel="next"]').attr('href');
     const resolveBase = baseUrl || feedLink;
 
-    const items: FeedItem[] = $("entry")
+    const items: FeedItem[] = $('entry')
       .map((_, el) => {
         const $entry = $(el);
-        const entryLink =
-          $entry.find('link[rel="alternate"], link:not([rel])').attr("href") ||
-          "";
-        const entryId = $entry.find("id").text();
-        const published = $entry.find("published").text();
-        const updated = $entry.find("updated").text();
+        const entryLink = $entry.find('link[rel="alternate"], link:not([rel])').attr('href') || '';
+        const entryId = $entry.find('id').text();
+        const published = $entry.find('published').text();
+        const updated = $entry.find('updated').text();
 
         // Resolve link with fallback to id if it's a URL
         const resolvedLink = this.resolveLink(entryLink, entryId, resolveBase);
 
         return {
           id: entryId,
-          title: $entry.find("title").text(),
+          title: $entry.find('title').text(),
           link: resolvedLink,
-          description: this.parseText($entry.find("summary")),
-          content: this.parseText($entry.find("content")),
-          author: $entry.find("author name").text() || undefined,
+          description: this.parseText($entry.find('summary')),
+          content: this.parseText($entry.find('content')),
+          author: $entry.find('author name').text() || undefined,
           publishedAt: this.parseDate(published),
           rawPublishedAt: published || updated || undefined,
           updatedAt: this.parseDate(updated),
           categories: this.parseCategories(
             $entry
-              .find("category")
-              .map((_, c) => $(c).attr("term"))
+              .find('category')
+              .map((_, c) => $(c).attr('term'))
               .get()
           ),
           customFields: this.extractCustomFields($entry),
@@ -180,62 +163,59 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
 
     return {
       data: {
-        format: "atom",
-        title: feed.find("> title").text(),
-        description: feed.find("> subtitle").text() || undefined,
+        format: 'atom',
+        title: feed.find('> title').text(),
+        description: feed.find('> subtitle').text() || undefined,
         link: this.resolveUrl(feedLink, resolveBase),
         next: nextLink ? this.resolveUrl(nextLink, resolveBase) : undefined,
-        language: feed.attr("xml:lang") || undefined,
-        lastBuildDate: this.parseDate(feed.find("> updated").text()),
-        copyright: feed.find("> rights").text() || undefined,
+        language: feed.attr('xml:lang') || undefined,
+        lastBuildDate: this.parseDate(feed.find('> updated').text()),
+        copyright: feed.find('> rights').text() || undefined,
         items,
         customFields: this.extractCustomFields(feed),
       },
       meta: {
-        generator: feed.find("> generator").text() || undefined,
+        generator: feed.find('> generator').text() || undefined,
         image: this.parseAtomImage(feed, resolveBase),
         categories: this.parseCategories(
           feed
-            .find("> category")
-            .map((_, c) => $(c).attr("term"))
+            .find('> category')
+            .map((_, c) => $(c).attr('term'))
             .get()
         ),
       },
     };
   }
 
-  private parseRSS1(
-    $: cheerio.CheerioAPI,
-    baseUrl?: string
-  ): ParserResult<ParsedFeed, FeedMeta> {
-    const channel = $("channel");
-    const feedLink = channel.find("link").text();
+  private parseRSS1($: cheerio.CheerioAPI, baseUrl?: string): ParserResult<ParsedFeed, FeedMeta> {
+    const channel = $('channel');
+    const feedLink = channel.find('link').text();
     const resolveBase = baseUrl || feedLink;
 
     // RSS 1.0 items are siblings of channel, not children
-    const items: FeedItem[] = $("item")
+    const items: FeedItem[] = $('item')
       .map((_, el) => {
         const $item = $(el);
-        const itemLink = $item.find("link").text();
-        const rdfAbout = $item.attr("rdf:about") || "";
-        const dcDate = $item.find("dc\\:date").text();
+        const itemLink = $item.find('link').text();
+        const rdfAbout = $item.attr('rdf:about') || '';
+        const dcDate = $item.find('dc\\:date').text();
 
         // Resolve link with fallback to rdf:about
         const resolvedLink = this.resolveLink(itemLink, rdfAbout, resolveBase);
 
         // Extract dc:subject as categories (RSS 1.0 uses Dublin Core)
         const dcSubjects = $item
-          .find("dc\\:subject")
+          .find('dc\\:subject')
           .map((_, s) => $(s).text())
           .get();
 
         return {
           id: rdfAbout || itemLink,
-          title: $item.find("title").text(),
+          title: $item.find('title').text(),
           link: resolvedLink,
-          description: this.parseText($item.find("description")),
-          content: this.parseContentEncoded($item.find("content\\:encoded")),
-          author: $item.find("dc\\:creator").text() || undefined,
+          description: this.parseText($item.find('description')),
+          content: this.parseContentEncoded($item.find('content\\:encoded')),
+          author: $item.find('dc\\:creator').text() || undefined,
           publishedAt: this.parseDate(dcDate),
           rawPublishedAt: dcDate || undefined,
           categories: this.parseCategories(dcSubjects),
@@ -245,38 +225,33 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
       .get();
 
     // Parse RDF image element (sibling of channel)
-    const rdfImage = $("image");
-    const imageUrl =
-      rdfImage.find("url").text() || rdfImage.attr("rdf:resource");
+    const rdfImage = $('image');
+    const imageUrl = rdfImage.find('url').text() || rdfImage.attr('rdf:resource');
 
     return {
       data: {
-        format: "rss1",
-        title: channel.find("title").text(),
-        description: channel.find("description").text() || undefined,
+        format: 'rss1',
+        title: channel.find('title').text(),
+        description: channel.find('description').text() || undefined,
         link: this.resolveUrl(feedLink, resolveBase),
-        language: channel.find("dc\\:language").text() || undefined,
-        lastBuildDate: this.parseDate(channel.find("dc\\:date").text()),
-        copyright: channel.find("dc\\:rights").text() || undefined,
+        language: channel.find('dc\\:language').text() || undefined,
+        lastBuildDate: this.parseDate(channel.find('dc\\:date').text()),
+        copyright: channel.find('dc\\:rights').text() || undefined,
         items,
         customFields: this.extractCustomFields(channel),
       },
       meta: {
-        generator:
-          channel.find("admin\\:generatorAgent").attr("rdf:resource") ||
-          undefined,
+        generator: channel.find('admin\\:generatorAgent').attr('rdf:resource') || undefined,
         image: imageUrl
           ? {
               url: this.resolveUrl(imageUrl, resolveBase),
-              title: rdfImage.find("title").text() || undefined,
-              link:
-                this.resolveUrl(rdfImage.find("link").text(), resolveBase) ||
-                undefined,
+              title: rdfImage.find('title').text() || undefined,
+              link: this.resolveUrl(rdfImage.find('link').text(), resolveBase) || undefined,
             }
           : undefined,
         categories: this.parseCategories(
           channel
-            .find("dc\\:subject")
+            .find('dc\\:subject')
             .map((_, s) => $(s).text())
             .get()
         ),
@@ -287,9 +262,7 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
   /**
    * Extract custom fields from an element using configured selectors.
    */
-  private extractCustomFields(
-    $el: cheerio.Cheerio<Element>
-  ): Record<string, string> | undefined {
+  private extractCustomFields($el: cheerio.Cheerio<Element>): Record<string, string> | undefined {
     if (Object.keys(this.customFields).length === 0) return undefined;
 
     const fields: Record<string, string> = {};
@@ -336,16 +309,14 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
   private parseContentEncoded($el: cheerio.Cheerio<Element>): string | undefined {
     const raw = $el.text().trim();
     if (!raw) return undefined;
-    return raw.replace(/<[^>]+>/g, "").trim() || undefined;
+    return raw.replace(/<[^>]+>/g, '').trim() || undefined;
   }
 
   /**
    * Parse categories/tags, filtering out empty strings.
    */
   private parseCategories(categories: (string | undefined)[]): string[] {
-    return categories
-      .map((c) => c?.trim())
-      .filter((c): c is string => !!c && c.length > 0);
+    return categories.map((c) => c?.trim()).filter((c): c is string => !!c && c.length > 0);
   }
 
   /**
@@ -353,13 +324,13 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
    * Only allows https scheme; all other schemes are rejected.
    */
   private resolveUrl(url: string, base?: string): string {
-    if (!url?.trim()) return "";
+    if (!url?.trim()) return '';
 
     try {
       const resolved = base ? new URL(url, base) : new URL(url);
-      return resolved.protocol === "https:" ? resolved.href : "";
+      return resolved.protocol === 'https:' ? resolved.href : '';
     } catch {
-      return "";
+      return '';
     }
   }
 
@@ -367,11 +338,7 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
    * Resolve link with fallback to id/guid if primary link is empty and id is a URL.
    * Only allows https scheme; all other schemes are rejected.
    */
-  private resolveLink(
-    primaryLink: string,
-    fallbackId: string,
-    base?: string
-  ): string {
+  private resolveLink(primaryLink: string, fallbackId: string, base?: string): string {
     // Try primary link first
     if (primaryLink?.trim()) {
       return this.resolveUrl(primaryLink, base);
@@ -381,14 +348,14 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
     if (fallbackId?.trim()) {
       try {
         const resolvedId = new URL(fallbackId);
-        return resolvedId.protocol === "https:" ? resolvedId.href : "";
+        return resolvedId.protocol === 'https:' ? resolvedId.href : '';
       } catch {
         // Not a valid URL, try resolving against base
         return this.resolveUrl(fallbackId, base);
       }
     }
 
-    return "";
+    return '';
   }
 
   /**
@@ -398,13 +365,13 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
     $enc: cheerio.Cheerio<Element>,
     baseUrl?: string
   ): FeedEnclosure | undefined {
-    const url = $enc.attr("url");
+    const url = $enc.attr('url');
     if (!url) return undefined;
 
     return {
       url: this.resolveUrl(url, baseUrl),
-      type: $enc.attr("type") || undefined,
-      length: this.parseNumber($enc.attr("length")),
+      type: $enc.attr('type') || undefined,
+      length: this.parseNumber($enc.attr('length')),
     };
   }
 
@@ -414,14 +381,14 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
   private parseImage(
     $img: cheerio.Cheerio<Element>,
     baseUrl?: string
-  ): FeedMeta["image"] | undefined {
-    const url = $img.find("url").text();
+  ): FeedMeta['image'] | undefined {
+    const url = $img.find('url').text();
     if (!url) return undefined;
 
     return {
       url: this.resolveUrl(url, baseUrl),
-      title: $img.find("title").text() || undefined,
-      link: this.resolveUrl($img.find("link").text(), baseUrl) || undefined,
+      title: $img.find('title').text() || undefined,
+      link: this.resolveUrl($img.find('link').text(), baseUrl) || undefined,
     };
   }
 
@@ -431,9 +398,9 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
   private parseAtomImage(
     $feed: cheerio.Cheerio<Element>,
     baseUrl?: string
-  ): FeedMeta["image"] | undefined {
-    const logo = $feed.find("> logo").text();
-    const icon = $feed.find("> icon").text();
+  ): FeedMeta['image'] | undefined {
+    const logo = $feed.find('> logo').text();
+    const icon = $feed.find('> icon').text();
     const url = logo || icon;
 
     if (!url) return undefined;

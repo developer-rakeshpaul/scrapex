@@ -18,6 +18,11 @@
       "types": "./dist/llm/index.d.mts",
       "import": "./dist/llm/index.mjs",
       "require": "./dist/llm/index.cjs"
+    },
+    "./embeddings": {
+      "types": "./dist/embeddings/index.d.mts",
+      "import": "./dist/embeddings/index.mjs",
+      "require": "./dist/embeddings/index.cjs"
     }
   },
   "main": "./dist/index.cjs",
@@ -53,7 +58,9 @@
     "extraction",
     "readability",
     "markdown",
-    "parser"
+    "parser",
+    "embeddings",
+    "vector-search"
   ],
   "author": "Rakesh Paul <https://binaryroute.com/authors/rk-paul/>",
   "license": "MIT",
@@ -81,17 +88,9 @@
     "vitest": "^4.0.16"
   },
   "peerDependencies": {
-    "@anthropic-ai/sdk": ">=0.30.0",
-    "openai": ">=4.0.0",
     "puppeteer": ">=23.0.0"
   },
   "peerDependenciesMeta": {
-    "@anthropic-ai/sdk": {
-      "optional": true
-    },
-    "openai": {
-      "optional": true
-    },
     "puppeteer": {
       "optional": true
     }
