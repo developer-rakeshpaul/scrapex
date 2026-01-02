@@ -21,13 +21,16 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
+          # Note: Not setting registry-url here to avoid auth token injection
+          # npm will use default registry
+
+      - name: Configure npm registry
+        run: npm config set registry https://registry.npmjs.org/
 
       - name: Verify npm version
         run: |
           echo "Node version: $(node -v)"
           echo "npm version: $(npm -v)"
-          # OIDC trusted publishing requires npm 11.5+
 
       - name: Install dependencies
         run: npm ci
@@ -66,14 +69,10 @@ jobs:
           else
             echo "tag=latest" >> $GITHUB_OUTPUT
           fi
-          echo "Publishing with npm tag: $(cat $GITHUB_OUTPUT | grep tag | cut -d= -f2)"
+          echo "Publishing with npm tag: ${{ steps.npm-tag.outputs.tag || 'beta' }}"
 
-      - name: Debug npm config
-        run: |
-          echo "Registry: $(npm config get registry)"
-          echo "GitHub Repository: ${{ github.repository }}"
-          echo "GitHub Actor: ${{ github.actor }}"
-          cat ~/.npmrc 2>/dev/null || echo "No .npmrc found"
-
-      - name: Publish to npm
+      - name: Publish to npm with OIDC
         run: npm publish --provenance --access public --tag ${{ steps.npm-tag.outputs.tag }}
+        env:
+          # Explicitly unset any auth token to force OIDC
+          NODE_AUTH_TOKEN: ''
