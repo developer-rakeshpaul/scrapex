@@ -159,6 +159,18 @@ const result = await scrape(url, {
 });
 ```
 
+By default, embeddings prefer `normalizedText` when available (generated via `scrape({ normalize: ... })`). Disable this if you want raw `textContent` instead:
+
+```typescript
+const result = await scrape(url, {
+  normalize: { mode: 'full', removeBoilerplate: true },
+  embeddings: {
+    provider: providerConfig,
+    preferNormalized: false,
+  },
+});
+```
+
 ## Chunking Long Content
 
 For long documents, content is automatically chunked with overlap:

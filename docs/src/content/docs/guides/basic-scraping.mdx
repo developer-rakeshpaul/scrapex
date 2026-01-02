@@ -67,6 +67,24 @@ const result = await scrape(url, {
 });
 ```
 
+### Normalization
+
+Generate clean, boilerplate-free text:
+
+```typescript
+const result = await scrape(url, {
+  normalize: {
+    mode: 'full',
+    removeBoilerplate: true,
+  },
+});
+
+console.log(result.normalizedText);
+console.log(result.normalizationMeta);
+```
+
+Note: For large pages, consider using `dropSelectors` to remove heavy DOM regions (nav, footer, ads, or SVGs) to improve normalization performance.
+
 ## Content Types
 
 scrapex automatically classifies content:

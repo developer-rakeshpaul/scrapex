@@ -106,6 +106,7 @@ OLLAMA_EMBEDDING_MODEL=nomic-embed-text npx tsx examples/21-embeddings.ts
 | [19-extractor-pipeline-debug.ts](./19-extractor-pipeline-debug.ts) | Debug extractor ordering, dependencies, and failure handling |
 | [20-rss-parsing.ts](./20-rss-parsing.ts) | Parse RSS/Atom feeds and convert to markdown |
 | [21-embeddings.ts](./21-embeddings.ts) | Generate embeddings from text or scraped content |
+| [22-normalize-text.ts](./22-normalize-text.ts) | Normalize text with boilerplate removal and metadata |
 
 ## Practice Sites
 

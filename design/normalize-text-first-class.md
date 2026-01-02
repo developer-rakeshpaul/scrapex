@@ -19,7 +19,7 @@ Introduce a first-class `normalize` option to `scrape()` that produces consisten
 
 ---
 
-## Proposed API
+## Proposed API (Implemented)
 
 ### New Types (`src/content/types.ts`)
 
@@ -154,7 +154,7 @@ export interface NormalizationMeta {
   boilerplateRemoved: boolean;
   /** Whether a classifier (custom or default) was used */
   classifierUsed: boolean;
-  /** Content hash for deduplication (SHA-256, first 16 chars) */
+  /** Content hash for deduplication (SHA-256, first 32 chars) */
   hash: string;
   /** Normalization time in milliseconds */
   extractionTimeMs: number;
@@ -218,7 +218,9 @@ import type { ContentBlock, ContentBlockClassifier, ClassifierResult } from './t
  * Default site-agnostic block classifier.
  * Filters navigation, footers, boilerplate, and short fragments.
  */
-export const defaultBlockClassifier: ContentBlockClassifier = (block): ClassifierResult => {
+export const defaultBlockClassifier: ContentBlockClassifier = (
+  block: ContentBlock
+): ClassifierResult => {
   const text = (block.text || '').trim();
   const lowerText = text.toLowerCase().slice(0, 1000); // limit regex input
 
@@ -255,7 +257,7 @@ export const defaultBlockClassifier: ContentBlockClassifier = (block): Classifie
   }
 
   // Media credits/captions
-  if (/\b(photo by|image:|credit:|source:)\b/i.test(lowerText.slice(0, 1000)) && text.length < 120) {
+  if (/\b(photo by|image:|credit:|source:)\b/i.test(lowerText) && text.length < 120) {
     return { accept: false, label: 'media-credit' };
   }
 
@@ -269,7 +271,7 @@ export const defaultBlockClassifier: ContentBlockClassifier = (block): Classifie
 
   // Longer paragraphs are typically more substantive
   if (block.type === 'paragraph') {
-    score = Math.min(0.9, 0.5 + (text.length / 1000));
+    score = Math.min(0.9, 0.5 + text.length / 1000);
   }
 
   // Quotes and code are often important
@@ -299,16 +301,14 @@ export function combineClassifiers(
       results.push(result);
     }
 
-    // Average scores
-    const scores = results.map(r => r.score).filter((s): s is number => s !== undefined);
-    const avgScore = scores.length > 0
-      ? scores.reduce((a, b) => a + b, 0) / scores.length
-      : undefined;
+    const scores = results.map((result) => result.score).filter((score) => score !== undefined);
+    const avgScore =
+      scores.length > 0 ? scores.reduce((sum, score) => sum + score, 0) / scores.length : undefined;
 
     return {
       accept: true,
       score: avgScore,
-      label: results.map(r => r.label).filter(Boolean).join('+') || 'content',
+      label: results.map((result) => result.label).filter(Boolean).join('+') || 'content',
     };
   };
 }
@@ -348,17 +348,17 @@ const BLOCK_TYPE_SELECTORS: Record<string, BlockType> = {
   '.legal, .disclaimer, .terms, .copyright': 'legal',
   'blockquote, q': 'quote',
   'pre, code': 'code',
-  'table': 'table',
+  table: 'table',
   'ul, ol, dl, li, dt, dd': 'list',
   'figure, img, video, audio, picture': 'media',
-  'figcaption': 'paragraph',
-  'h1': 'heading',
-  'h2': 'heading',
-  'h3': 'heading',
-  'h4': 'heading',
-  'h5': 'heading',
-  'h6': 'heading',
-  'p': 'paragraph',
+  figcaption: 'paragraph',
+  h1: 'heading',
+  h2: 'heading',
+  h3: 'heading',
+  h4: 'heading',
+  h5: 'heading',
+  h6: 'heading',
+  p: 'paragraph',
 };
 
 /**
@@ -392,7 +392,9 @@ export function parseBlocks(
     const $el = $(el);
     const tagName = el.tagName?.toLowerCase();
 
-    if (!tagName) return;
+    if (!tagName) {
+      return;
+    }
 
     // Determine block type
     let type: BlockType = 'unknown';
@@ -408,28 +410,38 @@ export function parseBlocks(
 
     // Extract heading level
     const headingMatch = tagName.match(/^h([1-6])$/);
-    if (headingMatch) {
+    if (headingMatch?.[1]) {
       type = 'heading';
-      level = parseInt(headingMatch[1], 10) as 1 | 2 | 3 | 4 | 5 | 6;
+      level = Number.parseInt(headingMatch[1], 10) as 1 | 2 | 3 | 4 | 5 | 6;
     }
 
     // Skip non-block elements
-    if (type === 'unknown' && !['p', 'div', 'section', 'article', 'li', 'dt', 'dd', 'figcaption'].includes(tagName)) {
+    if (
+      type === 'unknown' &&
+      !['p', 'div', 'section', 'article', 'li', 'dt', 'dd', 'figcaption'].includes(tagName)
+    ) {
       return;
     }
 
     // Get text content
     const text = $el.text().trim();
-    if (!text) return;
+    if (!text) {
+      return;
+    }
 
     // Avoid duplicates from nested elements by preferring the most granular blocks
-    const hasBlockChildren = $el.find('p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, pre, table').length > 0;
+    const hasBlockChildren =
+      $el.find('p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, pre, table').length > 0;
     if (hasBlockChildren) {
       return; // Skip containers, process children instead
     }
 
     // Build block
-    const parentTags = $el.parents().map((_, p) => p.tagName?.toLowerCase()).get().reverse();
+    const parentTags = $el
+      .parents()
+      .map((_, p) => p.tagName?.toLowerCase())
+      .get()
+      .reverse();
     const block: ContentBlock = {
       type: type === 'unknown' ? 'paragraph' : type,
       text,
@@ -462,12 +474,6 @@ export function parseBlocks(
 }
 ```
 
-Notes:
-- `DEFAULT_DROP_SELECTORS` includes large/noisy elements like `svg`, `script`, `style`, and `iframe`.
-- The allowlist explicitly keeps `li`, `dt`, `dd`, and `figcaption` to avoid dropping valid short content.
-- Lists are captured at the container level (`ul`, `ol`, `dl`) by default; list items are included in the parent text.
-- If finer granularity is desired, a future option can split list items into separate blocks.
-
 ---
 
 ## Normalizer Implementation
@@ -477,9 +483,9 @@ Notes:
 
 import { createHash } from 'node:crypto';
 import type {
+  ClassifierContext,
   ContentBlock,
   ContentBlockClassifier,
-  ClassifierContext,
   NormalizeOptions,
   NormalizeResult,
   NormalizationMeta,
@@ -491,7 +497,10 @@ import { defaultBlockClassifier } from './classifier.js';
  */
 function normalizeString(
   text: string,
-  options: Pick<NormalizeOptions, 'decodeEntities' | 'normalizeUnicode' | 'preserveLineBreaks' | 'stripLinks'>
+  options: Pick<
+    NormalizeOptions,
+    'decodeEntities' | 'normalizeUnicode' | 'preserveLineBreaks' | 'stripLinks'
+  >
 ): string {
   let result = text;
 
@@ -503,8 +512,10 @@ function normalizeString(
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
-      .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
-      .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)));
+      .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number.parseInt(code, 10)))
+      .replace(/&#x([0-9a-f]+);/gi, (_, code) =>
+        String.fromCharCode(Number.parseInt(code, 16))
+      );
   }
 
   // Strip markdown links, keep text
@@ -545,7 +556,6 @@ function truncateText(
   let truncated = text.slice(0, maxChars);
 
   if (strategy === 'sentence') {
-    // Find last sentence boundary
     const sentenceEnd = truncated.lastIndexOf('. ');
     const questionEnd = truncated.lastIndexOf('? ');
     const exclamEnd = truncated.lastIndexOf('! ');
@@ -555,13 +565,11 @@ function truncateText(
       truncated = truncated.slice(0, lastBoundary + 1);
     }
   } else if (strategy === 'word') {
-    // Find last word boundary
     const lastSpace = truncated.lastIndexOf(' ');
     if (lastSpace > maxChars * 0.8) {
       truncated = truncated.slice(0, lastSpace);
     }
   }
-  // 'char' strategy just uses the slice as-is
 
   return { text: truncated.trim(), truncated: true };
 }
@@ -592,11 +600,9 @@ export async function normalizeText(
     debug = false,
   } = options;
 
-  // Choose classifier
   const classifier: ContentBlockClassifier | undefined =
     options.blockClassifier ?? (removeBoilerplate ? defaultBlockClassifier : undefined);
 
-  // Classify blocks
   let classifiedBlocks: Array<ContentBlock & { score?: number; label?: string }> = [];
 
   if (classifier) {
@@ -623,19 +629,16 @@ export async function normalizeText(
       }
     }
   } else {
-    classifiedBlocks = blocks.map(b => ({ ...b }));
+    classifiedBlocks = blocks.map((block) => ({ ...block }));
   }
 
-  // Sort by score in summary mode
   if (mode === 'summary') {
     classifiedBlocks.sort((a, b) => (b.score ?? 0.5) - (a.score ?? 0.5));
   }
 
-  // Assemble text
-  const textParts = classifiedBlocks.map(block => {
+  const textParts = classifiedBlocks.map((block) => {
     let text = normalizeString(block.text, options);
 
-    // Format headings
     if (block.type === 'heading' && block.level) {
       text = `${'#'.repeat(block.level)} ${text}`;
     }
@@ -645,7 +648,6 @@ export async function normalizeText(
 
   let normalizedText = textParts.join('\n\n');
 
-  // Apply truncation
   let truncated = false;
   if (maxChars && normalizedText.length > maxChars) {
     const result = truncateText(normalizedText, maxChars, truncate);
@@ -653,9 +655,7 @@ export async function normalizeText(
     truncated = result.truncated;
   }
 
-  // Check minimum length
   if (minChars && normalizedText.length < minChars) {
-    // Return empty result if too short
     return {
       text: '',
       meta: {
@@ -674,7 +674,6 @@ export async function normalizeText(
     };
   }
 
-  // Build metadata
   const meta: NormalizationMeta = {
     charCount: normalizedText.length,
     tokenEstimate: Math.ceil(normalizedText.length / 4),
@@ -698,20 +697,6 @@ export async function normalizeText(
 
 ---
 
-## Data Flow Contract
-
-- Normalization runs on extracted HTML before truncation is applied to output.
-- When Readability content is available, prefer it as the block source; otherwise fall back to DOM parsing.
-- `normalizedText` is derived from accepted blocks, then truncated via `maxChars` with `truncate` strategy.
-- `hash` is computed from the final normalized text (after stripLinks + truncation).
-
-## Safety Defaults
-
-- `maxBlocks: 2000`
-- `stripLinks: true`
-- Default classifier uses bounded regex input (first 1000 chars).
-- `includeHtml: false` and `normalizedBlocks` only when `normalize.debug === true`.
-
 ## Pipeline Integration (`src/core/scrape.ts`)
 
 Add normalization after extraction, before LLM enhancement:
@@ -719,60 +704,51 @@ Add normalization after extraction, before LLM enhancement:
 ```ts
 // After extractors run, before LLM enhancement:
 
-// Normalization (after extraction, before LLM)
-if (options.normalize) {
+async function applyNormalization(
+  result: ScrapedData,
+  context: ExtractionContext,
+  options: ScrapeOptions,
+  url: string
+): Promise<void> {
+  if (!options.normalize) {
+    return;
+  }
+
   try {
     const blocks = parseBlocks(context.$, {
       dropSelectors: options.normalize.dropSelectors,
       maxBlocks: options.normalize.maxBlocks,
       includeHtml: options.normalize.includeHtml,
     });
-    const normalizeResult = await normalizeText(
-      blocks,
-      options.normalize,
-      normalizedUrl
-    );
 
-    if (normalizeResult.text) {
-      intermediateResult.normalizedText = normalizeResult.text;
-      intermediateResult.normalizationMeta = normalizeResult.meta;
+    const normalizeResult = await normalizeText(blocks, options.normalize, url);
 
-      if (options.normalize.debug && normalizeResult.blocks) {
-        intermediateResult.normalizedBlocks = normalizeResult.blocks;
-      }
+    result.normalizedText = normalizeResult.text;
+    result.normalizationMeta = normalizeResult.meta;
+
+    if (options.normalize.debug && normalizeResult.blocks) {
+      result.normalizedBlocks = normalizeResult.blocks;
     }
   } catch (error) {
     console.error('Normalization failed:', error);
-    intermediateResult.error = intermediateResult.error
-      ? `${intermediateResult.error}; normalize: ${error instanceof Error ? error.message : String(error)}`
+    result.error = result.error
+      ? `${result.error}; normalize: ${error instanceof Error ? error.message : String(error)}`
       : `normalize: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
+
+// Called in scrape() and scrapeHtml():
+await applyNormalization(intermediateResult, context, options, normalizedUrl);
 ```
 
 ---
 
 ## Embeddings Integration (`src/embeddings/input.ts`)
 
-Update `selectInput()` to prefer `normalizedText`:
+`EmbeddingOptions.preferNormalized` controls preference for `normalizedText`:
 
 ```ts
-export function selectInput(data: ScrapedData, config?: InputConfig): string {
-  // Prefer normalizedText when available (fallback to textContent if empty)
-  if (data.normalizedText) {
-    return data.normalizedText;
-  }
-
-  // ... existing selection logic ...
-}
-```
-
-If a project wants to avoid normalized content for embeddings, add an optional flag:
-
-```ts
-embeddings: {
-  preferNormalized?: boolean; // default: true
-}
+const rawInput = selectInput(data, options.input, options.preferNormalized);
 ```
 
 ---
@@ -781,11 +757,13 @@ embeddings: {
 
 | Scenario | Behavior |
 |----------|----------|
-| Block parsing fails | Fall back to empty blocks, set error field |
-| Classifier throws | Drop block, continue processing (do not include full content) |
-| Async classifier rejects | Drop block, continue processing |
-| Content too short (< minChars) | Return empty text with meta |
-| No accepted blocks | Return empty text with meta |
+| Block parsing fails | Caught by applyNormalization(), sets error field |
+| Classifier throws | Error propagates; caught by applyNormalization() |
+| Async classifier rejects | Error propagates; caught by applyNormalization() |
+| Content too short (< minChars) | Return empty text with meta (no error) |
+| No accepted blocks | Return empty text with meta (no error) |
+
+Note: The default classifier is synchronous and does not throw. Custom async classifiers should handle their own errors or let them propagate to be caught by the pipeline.
 
 ---
 
@@ -793,12 +771,12 @@ embeddings: {
 
 - No network access introduced.
 - Classifier is pure/deterministic; avoid site-specific patterns in defaults.
-- Treat `ContentBlock.html` as unsafe; sanitize before rendering.
-- Limit regex checks to a bounded prefix to avoid ReDoS.
+- Limit regex checks to a bounded prefix (first 1000 chars).
 - Enforce `maxBlocks` to avoid unbounded memory use.
 - Do not populate `ContentBlock.html` unless `includeHtml: true` is explicitly set.
+- Treat `ContentBlock.html` as unsafe; sanitize before rendering.
 - Preserve current SSRF protections and HTML parsing safeguards.
-- Hash uses SHA-256 (secure, collision-resistant).
+- Hash uses SHA-256 (32 hex chars = 128 bits, collision-resistant).
 
 ---
 
@@ -810,70 +788,45 @@ embeddings: {
 
 ---
 
-## Test Plan
+## Test Plan (Implemented)
 
 ### Unit Tests (`test/content/`)
 
-1. **Block Parser** (`blocks.test.ts`)
-   - Parses headings (h1-h6) with correct levels
-   - Parses paragraphs, lists, quotes, code blocks
-   - Detects nav/footer/legal structural types
-   - Respects dropSelectors option
-   - Handles nested elements correctly
+- **Block Parser** (`blocks.test.ts`)
+  - Parses headings and paragraphs with correct levels
+  - Respects drop selectors
+  - Respects maxBlocks
 
-2. **Classifier** (`classifier.test.ts`)
-   - Default classifier rejects nav/footer/legal
-   - Default classifier rejects boilerplate patterns
-   - Default classifier rejects short fragments
-   - Default classifier accepts substantial content
-   - Score calculation for summary mode
-   - combineClassifiers() works correctly
+- **Classifier** (`classifier.test.ts`)
+  - Rejects nav/footer/legal
+  - Rejects boilerplate patterns
+  - Accepts substantive content
 
-3. **Normalizer** (`normalizer.test.ts`)
-   - Decodes HTML entities
-   - Normalizes Unicode (NFC)
-   - Collapses whitespace correctly
-   - Preserves/removes line breaks per option
-   - Truncates at sentence/word/char boundaries
-   - Respects minChars threshold
-   - Generates consistent hashes
-   - Debug mode includes blocks
+- **Normalizer** (`normalizer.test.ts`)
+  - Decodes entities and strips markdown links
+  - Truncates at sentence boundaries
+  - Respects minChars threshold
 
 ### Integration Tests (`test/core/`)
 
-1. **Scrape with normalize** (`scrape-normalize.test.ts`)
-   - `normalize` option produces `normalizedText`
-   - `normalize.debug` includes `normalizedBlocks`
-   - Normalization errors don't break scrape
-   - `normalizedText` used by embeddings when available
+- **Scrape with normalize** (`scrape-normalize.test.ts`)
+  - Produces normalized text and metadata
+  - Emits normalized blocks when debug is enabled
 
 ---
 
-## File Structure
+## Future (Not Implemented Yet)
 
-```plaintext
-src/
-├── content/
-│   ├── index.ts           # Public exports
-│   ├── types.ts           # Type definitions
-│   ├── blocks.ts          # parseBlocks() implementation
-│   ├── classifier.ts      # defaultBlockClassifier, combineClassifiers
-│   └── normalizer.ts      # normalizeText() implementation
-├── core/
-│   ├── scrape.ts          # Add normalize option handling
-│   └── types.ts           # Add NormalizeOptions to ScrapeOptions
-├── embeddings/
-│   └── input.ts           # Update selectInput() to prefer normalizedText
-└── index.ts               # Export new types and utilities
+The following improvements are **not implemented** in code today, but are good candidates for future iterations:
 
-test/
-├── content/
-│   ├── blocks.test.ts
-│   ├── classifier.test.ts
-│   └── normalizer.test.ts
-└── core/
-    └── scrape-normalize.test.ts
-```
+- Preset configurations (`normalize: 'embedding' | 'display' | 'llm' | 'minimal'`).
+- Per-block hashing and deduplication.
+- `list-item` and `table-row` block types.
+- Structured table extraction and `includeAltText` for media blocks.
+- `replaceClassifier`, `onBlockClassified`, and classifier timeouts.
+- Hash input size limits and streaming/iterator block parsing for huge documents.
+- Dedicated sanitizer helper for `ContentBlock.html`.
+- Language detection beyond `languageHint`.
 
 ---
 
@@ -897,6 +850,7 @@ export type {
   NormalizeOptions,
   NormalizationMeta,
   NormalizeResult,
+  TruncateStrategy,
 } from './content/types.js';
 ```
 
@@ -975,35 +929,4 @@ const result = await normalizeText(blocks, {
 console.log(result.text);
 console.log(result.meta.tokenEstimate);
 ```
-
----
-
-## Implementation Checklist
-
-- [ ] Create `src/content/types.ts` with all type definitions
-- [ ] Create `src/content/blocks.ts` with `parseBlocks()`
-- [ ] Create `src/content/classifier.ts` with `defaultBlockClassifier`
-- [ ] Create `src/content/normalizer.ts` with `normalizeText()`
-- [ ] Create `src/content/index.ts` with exports
-- [ ] Update `src/core/types.ts` with new fields
-- [ ] Update `src/core/scrape.ts` with normalization step
-- [ ] Update `src/embeddings/input.ts` to prefer `normalizedText`
-- [ ] Update `src/index.ts` with new exports
-- [ ] Write unit tests for blocks, classifier, normalizer
-- [ ] Write integration test for scrape with normalize
-- [ ] Update documentation
-
----
-
-## Estimated Effort
-
-| Component | Estimate |
-|-----------|----------|
-| Types | 0.5h |
-| Block parser | 2h |
-| Classifier | 1h |
-| Normalizer | 2h |
-| Pipeline integration | 1h |
-| Tests | 3h |
-| Documentation | 1h |
-| **Total** | **~10-12h** |
+```

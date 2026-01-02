@@ -5,6 +5,24 @@
  * extensible pipeline, and pluggable parsers.
  */
 
+export type {
+  BlockType,
+  ClassifierContext,
+  ClassifierResult,
+  ContentBlock,
+  ContentBlockClassifier,
+  NormalizationMeta,
+  NormalizeOptions,
+  NormalizeResult,
+  TruncateStrategy,
+} from './content/index.js';
+// Content normalization
+export {
+  combineClassifiers,
+  defaultBlockClassifier,
+  normalizeText,
+  parseBlocks,
+} from './content/index.js';
 // Core types and utilities
 export type {
   CompletionOptions,

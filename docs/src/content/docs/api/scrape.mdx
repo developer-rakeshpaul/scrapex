@@ -39,6 +39,7 @@ The URL to scrape. Must be a valid HTTP or HTTPS URL.
 | `enhance` | `EnhancementType[]` | `undefined` | LLM enhancement types |
 | `extract` | `ExtractionSchema` | `undefined` | LLM structured extraction schema |
 | `embeddings` | `EmbeddingOptions` | `undefined` | Generate vector embeddings |
+| `normalize` | `NormalizeOptions` | `undefined` | Normalize content into clean text |
 
 ## Returns
 
@@ -79,6 +80,11 @@ interface ScrapedData {
 
   // Embedding result (when embeddings option is provided)
   embeddings?: EmbeddingResult;
+
+  // Normalized text output (when normalize option is provided)
+  normalizedText?: string;
+  normalizationMeta?: NormalizationMeta;
+  normalizedBlocks?: ContentBlock[];
 }
 ```
 
@@ -142,6 +148,22 @@ const result = await scrape('https://example.com', {
 if (result.embeddings?.status === 'success') {
   console.log(result.embeddings.vector); // [0.023, -0.041, ...]
 }
+```
+
+### With Normalization
+
+```typescript
+import { scrape } from 'scrapex';
+
+const result = await scrape('https://example.com/article', {
+  normalize: {
+    mode: 'full',
+    removeBoilerplate: true,
+  },
+});
+
+console.log(result.normalizedText);
+console.log(result.normalizationMeta);
 ```
 
 ### With Custom Extractors

@@ -1,3 +1,4 @@
+import { normalizeText, parseBlocks } from '@/content/index.js';
 import { generateEmbeddings } from '@/embeddings/pipeline.js';
 import { createDefaultExtractors, sortExtractors } from '@/extractors/index.js';
 import { checkRobotsTxt, defaultFetcher } from '@/fetchers/index.js';
@@ -5,7 +6,7 @@ import { enhance, extract } from '@/llm/enhancer.js';
 import { extractDomain, isValidUrl, normalizeUrl } from '@/utils/url.js';
 import { createExtractionContext, mergeResults, preloadJsdom } from './context.js';
 import { ScrapeError } from './errors.js';
-import type { Extractor, ScrapedData, ScrapeOptions } from './types.js';
+import type { ExtractionContext, Extractor, ScrapedData, ScrapeOptions } from './types.js';
 
 async function applyLlmProcessing(result: ScrapedData, options: ScrapeOptions): Promise<void> {
   // LLM Enhancement
@@ -32,6 +33,39 @@ async function applyLlmProcessing(result: ScrapedData, options: ScrapeOptions): 
         ? `${result.error}; LLM extraction: ${error instanceof Error ? error.message : String(error)}`
         : `LLM extraction: ${error instanceof Error ? error.message : String(error)}`;
     }
+  }
+}
+
+async function applyNormalization(
+  result: ScrapedData,
+  context: ExtractionContext,
+  options: ScrapeOptions,
+  url: string
+): Promise<void> {
+  if (!options.normalize) {
+    return;
+  }
+
+  try {
+    const blocks = parseBlocks(context.$, {
+      dropSelectors: options.normalize.dropSelectors,
+      maxBlocks: options.normalize.maxBlocks,
+      includeHtml: options.normalize.includeHtml,
+    });
+
+    const normalizeResult = await normalizeText(blocks, options.normalize, url);
+
+    result.normalizedText = normalizeResult.text;
+    result.normalizationMeta = normalizeResult.meta;
+
+    if (options.normalize.debug && normalizeResult.blocks) {
+      result.normalizedBlocks = normalizeResult.blocks;
+    }
+  } catch (error) {
+    console.error('Normalization failed:', error);
+    result.error = result.error
+      ? `${result.error}; normalize: ${error instanceof Error ? error.message : String(error)}`
+      : `normalize: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
@@ -143,6 +177,9 @@ export async function scrape(url: string, options: ScrapeOptions = {}): Promise<
     scrapeTimeMs: 0,
     error: context.results.error,
   };
+
+  // Normalization (after extraction, before LLM)
+  await applyNormalization(intermediateResult, context, options, normalizedUrl);
 
   // LLM Enhancement and Extraction
   await applyLlmProcessing(intermediateResult, options);
@@ -260,6 +297,9 @@ export async function scrapeHtml(
     scrapeTimeMs: 0,
     error: context.results.error,
   };
+
+  // Normalization (after extraction, before LLM)
+  await applyNormalization(intermediateResult, context, options, normalizedUrl);
 
   // LLM Enhancement and Extraction
   await applyLlmProcessing(intermediateResult, options);

@@ -412,6 +412,7 @@ Main configuration for embedding generation.
 interface EmbeddingOptions {
   provider: EmbeddingProviderConfig;
   model?: string;
+  preferNormalized?: boolean; // Default: true. Use normalizedText instead of textContent when available.
   input?: EmbeddingInputConfig;
   chunking?: ChunkingConfig;
   output?: OutputConfig;

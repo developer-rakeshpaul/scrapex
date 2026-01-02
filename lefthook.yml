@@ -1,0 +1,18 @@
+# Lefthook configuration
+# https://github.com/evilmartians/lefthook
+
+pre-commit:
+  parallel: true
+  commands:
+    lint-format:
+      glob: "*.{js,ts,mjs,mts,cjs,cts,jsx,tsx,json}"
+      run: npx biome check --write {staged_files}
+      stage_fixed: true
+
+pre-push:
+  parallel: false
+  commands:
+    type-check:
+      run: npm run type-check
+    test:
+      run: npm test
