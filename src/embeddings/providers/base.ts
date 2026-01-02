@@ -141,6 +141,28 @@ export function handleApiError(error: unknown, providerName: string): never {
     throw error;
   }
 
+  const statusCode =
+    typeof (error as { statusCode?: number }).statusCode === 'number'
+      ? (error as { statusCode: number }).statusCode
+      : typeof (error as { status?: number }).status === 'number'
+        ? (error as { status: number }).status
+        : undefined;
+
+  if (statusCode) {
+    if (statusCode === 429) {
+      throw new ScrapeError(`${providerName} rate limit exceeded`, 'BLOCKED', statusCode);
+    }
+    if (statusCode === 401 || statusCode === 403) {
+      throw new ScrapeError(`${providerName} authentication failed`, 'BLOCKED', statusCode);
+    }
+    if (statusCode === 408 || statusCode === 504) {
+      throw new ScrapeError(`${providerName} request timed out`, 'TIMEOUT', statusCode);
+    }
+    if (statusCode >= 500) {
+      throw new ScrapeError(`${providerName} server error`, 'FETCH_FAILED', statusCode);
+    }
+  }
+
   if (error instanceof Error) {
     const lowerMessage = error.message.toLowerCase();
 

@@ -41,7 +41,7 @@ docker exec ollama ollama pull llama3.2
 npx tsx examples/09-llm-local-docker.ts
 
 # Or specify custom endpoint via environment variables
-LLM_URL=http://localhost:12434/engines/v1 LLM_MODEL=ai/smollm2:360M-Q4_K_M npx tsx examples/09-llm-local-docker.ts
+LLM_URL=http://localhost:12434/engines/v1/chat/completions LLM_MODEL=ai/smollm2:360M-Q4_K_M npx tsx examples/09-llm-local-docker.ts
 ```
 
 For the Puppeteer example (18), install the optional peer dependency:
@@ -85,7 +85,7 @@ OLLAMA_EMBEDDING_MODEL=nomic-embed-text npx tsx examples/21-embeddings.ts
 |---------|-------------|
 | [11-markdown-parsing.ts](./11-markdown-parsing.ts) | Parse markdown into sections, links, code blocks |
 | [12-github-parsing.ts](./12-github-parsing.ts) | GitHub-specific URL parsing and utilities |
-| [20-rss-parsing.ts](./20-rss-parsing.ts) | Parse RSS/Atom feeds and convert to markdown |
+| [20-rss-parsing.ts](./20-rss-parsing.ts) | Parse RSS/Atom feeds and convert to Markdown |
 
 ### Embeddings
 

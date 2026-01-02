@@ -262,6 +262,7 @@ describe('Provider Presets', () => {
     };
 
     it('should lazily load pipeline only on first call', async () => {
+      // biome-ignore lint/suspicious/noExplicitAny: Mock transformers library for testing
       const provider = createTransformersEmbedding(mockTransformers as any);
 
       expect(mockPipeline).not.toHaveBeenCalled();
@@ -280,6 +281,7 @@ describe('Provider Presets', () => {
     });
 
     it('should reload pipeline if model changes', async () => {
+      // biome-ignore lint/suspicious/noExplicitAny: Mock transformers library for testing
       const provider = createTransformersEmbedding(mockTransformers as any);
 
       const extractor = vi.fn().mockResolvedValue({ data: new Float32Array([0.1]) });
@@ -292,9 +294,34 @@ describe('Provider Presets', () => {
       expect(mockPipeline).toHaveBeenCalledWith('feature-extraction', 'model-b', expect.anything());
     });
 
-    it('should set cache directory', () => {
-      createTransformersEmbedding(mockTransformers as any, { cacheDir: '/tmp/cache' });
-      expect(mockTransformers.env.cacheDir).toBe('/tmp/cache');
+    it('should set cache directory during pipeline initialization', async () => {
+      // Create a fresh mock to track cacheDir at call time
+      const envState = { cacheDir: '' };
+      let cacheDirDuringPipelineCall: string | undefined;
+
+      const localMockPipeline = vi.fn().mockImplementation(() => {
+        // Capture cacheDir at the moment pipeline() is called
+        cacheDirDuringPipelineCall = envState.cacheDir;
+        return Promise.resolve(async () => ({ data: new Float32Array([0.1]) }));
+      });
+
+      const localMockTransformers = {
+        pipeline: localMockPipeline,
+        env: envState,
+      };
+
+      // biome-ignore lint/suspicious/noExplicitAny: Mock transformers library for testing
+      const provider = createTransformersEmbedding(localMockTransformers as any, {
+        cacheDir: '/tmp/cache',
+      });
+
+      // Trigger pipeline initialization
+      await provider.embed(['test'], {});
+
+      // cacheDir should have been set during the pipeline() call
+      expect(cacheDirDuringPipelineCall).toBe('/tmp/cache');
+      // But restored after initialization (transient behavior)
+      expect(envState.cacheDir).toBe('');
     });
   });
 });

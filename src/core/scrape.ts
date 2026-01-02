@@ -145,7 +145,10 @@ export async function scrape(url: string, options: ScrapeOptions = {}): Promise<
   // Embedding Generation (after LLM enhancement so summary/entities are available)
   // Note: generateEmbeddings never throws - it returns EmbeddingSkipped on errors
   if (options.embeddings) {
-    intermediateResult.embeddings = await generateEmbeddings(intermediateResult, options.embeddings);
+    intermediateResult.embeddings = await generateEmbeddings(
+      intermediateResult,
+      options.embeddings
+    );
   }
 
   // Build final result with timing
@@ -256,7 +259,10 @@ export async function scrapeHtml(
   // Embedding Generation
   // Note: generateEmbeddings never throws - it returns EmbeddingSkipped on errors
   if (options.embeddings) {
-    intermediateResult.embeddings = await generateEmbeddings(intermediateResult, options.embeddings);
+    intermediateResult.embeddings = await generateEmbeddings(
+      intermediateResult,
+      options.embeddings
+    );
   }
 
   // Build final result with timing

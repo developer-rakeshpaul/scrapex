@@ -35,6 +35,8 @@ export interface CacheKeyParams {
 /**
  * Generate a content-addressable cache key.
  * Key is based on content hash and embedding configuration.
+ * Note: custom RegExp patterns are serialized by source+flags; different
+ * constructions can yield different cache keys even if equivalent.
  */
 export function generateCacheKey(params: CacheKeyParams): string {
   const hash = createHash('sha256');
@@ -375,6 +377,7 @@ export function createNoOpCache(): EmbeddingCache {
 
 /**
  * Default in-memory cache instance.
+ * Optimized for moderate cache sizes (default 1000 entries).
  */
 let defaultCache: InMemoryEmbeddingCache | null = null;
 
@@ -391,9 +394,9 @@ export function getDefaultCache(): InMemoryEmbeddingCache {
 /**
  * Reset the default cache (mainly for testing).
  */
-export function resetDefaultCache(): void {
+export async function resetDefaultCache(): Promise<void> {
   if (defaultCache) {
-    defaultCache.clear();
+    await defaultCache.clear();
   }
   defaultCache = null;
 }

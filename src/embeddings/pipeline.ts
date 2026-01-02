@@ -1,4 +1,5 @@
 import type { ScrapedData } from '../core/types.js';
+import { ScrapeError } from '../core/errors.js';
 import { aggregateVectors, getDimensions } from './aggregation.js';
 import { generateCacheKey, generateChecksum, getDefaultCache } from './cache.js';
 import { chunkText, estimateTokens } from './chunking.js';
@@ -273,8 +274,10 @@ export async function generateEmbeddings(
 
     return result;
   } catch (error) {
-    // Never throw - return skipped result
     const reason = error instanceof Error ? error.message : String(error);
+    if (error instanceof ScrapeError && ['INVALID_URL', 'BLOCKED'].includes(error.code)) {
+      throw error;
+    }
     return createSkippedResult(reason, {
       latencyMs: Date.now() - startTime,
     });

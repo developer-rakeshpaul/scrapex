@@ -144,6 +144,7 @@ const fireworks = createOpenAI({
 
     try {
       if (providerName.startsWith("Ollama")) {
+        // Ollama often struggles with JSON-only responses; use ask() for plain text.
         const data = await scrape("https://quotes.toscrape.com", {
           maxContentLength: 5000,
         });

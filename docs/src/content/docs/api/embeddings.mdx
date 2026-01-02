@@ -107,7 +107,7 @@ import { createOllamaEmbedding } from 'scrapex/embeddings';
 
 const provider = createOllamaEmbedding({
   model?: string,     // Default: 'nomic-embed-text'
-  baseUrl?: string,   // Default: 'http://localhost:11434/api/embeddings'
+  baseUrl?: string,   // Default: 'http://localhost:11434/api/embeddings' (full endpoint URL)
 });
 ```
 
@@ -153,6 +153,8 @@ const provider = createTransformersEmbedding(transformers, {
   cacheDir?: string,   // Model cache directory
 });
 ```
+
+Note: `cacheDir` is applied only during pipeline initialization and then restored to avoid global side effects.
 
 **Required dependencies:**
 ```bash
@@ -623,6 +625,8 @@ interface EmbeddingCache {
   clear(): Promise<void>;
 }
 ```
+
+Note: The built-in in-memory cache uses a simple LRU strategy that scans entries to evict the oldest. This is efficient for moderate cache sizes (default 1000), but if you need larger or high-throughput caching, consider providing a custom store with O(1) eviction.
 
 ### ResilienceConfig
 

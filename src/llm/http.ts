@@ -3,7 +3,7 @@
  * Provides a unified interface for any REST-based LLM API.
  */
 
-import type { z } from 'zod';
+import { z } from 'zod';
 import { type BaseHttpConfig, BaseHttpProvider } from '../common/http-base.js';
 import { ScrapeError } from '../core/errors.js';
 import type { CompletionOptions, LLMProvider } from './types.js';
@@ -177,10 +177,16 @@ Do not include any explanation or markdown formatting. Just the JSON object.`;
     }
 
     try {
-      // Try to extract JSON from response (in case of markdown formatting)
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const trimmed = content.trim();
+      try {
+        return schema.parse(JSON.parse(trimmed));
+      } catch {
+        // Fall back to extracting JSON from markdown or surrounding text
+      }
+
+      const jsonMatch = content.match(/[[{][\s\S]*[\]}]/);
       if (!jsonMatch) {
-        throw new Error('No JSON object found in response');
+        throw new Error('No JSON found in response');
       }
 
       const parsed = JSON.parse(jsonMatch[0]);
@@ -206,9 +212,9 @@ Do not include any explanation or markdown formatting. Just the JSON object.`;
  * Used for prompting LLMs to return structured data.
  */
 export function zodToJsonSchema(schema: z.ZodType<unknown>): object {
-  // Zod 4+ has built-in toJSONSchema method
-  if (typeof (schema as unknown as { toJSONSchema: () => object }).toJSONSchema === 'function') {
-    const jsonSchema = (schema as unknown as { toJSONSchema: () => object }).toJSONSchema();
+  // Zod 4+ has built-in static toJSONSchema method
+  if (typeof z.toJSONSchema === 'function') {
+    const jsonSchema = z.toJSONSchema(schema);
     // Remove $schema key as it's not needed for LLM prompting
     const { $schema, ...rest } = jsonSchema as { $schema?: string; [key: string]: unknown };
     return rest;
@@ -257,4 +263,4 @@ export function zodToJsonSchema(schema: z.ZodType<unknown>): object {
 }
 
 // Re-export types for convenience
-export type { z as ZodType } from 'zod';
+export type { ZodType } from 'zod';

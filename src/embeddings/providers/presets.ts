@@ -288,11 +288,6 @@ export function createTransformersEmbedding(
     normalize: options?.normalize ?? true,
   };
 
-  // Set cache directory if provided
-  if (options?.cacheDir && transformers.env) {
-    transformers.env.cacheDir = options.cacheDir;
-  }
-
   return {
     name: 'transformers',
     async embed(texts: string[], request: EmbedRequest): Promise<EmbedResponse> {
@@ -300,9 +295,27 @@ export function createTransformersEmbedding(
 
       // Lazy-load pipeline (only on first use or model change)
       if (!pipeline || currentModel !== model) {
-        pipeline = await transformers.pipeline('feature-extraction', model, {
-          quantized: config.quantized,
-        });
+        const cacheDir = options?.cacheDir;
+        const env = transformers.env as { cacheDir?: string } | undefined;
+        const priorCacheDir = env?.cacheDir;
+
+        if (cacheDir && env) {
+          env.cacheDir = cacheDir;
+        }
+
+        try {
+          pipeline = await transformers.pipeline('feature-extraction', model, {
+            quantized: config.quantized,
+          });
+        } finally {
+          if (cacheDir && env) {
+            if (priorCacheDir === undefined) {
+              delete env.cacheDir;
+            } else {
+              env.cacheDir = priorCacheDir;
+            }
+          }
+        }
         currentModel = model;
       }
 

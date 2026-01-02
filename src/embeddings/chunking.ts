@@ -60,7 +60,7 @@ export function createTokenizer(config?: ChunkingConfig['tokenizer']): (text: st
 
 /**
  * Find a natural break point in text (sentence or word boundary).
- * Prefers sentence boundaries (., !, ?) but falls back to word boundaries.
+ * Prefers common sentence boundaries (Latin + CJK), falls back to word boundaries.
  */
 function findBreakPoint(text: string, targetIndex: number): number {
   // Look for sentence boundary within 20% of target
@@ -69,7 +69,7 @@ function findBreakPoint(text: string, targetIndex: number): number {
   const searchText = text.slice(searchStart, searchEnd);
 
   // Find last sentence boundary before target
-  const sentenceMatch = /[.!?]\s+/g;
+  const sentenceMatch = /[.!?。！？]\s*/g;
   let lastSentenceEnd = -1;
 
   for (const match of searchText.matchAll(sentenceMatch)) {
@@ -100,7 +100,8 @@ function findBreakPoint(text: string, targetIndex: number): number {
 export function chunkText(text: string, config?: ChunkingConfig): TextChunk[] {
   const chunkSize = config?.size ?? DEFAULT_CHUNK_SIZE;
   const rawOverlap = config?.overlap ?? DEFAULT_OVERLAP;
-  const overlap = Math.min(rawOverlap, chunkSize - 1); // Ensure overlap < size
+  const safeOverlap = Math.max(0, rawOverlap);
+  const overlap = Math.min(safeOverlap, Math.max(0, chunkSize - 1)); // Ensure overlap < size
   const maxInputLength = config?.maxInputLength ?? DEFAULT_MAX_INPUT_LENGTH;
   const tokenizer = createTokenizer(config?.tokenizer);
 
@@ -222,8 +223,9 @@ export function getChunkingStats(
   // Calculate estimated chunks
   let estimatedChunks = 1;
   if (estimatedTokens > chunkSize) {
-    const effectiveChunkSize = chunkSize - overlap;
-    estimatedChunks = Math.ceil((estimatedTokens - overlap) / effectiveChunkSize);
+    const clampedOverlap = Math.min(overlap, Math.max(0, chunkSize - 1));
+    const effectiveChunkSize = Math.max(1, chunkSize - clampedOverlap);
+    estimatedChunks = Math.ceil((estimatedTokens - clampedOverlap) / effectiveChunkSize);
   }
 
   return {

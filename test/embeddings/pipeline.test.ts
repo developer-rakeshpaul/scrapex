@@ -60,8 +60,8 @@ const createTrackingProvider = (): {
 };
 
 describe('Embedding Pipeline', () => {
-  beforeEach(() => {
-    resetDefaultCache();
+  beforeEach(async () => {
+    await resetDefaultCache();
   });
 
   const mockData: Partial<ScrapedData> = {

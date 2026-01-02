@@ -74,7 +74,7 @@ if (result.embeddings?.status === 'success') {
     });
     ```
   </TabItem>
-  <TabItem label="Transformers.js">
+<TabItem label="Transformers.js">
     ```typescript
     // Zero-cost, offline embeddings using Hugging Face models
     import * as transformers from '@huggingface/transformers';
@@ -86,6 +86,8 @@ if (result.embeddings?.status === 'success') {
           type: 'custom',
           provider: createTransformersEmbedding(transformers, {
             model: 'Xenova/all-MiniLM-L6-v2',
+            // cacheDir is applied during pipeline init and then restored
+            cacheDir: '/tmp/transformers-cache',
           }),
         },
       },
@@ -229,7 +231,7 @@ const result = await scrape(url, {
 </Aside>
 
 <Aside type="note">
-  Default redaction patterns cover email, US phone formats, credit cards, SSN, and IPv4 addresses. Use `customPatterns` for additional coverage.
+  Available redaction patterns cover email, US phone formats, credit cards, SSN, and IPv4 addresses. Enable the patterns you need, and use `customPatterns` for additional coverage.
 </Aside>
 
 ## Caching

@@ -303,11 +303,12 @@ export abstract class BaseHttpProvider<TError = unknown> {
 
     // The actual fetch operation
     const doFetch = async (signal: AbortSignal): Promise<FetchResult<T>> => {
+      const composedSignal = options.signal ? AbortSignal.any([options.signal, signal]) : signal;
       const response = await fetch(url, {
         method: options.method ?? 'POST',
         headers: { ...this.headers, ...options.headers },
         body: options.body ? JSON.stringify(options.body) : undefined,
-        signal: options.signal ?? signal,
+        signal: composedSignal,
         redirect: this.allowRedirects ? 'follow' : 'error',
       });
 

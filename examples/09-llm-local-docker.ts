@@ -122,11 +122,11 @@ async function detectProvider(): Promise<{ provider: LLMProvider; name: string }
     console.log('  ✓ Docker Model Runner available');
     try {
       return {
-          provider: createOpenAI({
-            baseUrl: DOCKER_MODEL_RUNNER.baseUrl,
-            apiKey: 'not-needed', // Local doesn't need API key
-            model: DOCKER_MODEL_RUNNER.model,
-          }),
+        provider: createOpenAI({
+          baseUrl: DOCKER_MODEL_RUNNER.baseUrl,
+          apiKey: 'not-needed', // Local doesn't need API key
+          model: DOCKER_MODEL_RUNNER.model,
+        }),
         name: 'Docker Model Runner',
       };
     } catch (error) {

@@ -233,10 +233,32 @@ export async function withTimeout<T>(
 
 /**
  * Create an AbortSignal that times out after specified milliseconds.
+ * If parentSignal is provided, this signal will abort when the parent aborts.
  */
-export function createTimeoutSignal(timeoutMs: number): AbortSignal {
+export function createTimeoutSignal(timeoutMs: number, parentSignal?: AbortSignal): AbortSignal {
   const controller = new AbortController();
-  setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  timeoutId.unref?.();
+
+  const clear = () => clearTimeout(timeoutId);
+  controller.signal.addEventListener('abort', clear, { once: true });
+
+  if (parentSignal) {
+    if (parentSignal.aborted) {
+      clear();
+      controller.abort(parentSignal.reason);
+      return controller.signal;
+    }
+
+    parentSignal.addEventListener(
+      'abort',
+      () => {
+        clear();
+        controller.abort(parentSignal.reason);
+      },
+      { once: true }
+    );
+  }
   return controller.signal;
 }
 

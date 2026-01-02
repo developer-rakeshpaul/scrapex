@@ -26,9 +26,7 @@ export {
  * Create an embedding provider from configuration.
  * This is the main factory function for creating providers.
  */
-export function createEmbeddingProvider(
-  config: EmbeddingProviderConfig
-): EmbeddingProvider {
+export function createEmbeddingProvider(config: EmbeddingProviderConfig): EmbeddingProvider {
   switch (config.type) {
     case 'http': {
       // Use static import - already imported at top of file
