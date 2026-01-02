@@ -1,9 +1,9 @@
 /**
- * 14-batch-scraping.ts
+ * 15-batch-scraping.ts
  *
  * Scrape multiple URLs efficiently with rate limiting and error handling.
  *
- * Run: npx tsx examples/14-batch-scraping.ts
+ * Run: npx tsx examples/15-batch-scraping.ts
  */
 
 import { type ScrapedData, ScrapeError, scrape } from '../src/index.js';

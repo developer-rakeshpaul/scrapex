@@ -12,7 +12,7 @@ Parses RSS 2.0, RSS 1.0 (RDF), and Atom 1.0 feeds. Only `https` URLs are emitted
 ```typescript
 class RSSParser {
   constructor(options?: RSSParserOptions);
-  canParse(content: string): boolean;
+  canParse(content: string, url?: string): boolean;
   parse(content: string, url?: string): ParserResult<ParsedFeed, FeedMeta>;
 }
 

@@ -67,10 +67,10 @@ export class NativeFetcher implements Fetcher {
       }
 
       const contentType = response.headers.get('content-type') || '';
-      
+
       // Validate content type
       if (options.allowedContentTypes) {
-        const isAllowed = options.allowedContentTypes.some(type => 
+        const isAllowed = options.allowedContentTypes.some((type) =>
           contentType.toLowerCase().includes(type.toLowerCase())
         );
         if (!isAllowed) {

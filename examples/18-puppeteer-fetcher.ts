@@ -1,5 +1,5 @@
 /**
- * 17-puppeteer-fetcher.ts
+ * 18-puppeteer-fetcher.ts
  *
  * Demonstrates scraping a JavaScript-rendered page by providing a custom Fetcher
  * implemented with Puppeteer (optional peer dependency).
@@ -8,7 +8,7 @@
  *   npm install puppeteer
  *
  * Run:
- *   npx tsx examples/17-puppeteer-fetcher.ts
+ *   npx tsx examples/18-puppeteer-fetcher.ts
  */
 
 import { ScrapeError, type Fetcher, type FetchOptions, type FetchResult, scrape } from '../src/index.js';

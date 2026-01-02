@@ -31,6 +31,55 @@ export {
   scrape,
   scrapeHtml,
 } from './core/index.js';
+export type {
+  ChunkingConfig,
+  // Cache
+  EmbeddingCache,
+  EmbeddingCacheConfig,
+  EmbeddingInputConfig,
+  EmbeddingMetrics,
+  // Options
+  EmbeddingOptions,
+  // Provider types
+  EmbeddingProvider,
+  EmbeddingProviderConfig,
+  // Results
+  EmbeddingResult,
+  EmbeddingSkipped,
+  EmbeddingSource,
+  EmbeddingSuccessMultiple,
+  EmbeddingSuccessSingle,
+  EmbedRequest,
+  EmbedResponse,
+  HttpEmbeddingConfig,
+  OutputConfig,
+  ResilienceConfig,
+  SafetyConfig,
+} from './embeddings/index.js';
+// Embeddings
+export {
+  aggregateVectors,
+  // Utilities
+  chunkText,
+  cosineSimilarity,
+  createAzureEmbedding,
+  // Providers
+  createEmbeddingProvider,
+  createHttpEmbedding,
+  createHuggingFaceEmbedding,
+  createOllamaEmbedding,
+  createOpenAIEmbedding,
+  createPiiRedactor,
+  createTransformersEmbedding,
+  // Main functions
+  embed,
+  embedScrapedData,
+  estimateTokens,
+  generateEmbeddings,
+  InMemoryEmbeddingCache,
+  redactPii,
+  TRANSFORMERS_MODELS,
+} from './embeddings/index.js';
 // Extractors
 export {
   ContentExtractor,
@@ -54,20 +103,20 @@ export {
 export { RSSParser } from './parsers/index.js';
 // Utilities (URL + Feed)
 export {
+  discoverFeeds,
   // URL utilities
   extractDomain,
+  feedToMarkdown,
+  feedToText,
+  // Feed utilities
+  fetchFeed,
+  filterByDate,
   getPath,
   getProtocol,
   isExternalUrl,
   isValidUrl,
   matchesUrlPattern,
   normalizeUrl,
-  resolveUrl,
-  // Feed utilities
-  fetchFeed,
-  discoverFeeds,
-  filterByDate,
-  feedToMarkdown,
-  feedToText,
   paginateFeed,
+  resolveUrl,
 } from './utils/index.js';

@@ -7,7 +7,7 @@
  * Learn more: https://www.docker.com/blog/run-llms-locally/
  *
  * Environment variables (optional - for custom/testing):
- *   LLM_URL    - Base URL for the LLM endpoint (default: http://localhost:12434/engines/v1)
+ *   LLM_URL    - Chat completions endpoint (default: http://localhost:12434/engines/v1/chat/completions)
  *   LLM_MODEL  - Model name to use (e.g., ai/smollm2:360M-Q4_K_M)
  *   SCRAPE_URL - URL to scrape and summarize (default: https://example.com)
  *
@@ -37,7 +37,7 @@ import type { LLMProvider } from '../src/llm/index.js';
 import { createLMStudio, createOllama, createOpenAI } from '../src/llm/index.js';
 
 // Default Docker Model Runner URL
-const DEFAULT_DOCKER_URL = 'http://localhost:12434/engines/v1';
+const DEFAULT_DOCKER_URL = 'http://localhost:12434/engines/v1/chat/completions';
 const DEFAULT_SCRAPE_URL = 'https://example.com';
 
 // Docker Model Runner configuration
@@ -49,21 +49,32 @@ const DOCKER_MODEL_RUNNER = {
 
 // Ollama Docker configuration
 const OLLAMA_DOCKER = {
-  baseUrl: 'http://localhost:11434/v1',
-  port: 11434,
+  baseUrl: 'http://localhost:11434/v1/chat/completions',
   model: 'llama3.2',
 };
 
 // LM Studio configuration
 const LM_STUDIO = {
-  baseUrl: 'http://localhost:1234/v1',
-  port: 1234,
+  baseUrl: 'http://localhost:1234/v1/chat/completions',
   model: 'local-model',
 };
 
+function getProbeUrl(endpoint: string): string {
+  try {
+    const parsed = new URL(endpoint);
+    if (parsed.pathname.endsWith('/chat/completions')) {
+      parsed.pathname = parsed.pathname.replace(/\/chat\/completions$/, '');
+      return parsed.toString();
+    }
+    return parsed.toString();
+  } catch {
+    return endpoint;
+  }
+}
+
 async function checkEndpoint(url: string): Promise<boolean> {
   try {
-    const response = await fetch(url.replace('/v1', ''), {
+    const response = await fetch(getProbeUrl(url), {
       method: 'GET',
       signal: AbortSignal.timeout(2000),
     });
@@ -133,7 +144,7 @@ async function detectProvider(): Promise<{ provider: LLMProvider; name: string }
       return {
         provider: createOllama({
           model: OLLAMA_DOCKER.model,
-          port: OLLAMA_DOCKER.port,
+          baseUrl: OLLAMA_DOCKER.baseUrl,
         }),
         name: 'Ollama',
       };
@@ -150,7 +161,7 @@ async function detectProvider(): Promise<{ provider: LLMProvider; name: string }
     console.log('  ✓ LM Studio available');
     try {
       return {
-        provider: createLMStudio({ model: LM_STUDIO.model, port: LM_STUDIO.port }),
+        provider: createLMStudio({ model: LM_STUDIO.model, baseUrl: LM_STUDIO.baseUrl }),
         name: 'LM Studio',
       };
     } catch (error) {
@@ -169,9 +180,6 @@ async function main() {
   // Show setup instructions
   console.log('--- Setup Instructions ---');
   console.log(`
-Prerequisites:
-  npm install openai  # Required for OpenAI-compatible APIs
-
 Option 1: Docker Model Runner (Recommended)
   - Requires Docker Desktop 4.40+
   - Enable: Settings > Features in development > Docker Model Runner
@@ -187,7 +195,7 @@ Option 3: LM Studio
   - Load a model and start the local server
 
 Custom: Use environment variables to test any OpenAI-compatible endpoint
-  LLM_URL=http://localhost:12434/engines/v1 LLM_MODEL=ai/smollm2:360M-Q4_K_M npx tsx examples/09-llm-local-docker.ts
+  LLM_URL=http://localhost:12434/engines/v1/chat/completions LLM_MODEL=ai/smollm2:360M-Q4_K_M npx tsx examples/09-llm-local-docker.ts
 `);
 
   // Detect available provider
@@ -241,7 +249,7 @@ import { scrape } from 'scrapex';
 import { createOpenAI } from 'scrapex/llm';
 
 const llm = createOpenAI({
-  baseUrl: 'http://localhost:12434/engines/v1',
+  baseUrl: 'http://localhost:12434/engines/v1/chat/completions',
   apiKey: 'not-needed',
   model: 'ai/smolvlm',
 });
@@ -256,7 +264,7 @@ import { createOllama } from 'scrapex/llm';
 
 const ollama = createOllama({
   model: 'llama3.2',
-  port: 11434,
+  baseUrl: 'http://localhost:11434/v1/chat/completions',
 });
 
 const result2 = await scrape('https://example.com', {

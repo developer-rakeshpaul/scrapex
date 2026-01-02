@@ -1,8 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { z } from 'zod';
+import type { ScrapedData } from '@/core/types.js';
 import { enhance, extract } from '@/llm/enhancer.js';
 import type { LLMProvider } from '@/llm/types.js';
-import type { ScrapedData } from '@/core/types.js';
 
 // Mock LLM provider for testing
 function createMockProvider(responses: Record<string, unknown>): LLMProvider {

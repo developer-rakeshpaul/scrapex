@@ -1,4 +1,5 @@
 import type { CheerioAPI } from 'cheerio';
+import type { EmbeddingOptions, EmbeddingResult } from '../embeddings/types.js';
 
 /**
  * Content type classification for scraped URLs
@@ -79,6 +80,9 @@ export interface ScrapedData {
 
   // Custom extractor results (extensibility)
   custom?: Record<string, unknown>;
+
+  // Embeddings (optional)
+  embeddings?: EmbeddingResult;
 
   // Meta
   scrapedAt: string;
@@ -208,4 +212,7 @@ export interface ScrapeOptions {
 
   /** Schema for structured LLM extraction */
   extract?: ExtractionSchema;
+
+  /** Embedding generation options */
+  embeddings?: EmbeddingOptions;
 }

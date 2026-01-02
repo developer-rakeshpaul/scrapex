@@ -8,6 +8,7 @@ Modern web scraper with LLM-enhanced extraction, extensible pipeline, and plugga
 
 - **LLM-Ready Output** - Content extracted as Markdown, optimized for AI/LLM consumption
 - **Provider-Agnostic LLM** - Works with OpenAI, Anthropic, Ollama, LM Studio, or any OpenAI-compatible API
+- **Vector Embeddings** - Generate embeddings with OpenAI, Azure, Cohere, HuggingFace, Ollama, or local Transformers.js
 - **Extensible Pipeline** - Pluggable extractors with priority-based execution
 - **Smart Extraction** - Uses Mozilla Readability for content, Cheerio for metadata
 - **Markdown Parsing** - Parse markdown content, awesome lists, and GitHub repos
@@ -143,14 +144,48 @@ console.log(result.suggestedTags); // ['javascript', 'web', ...]
 console.log(result.entities);      // { people: [], organizations: [], ... }
 ```
 
+### Embeddings
+
+Generate vector embeddings from scraped content for semantic search, RAG, and similarity matching:
+
+```typescript
+import { scrape } from 'scrapex';
+import { createOpenAIEmbedding } from 'scrapex/embeddings';
+
+const result = await scrape('https://example.com/article', {
+  embeddings: {
+    provider: { type: 'custom', provider: createOpenAIEmbedding() },
+    model: 'text-embedding-3-small',
+  },
+});
+
+if (result.embeddings?.status === 'success') {
+  console.log(result.embeddings.vector); // [0.023, -0.041, ...]
+}
+```
+
+Features include:
+- **Multiple providers** - OpenAI, Azure, Cohere, HuggingFace, Ollama, Transformers.js
+- **PII redaction** - Automatically redact emails, phones, SSNs before sending to APIs
+- **Smart chunking** - Split long content with configurable overlap
+- **Caching** - Content-addressable cache to avoid redundant API calls
+- **Resilience** - Retry, circuit breaker, rate limiting
+
+See the [Embeddings Guide](https://scrapex.dev/guides/embeddings) for full documentation.
+
+## Breaking Changes (Beta)
+
+- LLM provider classes (e.g., `AnthropicProvider`) were removed. Use preset factories like
+  `createOpenAI`, `createAnthropic`, `createOllama`, and `createLMStudio` instead.
+
 ### Using Anthropic Claude
 
 ```typescript
-import { AnthropicProvider } from 'scrapex/llm';
+import { createAnthropic } from 'scrapex/llm';
 
-const llm = new AnthropicProvider({
+const llm = createAnthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
-  model: 'claude-3-5-haiku-20241022', // or 'claude-sonnet-4-20250514'
+  model: 'claude-3-5-haiku-20241022', // or 'claude-3-5-sonnet-20241022'
 });
 
 const result = await scrape(url, { llm, enhance: ['summarize'] });

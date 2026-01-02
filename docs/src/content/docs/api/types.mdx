@@ -53,6 +53,9 @@ interface ScrapedData {
   entities?: ExtractedEntities;
   extracted?: Record<string, unknown>;
 
+  // Embedding result
+  embeddings?: EmbeddingResult;
+
   // Custom extractor data
   custom?: Record<string, unknown>;
 
@@ -87,6 +90,9 @@ interface ScrapeOptions {
   llm?: LLMProvider;
   enhance?: EnhancementType[];
   extract?: ExtractionSchema;
+
+  // Embeddings
+  embeddings?: EmbeddingOptions;
 }
 ```
 
@@ -222,27 +228,17 @@ interface CompletionOptions {
 }
 ```
 
-### OpenAICompatibleConfig
-
-Options for `createOpenAI()`, `createOllama()`, and `createLMStudio()`.
-
-```typescript
-interface OpenAICompatibleConfig {
-  apiKey?: string;
-  model?: string;
-  baseUrl?: string;
-}
-```
+Preset factory options are documented in the
+[LLM Providers API](/api/llm-providers).
 
 ### AnthropicConfig
 
-Options for `AnthropicProvider`.
+Options for `createAnthropic()`.
 
 ```typescript
 interface AnthropicConfig {
   apiKey?: string;
   model?: string;
-  baseUrl?: string;
 }
 ```
 
@@ -372,6 +368,86 @@ type ScrapeErrorCode =
   | 'VALIDATION_ERROR';
 ```
 
+## Embedding Types
+
+### EmbeddingOptions
+
+Options for embedding generation.
+
+```typescript
+interface EmbeddingOptions {
+  provider: EmbeddingProviderConfig;
+  model?: string;
+  input?: EmbeddingInputConfig;
+  chunking?: ChunkingConfig;
+  output?: OutputConfig;
+  safety?: SafetyConfig;
+  cache?: EmbeddingCacheConfig;
+  resilience?: ResilienceConfig;
+  onChunk?: (chunk: string, embedding: number[]) => void;
+  onMetrics?: (metrics: EmbeddingMetrics) => void;
+}
+```
+
+### EmbeddingResult
+
+Discriminated union for embedding results.
+
+```typescript
+type EmbeddingResult =
+  | EmbeddingSuccessSingle
+  | EmbeddingSuccessMultiple
+  | EmbeddingSkipped;
+
+interface EmbeddingSuccessSingle {
+  status: 'success';
+  aggregation: 'average' | 'max' | 'first';
+  vector: number[];
+  source: EmbeddingSource;
+}
+
+interface EmbeddingSuccessMultiple {
+  status: 'success';
+  aggregation: 'all';
+  vectors: number[][];
+  source: EmbeddingSource;
+}
+
+interface EmbeddingSkipped {
+  status: 'skipped';
+  reason: string;
+  source: Partial<EmbeddingSource>;
+}
+```
+
+### EmbeddingSource
+
+Metadata about embedding generation.
+
+```typescript
+interface EmbeddingSource {
+  model?: string;
+  chunks: number;
+  tokens: number;
+  checksum: string;
+  cached: boolean;
+  latencyMs: number;
+}
+```
+
+### EmbeddingProviderConfig
+
+Provider configuration (discriminated union).
+
+```typescript
+type EmbeddingProviderConfig =
+  | { type: 'http'; config: HttpEmbeddingConfig }
+  | { type: 'custom'; provider: EmbeddingProvider };
+```
+
+Use preset factories (e.g., `createOpenAIEmbedding`, `createAzureEmbedding`) with
+`{ type: 'custom', provider: ... }`.
+
 ## Importing Types
 
 ```typescript
@@ -404,6 +480,19 @@ import type {
   MarkdownLink,
   CodeBlock,
 } from 'scrapex/parsers';
+
+// Embedding types
+import type {
+  EmbeddingOptions,
+  EmbeddingResult,
+  EmbeddingProvider,
+  EmbeddingProviderConfig,
+  EmbeddingSource,
+  EmbeddingMetrics,
+  ChunkingConfig,
+  SafetyConfig,
+  ResilienceState,
+} from 'scrapex/embeddings';
 ```
 
 ## See Also
@@ -411,3 +500,4 @@ import type {
 - [API Reference: scrape()](/api/scrape) - Main function
 - [API Reference: Extractors](/api/extractors) - Extractor API
 - [API Reference: LLM Providers](/api/llm-providers) - LLM API
+- [API Reference: Embeddings](/api/embeddings) - Embeddings API

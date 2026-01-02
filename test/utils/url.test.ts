@@ -132,9 +132,7 @@ describe('url utilities', () => {
       expect(resolveUrl('//cdn.example.com:8080/resource', baseUrl)).toBe(
         'https://cdn.example.com:8080/resource'
       );
-      expect(resolveUrl('//localhost:3000/api', baseUrl)).toBe(
-        'https://localhost:3000/api'
-      );
+      expect(resolveUrl('//localhost:3000/api', baseUrl)).toBe('https://localhost:3000/api');
     });
 
     it('should handle protocol-relative URLs with query strings, fragments, and ports combined', () => {
@@ -194,12 +192,12 @@ describe('url utilities', () => {
     });
 
     it('should match wildcard patterns', () => {
-      expect(matchesUrlPattern('https://example.com/blog/post-1', 'https://example.com/blog/*')).toBe(
+      expect(
+        matchesUrlPattern('https://example.com/blog/post-1', 'https://example.com/blog/*')
+      ).toBe(true);
+      expect(matchesUrlPattern('https://example.com/any/path', 'https://example.com/*/path')).toBe(
         true
       );
-      expect(
-        matchesUrlPattern('https://example.com/any/path', 'https://example.com/*/path')
-      ).toBe(true);
       expect(matchesUrlPattern('https://sub.example.com/page', 'https://*.example.com/*')).toBe(
         true
       );

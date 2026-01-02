@@ -1,3 +1,4 @@
+import { generateEmbeddings } from '@/embeddings/pipeline.js';
 import { createDefaultExtractors, sortExtractors } from '@/extractors/index.js';
 import { checkRobotsTxt, defaultFetcher } from '@/fetchers/index.js';
 import { enhance, extract } from '@/llm/enhancer.js';
@@ -141,6 +142,15 @@ export async function scrape(url: string, options: ScrapeOptions = {}): Promise<
     }
   }
 
+  // Embedding Generation (after LLM enhancement so summary/entities are available)
+  // Note: generateEmbeddings never throws - it returns EmbeddingSkipped on errors
+  if (options.embeddings) {
+    intermediateResult.embeddings = await generateEmbeddings(
+      intermediateResult,
+      options.embeddings
+    );
+  }
+
   // Build final result with timing
   const scrapeTimeMs = Date.now() - startTime;
 
@@ -212,10 +222,10 @@ export async function scrapeHtml(
     }
   }
 
-  const scrapeTimeMs = Date.now() - startTime;
   const domain = extractDomain(normalizedUrl);
 
-  const result: ScrapedData = {
+  // Build intermediate result
+  const intermediateResult: ScrapedData = {
     url: normalizedUrl,
     canonicalUrl: context.results.canonicalUrl || normalizedUrl,
     domain,
@@ -242,8 +252,25 @@ export async function scrapeHtml(
     extracted: context.results.extracted,
     custom: context.results.custom,
     scrapedAt: new Date().toISOString(),
-    scrapeTimeMs,
+    scrapeTimeMs: 0,
     error: context.results.error,
+  };
+
+  // Embedding Generation
+  // Note: generateEmbeddings never throws - it returns EmbeddingSkipped on errors
+  if (options.embeddings) {
+    intermediateResult.embeddings = await generateEmbeddings(
+      intermediateResult,
+      options.embeddings
+    );
+  }
+
+  // Build final result with timing
+  const scrapeTimeMs = Date.now() - startTime;
+
+  const result: ScrapedData = {
+    ...intermediateResult,
+    scrapeTimeMs,
   };
 
   return result;

@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 import { describe, expect, it } from 'vitest';
-import { MetaExtractor } from '@/extractors/meta.js';
 import type { ExtractionContext } from '@/core/types.js';
+import { MetaExtractor } from '@/extractors/meta.js';
 
 // Helper to create extraction context
 function createContext(html: string, url = 'https://example.com'): ExtractionContext {
@@ -156,9 +156,7 @@ describe('MetaExtractor', () => {
 
     it('should fallback to finalUrl', async () => {
       const html = '<html><head></head></html>';
-      const result = await extractor.extract(
-        createContext(html, 'https://example.com/final')
-      );
+      const result = await extractor.extract(createContext(html, 'https://example.com/final'));
       expect(result.canonicalUrl).toBe('https://example.com/final');
     });
   });

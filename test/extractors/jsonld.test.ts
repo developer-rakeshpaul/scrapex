@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio';
 import { describe, expect, it } from 'vitest';
-import { JsonLdExtractor } from '@/extractors/jsonld.js';
 import type { ExtractionContext } from '@/core/types.js';
+import { JsonLdExtractor } from '@/extractors/jsonld.js';
 
 function createContext(html: string, url = 'https://example.com'): ExtractionContext {
   const $ = cheerio.load(html);

@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  groupByCategory,
-  isGitHubRepo,
-  parseGitHubUrl,
-  toRawUrl,
-} from '@/parsers/github.js';
+import { groupByCategory, isGitHubRepo, parseGitHubUrl, toRawUrl } from '@/parsers/github.js';
 import type { MarkdownLink } from '@/parsers/types.js';
 
 // Test repo: https://github.com/developer-rakeshpaul/scrapex

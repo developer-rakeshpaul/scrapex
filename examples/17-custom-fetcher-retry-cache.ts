@@ -1,11 +1,11 @@
 /**
- * 16-custom-fetcher-retry-cache.ts
+ * 17-custom-fetcher-retry-cache.ts
  *
  * Demonstrates a custom Fetcher that adds:
  * - Simple in-memory caching
  * - Retry with exponential backoff for retryable failures
  *
- * Run: npx tsx examples/16-custom-fetcher-retry-cache.ts
+ * Run: npx tsx examples/17-custom-fetcher-retry-cache.ts
  */
 
 import {
@@ -97,4 +97,3 @@ async function main() {
 }
 
 main().catch(console.error);
-

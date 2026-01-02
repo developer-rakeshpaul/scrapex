@@ -3,104 +3,356 @@ title: LLM Providers
 description: API reference for LLM provider configuration and enhancement.
 ---
 
-LLM providers enable AI-powered content enhancement.
+LLM providers enable AI-powered content enhancement using a provider-agnostic design.
 
-## createOpenAI()
+## Preset Factory Functions
 
-Creates an OpenAI-compatible provider. Works with OpenAI, Azure OpenAI, Ollama, LM Studio, and other compatible APIs.
+All preset functions return an `LLMProvider` instance configured for the specific service.
+
+### createOpenAI()
+
+Creates an OpenAI provider.
 
 ```typescript
-function createOpenAI(options?: OpenAICompatibleConfig): LLMProvider
+function createOpenAI(options?: {
+  apiKey?: string;
+  model?: string;
+  baseUrl?: string;
+}): LLMProvider
 ```
 
-### Options
+#### Options
 
-| Option | Type | Required | Default | Description |
-|--------|------|----------|---------|-------------|
-| `apiKey` | `string` | No* | `OPENAI_API_KEY` env | API key |
-| `baseUrl` | `string` | No | OpenAI API | Custom endpoint |
-| `model` | `string` | No | `gpt-4o-mini` | Model to use |
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `apiKey` | `string` | `OPENAI_API_KEY` env | API key |
+| `model` | `string` | `gpt-4o-mini` | Model to use |
+| `baseUrl` | `string` | OpenAI API | Custom endpoint |
 
-*Required unless using environment variable or local endpoint.
-
-### Examples
+#### Example
 
 ```typescript
 import { createOpenAI } from 'scrapex/llm';
 
-// OpenAI
-const openai = createOpenAI({
+const provider = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   model: 'gpt-4o',
 });
-
-// Ollama (local)
-    const ollama = createOpenAI({
-      baseUrl: 'http://localhost:11434/v1',
-  model: 'llama3.2',
-});
-
-// LM Studio (local)
-    const lmstudio = createOpenAI({
-      baseUrl: 'http://localhost:1234/v1',
-  model: 'local-model',
-});
-
-// Azure OpenAI
-    const azure = createOpenAI({
-      apiKey: process.env.AZURE_OPENAI_KEY,
-      baseUrl: 'https://your-resource.openai.azure.com/openai/deployments/your-deployment',
-    });
 ```
 
-## createOllama()
+### createAnthropic()
 
-Create a local Ollama provider (OpenAI-compatible).
+Creates an Anthropic Claude provider.
 
 ```typescript
-function createOllama(config?: { model: string; port?: number }): LLMProvider
+function createAnthropic(options?: {
+  apiKey?: string;
+  model?: string;
+}): LLMProvider
 ```
 
-## createLMStudio()
+#### Options
 
-Create a local LM Studio provider (OpenAI-compatible).
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `apiKey` | `string` | `ANTHROPIC_API_KEY` env | API key |
+| `model` | `string` | `claude-3-5-haiku-20241022` | Model to use |
 
-```typescript
-function createLMStudio(config?: { model: string; port?: number }): LLMProvider
-```
-
-## AnthropicProvider
-
-Native Anthropic Claude provider.
+#### Example
 
 ```typescript
-class AnthropicProvider implements LLMProvider
-```
+import { createAnthropic } from 'scrapex/llm';
 
-### Constructor
-
-```typescript
-new AnthropicProvider(options?: AnthropicConfig)
-```
-
-### Options
-
-| Option | Type | Required | Default | Description |
-|--------|------|----------|---------|-------------|
-| `apiKey` | `string` | No | `ANTHROPIC_API_KEY` env | API key |
-| `model` | `string` | No | `claude-3-5-haiku-20241022` | Model to use |
-| `baseUrl` | `string` | No | Anthropic API | Custom endpoint |
-
-### Example
-
-```typescript
-import { AnthropicProvider } from 'scrapex/llm';
-
-const anthropic = new AnthropicProvider({
+const provider = createAnthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
   model: 'claude-3-5-sonnet-20241022',
 });
 ```
+
+### createGroq()
+
+Creates a Groq provider for fast inference.
+
+```typescript
+function createGroq(options?: {
+  apiKey?: string;
+  model?: string;
+}): LLMProvider
+```
+
+#### Example
+
+```typescript
+import { createGroq } from 'scrapex/llm';
+
+const provider = createGroq({
+  model: 'llama-3.1-70b-versatile',
+});
+```
+
+### createOllama()
+
+Creates a local Ollama provider.
+
+```typescript
+function createOllama(options: {
+  model: string;
+  baseUrl?: string;
+}): LLMProvider
+```
+
+#### Example
+
+```typescript
+import { createOllama } from 'scrapex/llm';
+
+const provider = createOllama({
+  model: 'llama3.2',
+});
+```
+
+### createLMStudio()
+
+Creates a local LM Studio provider.
+
+```typescript
+function createLMStudio(options: {
+  model: string;
+  baseUrl?: string;
+}): LLMProvider
+```
+
+#### Example
+
+```typescript
+import { createLMStudio } from 'scrapex/llm';
+
+const provider = createLMStudio({
+  model: 'local-model',
+});
+```
+
+### createTogether()
+
+Creates a Together AI provider.
+
+```typescript
+function createTogether(options?: {
+  apiKey?: string;
+  model?: string;
+}): LLMProvider
+```
+
+#### Example
+
+```typescript
+import { createTogether } from 'scrapex/llm';
+
+const provider = createTogether({
+  model: 'meta-llama/Llama-3.2-3B-Instruct-Turbo',
+});
+```
+
+### createOpenRouter()
+
+Creates an OpenRouter provider for access to many models.
+
+```typescript
+function createOpenRouter(options: {
+  apiKey?: string;
+  model: string;
+  siteUrl?: string;
+  siteName?: string;
+}): LLMProvider
+```
+
+#### Example
+
+```typescript
+import { createOpenRouter } from 'scrapex/llm';
+
+const provider = createOpenRouter({
+  model: 'anthropic/claude-3.5-sonnet',
+});
+```
+
+### createHttpLLM()
+
+Creates a generic HTTP provider for any OpenAI-compatible API.
+
+```typescript
+function createHttpLLM(config: HttpLLMConfig): LLMProvider
+```
+
+#### Example
+
+```typescript
+import { createHttpLLM } from 'scrapex/llm';
+
+const provider = createHttpLLM({
+  baseUrl: 'https://my-api.com/v1/chat/completions',
+  model: 'my-model',
+  headers: { Authorization: 'Bearer my-key' },
+});
+```
+
+## Local & Docker Models
+
+scrapex fully supports local LLM servers running in Docker or natively. Any server that exposes an OpenAI-compatible chat completions API will work.
+
+### Docker Model Runner
+
+[Docker Model Runner](https://docs.docker.com/ai/model-runner/) is built into Docker Desktop 4.40+ and provides the simplest way to run LLMs locally with an OpenAI-compatible API.
+
+```bash
+# Pull and run a model
+docker model pull ai/llama3.2
+docker model run ai/llama3.2
+```
+
+```typescript
+import { createHttpLLM } from 'scrapex/llm';
+
+// From host (requires TCP host access enabled in Docker Desktop)
+const provider = createHttpLLM({
+  baseUrl: 'http://localhost:12434/engines/llama.cpp/v1/chat/completions',
+  model: 'ai/llama3.2',
+  requireHttps: false,
+  allowPrivate: true,
+});
+
+// From within a container
+const containerProvider = createHttpLLM({
+  baseUrl: 'http://model-runner.docker.internal/engines/llama.cpp/v1/chat/completions',
+  model: 'ai/llama3.2',
+  requireHttps: false,
+  allowPrivate: true,
+});
+```
+
+### Ollama (Docker)
+
+[Ollama](https://ollama.ai) is the easiest way to run local models. It has an official Docker image:
+
+```bash
+# Run Ollama in Docker
+docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+
+# Pull a model
+docker exec -it ollama ollama pull llama3.2
+```
+
+```typescript
+import { createOllama } from 'scrapex/llm';
+
+// Connect to Ollama running in Docker
+const provider = createOllama({
+  model: 'llama3.2',
+  baseUrl: 'http://localhost:11434/v1/chat/completions', // default
+});
+
+const result = await scrape(url, {
+  llm: provider,
+  enhance: ['summarize'],
+});
+```
+
+### vLLM (Docker)
+
+[vLLM](https://docs.vllm.ai) provides high-throughput inference with an OpenAI-compatible API:
+
+```bash
+docker run --runtime nvidia --gpus all \
+  -v ~/.cache/huggingface:/root/.cache/huggingface \
+  -p 8000:8000 \
+  vllm/vllm-openai:latest \
+  --model meta-llama/Llama-3.2-3B-Instruct
+```
+
+```typescript
+import { createHttpLLM } from 'scrapex/llm';
+
+const provider = createHttpLLM({
+  baseUrl: 'http://localhost:8000/v1/chat/completions',
+  model: 'meta-llama/Llama-3.2-3B-Instruct',
+  requireHttps: false,
+  allowPrivate: true,
+});
+```
+
+### LocalAI (Docker)
+
+[LocalAI](https://localai.io) is a drop-in replacement for OpenAI:
+
+```bash
+docker run -p 8080:8080 --name local-ai \
+  -v models:/models \
+  localai/localai:latest-cpu
+```
+
+```typescript
+import { createHttpLLM } from 'scrapex/llm';
+
+const provider = createHttpLLM({
+  baseUrl: 'http://localhost:8080/v1/chat/completions',
+  model: 'gpt-3.5-turbo', // or your loaded model name
+  requireHttps: false,
+  allowPrivate: true,
+});
+```
+
+### Text Generation Inference (Docker)
+
+[TGI](https://huggingface.co/docs/text-generation-inference) from Hugging Face:
+
+```bash
+docker run --gpus all -p 8080:80 \
+  -v data:/data \
+  ghcr.io/huggingface/text-generation-inference:latest \
+  --model-id meta-llama/Llama-3.2-3B-Instruct
+```
+
+```typescript
+import { createHttpLLM } from 'scrapex/llm';
+
+const provider = createHttpLLM({
+  baseUrl: 'http://localhost:8080/v1/chat/completions',
+  model: 'meta-llama/Llama-3.2-3B-Instruct',
+  requireHttps: false,
+  allowPrivate: true,
+});
+```
+
+### llama.cpp Server
+
+[llama.cpp](https://github.com/ggerganov/llama.cpp) server mode provides OpenAI-compatible endpoints:
+
+```bash
+# Build and run llama.cpp server
+./llama-server -m models/llama-3.2-3b.gguf --port 8080
+```
+
+```typescript
+import { createHttpLLM } from 'scrapex/llm';
+
+const provider = createHttpLLM({
+  baseUrl: 'http://localhost:8080/v1/chat/completions',
+  model: 'llama-3.2-3b',
+  requireHttps: false,
+  allowPrivate: true,
+});
+```
+
+### Security Configuration for Local Models
+
+When connecting to local servers, you must configure security options:
+
+| Option | Default | Local Usage |
+|--------|---------|-------------|
+| `requireHttps` | `true` | Set to `false` for HTTP |
+| `allowPrivate` | `false` | Set to `true` for localhost/Docker |
+
+The built-in presets `createOllama()` and `createLMStudio()` automatically configure these options.
 
 ## LLMProvider Interface
 
@@ -108,6 +360,7 @@ Implement this interface for custom providers:
 
 ```typescript
 interface LLMProvider {
+  readonly name: string;
   complete(prompt: string, options?: CompletionOptions): Promise<string>;
   completeJSON<T>(prompt: string, schema: z.ZodType<T>, options?: CompletionOptions): Promise<T>;
 }
@@ -117,29 +370,69 @@ interface CompletionOptions {
   temperature?: number;
   systemPrompt?: string;
 }
-```
 
-### Custom Provider Example
-
-```typescript
-class MyProvider implements LLMProvider {
-  async complete(prompt: string, options?: CompletionOptions): Promise<string> {
-    const response = await fetch('https://my-llm-api.com/complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt,
-        max_tokens: options?.maxTokens ?? 4096,
-      }),
-    });
-
-    const data = await response.json();
-    return data.text;
-  }
+interface ResilienceState {
+  circuitBreaker?: {
+    isOpen(): boolean;
+    recordSuccess(): void;
+    recordFailure(): void;
+    getState?(): CircuitState;
+  };
+  rateLimiter?: {
+    acquire(): Promise<void>;
+  };
+  semaphore?: {
+    execute<T>(fn: () => Promise<T>): Promise<T>;
+  };
 }
 ```
 
-## enhance()
+## HttpLLMConfig
+
+Configuration for the HTTP-based LLM provider:
+
+```typescript
+interface HttpLLMConfig<TRequest = unknown, TResponse = unknown, TError = unknown> {
+  baseUrl: string;
+  model: string;
+  headers?: Record<string, string>;
+  requestBuilder?: (prompt: string, options: CompletionOptions) => TRequest;
+  responseMapper?: (response: TResponse) => string;
+  errorMapper?: (response: TError) => string;
+  jsonMode?: boolean;
+  // Security options
+  requireHttps?: boolean;  // default: true
+  allowPrivate?: boolean;  // default: false
+  resolveDns?: boolean;    // default: true
+  allowRedirects?: boolean; // default: false
+  // Resilience options
+  resilience?: {
+    retry?: {
+      maxAttempts?: number;
+      backoffMs?: number;
+      backoffMultiplier?: number;
+      retryableStatuses?: number[];
+    };
+    circuitBreaker?: {
+      failureThreshold?: number;
+      resetTimeoutMs?: number;
+    };
+    rateLimit?: {
+      requestsPerMinute?: number;
+      tokensPerMinute?: number;
+    };
+    timeoutMs?: number;
+    concurrency?: number;
+    state?: ResilienceState;
+  };
+}
+```
+
+`errorMapper` lets you normalize provider-specific error payloads before they are mapped to `ScrapeError` codes.
+
+## Enhancement Functions
+
+### enhance()
 
 Run LLM enhancements against scraped data.
 
@@ -151,21 +444,21 @@ function enhance(
 ): Promise<Partial<ScrapedData>>
 ```
 
-### Example
+#### Example
 
 ```typescript
 import { scrape } from 'scrapex';
 import { createOpenAI, enhance } from 'scrapex/llm';
 
-const provider = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const provider = createOpenAI();
 const data = await scrape('https://example.com');
 
 const result = await enhance(data, provider, ['summarize', 'entities']);
 ```
 
-## ask()
+### ask()
 
-Ask custom questions about scraped content. Results are stored in the `custom` field.
+Ask custom questions about scraped content.
 
 ```typescript
 function ask(
@@ -176,16 +469,7 @@ function ask(
 ): Promise<Partial<ScrapedData>>
 ```
 
-### Options
-
-| Option | Type | Required | Default | Description |
-|--------|------|----------|---------|-------------|
-| `key` | `string` | No | `'response'` | Key to store result under in `custom` |
-| `schema` | `ExtractionSchema` | No | - | Schema for structured response |
-
-### Template Placeholders
-
-Use these placeholders in your prompts:
+#### Template Placeholders
 
 | Placeholder | Description |
 |-------------|-------------|
@@ -196,40 +480,21 @@ Use these placeholders in your prompts:
 | `{{excerpt}}` | Content excerpt |
 | `{{domain}}` | Hostname only |
 
-### Examples
+#### Example
 
 ```typescript
-import { scrape } from 'scrapex';
 import { createOpenAI, ask } from 'scrapex/llm';
 
-const provider = createOpenAI({ model: 'gpt-4o-mini' });
-const data = await scrape('https://example.com/article');
-
-// Simple question
-const result = await ask(data, provider, "What is the author's main argument?", {
-  key: 'mainArgument'
+const provider = createOpenAI();
+const result = await ask(data, provider, "What is the main topic?", {
+  key: 'mainTopic'
 });
-console.log(result.custom?.mainArgument);
-// "The author argues that AI will transform healthcare..."
-
-// Structured response
-const result2 = await ask(data, provider, "Analyze the sentiment", {
-  key: 'sentiment',
-  schema: { tone: 'string', score: 'number', reasoning: 'string' }
-});
-console.log(result2.custom?.sentiment);
-// { tone: 'optimistic', score: 0.75, reasoning: '...' }
-
-// Using placeholders
-const result3 = await ask(data, provider,
-  "For the article from {{domain}}, summarize the key points about {{title}}",
-  { key: 'keyPoints' }
-);
+console.log(result.custom?.mainTopic);
 ```
 
-## extract()
+### extract()
 
-Extract structured data using a schema and optional custom prompt template.
+Extract structured data using a schema.
 
 ```typescript
 function extract<T>(
@@ -240,7 +505,7 @@ function extract<T>(
 ): Promise<T>
 ```
 
-### Example with Custom Prompt
+#### Example
 
 ```typescript
 import { extract } from 'scrapex/llm';
@@ -248,28 +513,24 @@ import { extract } from 'scrapex/llm';
 interface Product {
   name: string;
   price: number;
-  inStock: boolean;
 }
 
 const products = await extract<Product[]>(data, provider, {
   name: 'string',
   price: 'number',
-  inStock: 'boolean'
-}, "Find all products mentioned in {{content}} from {{domain}}");
+});
 ```
 
 ## Enhancement Types
-
-Use these values in `enhance` when calling `scrape()`:
 
 ```typescript
 type EnhancementType = 'summarize' | 'tags' | 'entities' | 'classify';
 ```
 
-- `summarize` → `summary`
-- `tags` → `suggestedTags`
-- `entities` → `entities`
-- `classify` → updates `contentType` when confidence is high
+- `summarize` - Generates `summary`
+- `tags` - Generates `suggestedTags`
+- `entities` - Extracts people, organizations, technologies, locations, concepts
+- `classify` - Determines content type
 
 ## See Also
 

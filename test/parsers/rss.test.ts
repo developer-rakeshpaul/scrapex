@@ -1,17 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as fs from 'fs';
-import * as path from 'path';
-import { RSSParser } from '../../src/parsers/rss.js';
-import { 
-  fetchFeed, 
-  discoverFeeds, 
-  filterByDate, 
-  feedToMarkdown, 
-  feedToText, 
-  paginateFeed 
-} from '../../src/utils/feed.js';
-import { NativeFetcher } from '../../src/fetchers/fetch.js';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { describe, expect, it, vi } from 'vitest';
 import type { FetchResult } from '../../src/fetchers/types.js';
+import { RSSParser } from '../../src/parsers/rss.js';
+import {
+  discoverFeeds,
+  feedToMarkdown,
+  fetchFeed,
+  filterByDate,
+  paginateFeed,
+} from '../../src/utils/feed.js';
 
 // Read fixtures
 const fixturesDir = path.join(__dirname, '../fixtures');
@@ -24,7 +22,7 @@ describe('RSSParser', () => {
   it('should parse RSS 2.0 feeds', () => {
     const parser = new RSSParser();
     expect(parser.canParse(rss2Content)).toBe(true);
-    
+
     const result = parser.parse(rss2Content, 'https://example.com/feed.xml');
     const { data } = result;
 
@@ -44,7 +42,7 @@ describe('RSSParser', () => {
     expect(item1.enclosure).toEqual({
       url: 'https://example.com/podcast.mp3',
       length: 123456,
-      type: 'audio/mpeg'
+      type: 'audio/mpeg',
     });
 
     const item2 = data.items[1];
@@ -62,7 +60,7 @@ describe('RSSParser', () => {
     expect(data.format).toBe('atom');
     expect(data.title).toBe('Scrapex Atom Test');
     expect(data.next).toBe('https://example.com/atom?page=2');
-    
+
     const item = data.items[0];
     expect(item.title).toBe('Atom Entry 1');
     expect(item.id).toBe('urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a');
@@ -79,7 +77,7 @@ describe('RSSParser', () => {
 
     expect(data.format).toBe('rss1');
     expect(data.title).toBe('Scrapex RSS 1.0 Test');
-    
+
     const item = data.items[0];
     expect(item.title).toBe('RSS 1.0 Item');
     expect(item.link).toBe('https://example.com/item1');
@@ -159,8 +157,8 @@ describe('RSSParser', () => {
     const parser = new RSSParser({
       customFields: {
         duration: 'itunes\\:duration',
-        explicit: 'itunes\\:explicit'
-      }
+        explicit: 'itunes\\:explicit',
+      },
     });
 
     const result = parser.parse(customXml);
@@ -168,7 +166,7 @@ describe('RSSParser', () => {
 
     expect(item.customFields).toEqual({
       duration: '10:00',
-      explicit: 'no'
+      explicit: 'no',
     });
   });
 });
@@ -184,10 +182,7 @@ describe('Feed Utilities', () => {
       </html>
     `;
     const feeds = discoverFeeds(html, 'https://example.com');
-    expect(feeds).toEqual([
-      'https://example.com/feed.xml',
-      'https://example.com/atom'
-    ]);
+    expect(feeds).toEqual(['https://example.com/feed.xml', 'https://example.com/atom']);
   });
 
   it('should filter items by date', () => {
@@ -199,7 +194,7 @@ describe('Feed Utilities', () => {
 
     const filtered = filterByDate(items, {
       after: new Date('2023-12-31'),
-      includeUndated: false
+      includeUndated: false,
     });
 
     expect(filtered).toHaveLength(1);
@@ -207,7 +202,7 @@ describe('Feed Utilities', () => {
 
     const withUndated = filterByDate(items, {
       after: new Date('2023-12-31'),
-      includeUndated: true
+      includeUndated: true,
     });
     expect(withUndated).toHaveLength(2);
   });
@@ -241,36 +236,40 @@ describe('Feed Utilities', () => {
         html: rss2Content,
         finalUrl: 'https://example.com/feed.xml',
         statusCode: 200,
-        contentType: 'application/rss+xml'
-      } as FetchResult)
+        contentType: 'application/rss+xml',
+      } as FetchResult),
     };
 
     const result = await fetchFeed('https://example.com/feed.xml', {
-      fetcher: mockFetcher
+      fetcher: mockFetcher,
     });
 
-    expect(mockFetcher.fetch).toHaveBeenCalledWith('https://example.com/feed.xml', expect.objectContaining({
-      allowedContentTypes: expect.arrayContaining(['application/rss+xml'])
-    }));
+    expect(mockFetcher.fetch).toHaveBeenCalledWith(
+      'https://example.com/feed.xml',
+      expect.objectContaining({
+        allowedContentTypes: expect.arrayContaining(['application/rss+xml']),
+      })
+    );
     expect(result.data.title).toBe('Scrapex RSS 2.0 Test');
   });
 
   it('should paginate feeds', async () => {
     const mockFetcher = {
       name: 'mock',
-      fetch: vi.fn()
+      fetch: vi
+        .fn()
         .mockResolvedValueOnce({
           html: atomContent, // Has next link
           finalUrl: 'https://example.com/atom',
           statusCode: 200,
-          contentType: 'application/atom+xml'
+          contentType: 'application/atom+xml',
         } as FetchResult)
         .mockResolvedValueOnce({
           html: atomContent.replace('rel="next"', 'rel="prev"'), // No next link
           finalUrl: 'https://example.com/atom?page=2',
           statusCode: 200,
-          contentType: 'application/atom+xml'
-        } as FetchResult)
+          contentType: 'application/atom+xml',
+        } as FetchResult),
     };
 
     const pages = [];
@@ -280,6 +279,10 @@ describe('Feed Utilities', () => {
 
     expect(pages).toHaveLength(2);
     expect(mockFetcher.fetch).toHaveBeenCalledTimes(2);
-    expect(mockFetcher.fetch).toHaveBeenNthCalledWith(2, 'https://example.com/atom?page=2', expect.any(Object));
+    expect(mockFetcher.fetch).toHaveBeenNthCalledWith(
+      2,
+      'https://example.com/atom?page=2',
+      expect.any(Object)
+    );
   });
 });
