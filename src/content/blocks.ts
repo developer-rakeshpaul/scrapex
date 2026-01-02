@@ -142,17 +142,20 @@ export function parseBlocks(
     if (type === 'media') {
       const img = $el.is('img') ? $el : $el.find('img').first();
       if (img.length) {
-        block.attrs = {
-          alt: img.attr('alt') || '',
-          src: img.attr('src') || '',
-        };
+        const alt = img.attr('alt');
+        const src = img.attr('src');
+        block.attrs = {};
+        if (alt) block.attrs.alt = alt;
+        if (src) block.attrs.src = src;
       } else {
         const video = $el.is('video') ? $el : $el.find('video').first();
         if (video.length) {
-          block.attrs = {
-            src: video.attr('src') || video.find('source').first().attr('src') || '',
-            poster: video.attr('poster') || '',
-          };
+          // Only the first <source> is captured for video elements.
+          const src = video.attr('src') || video.find('source').first().attr('src');
+          const poster = video.attr('poster');
+          block.attrs = {};
+          if (src) block.attrs.src = src;
+          if (poster) block.attrs.poster = poster;
         }
       }
     }
