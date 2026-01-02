@@ -83,6 +83,8 @@ console.log(result.normalizedText);
 console.log(result.normalizationMeta);
 ```
 
+Note: For large pages, consider using `dropSelectors` to remove heavy DOM regions (nav, footer, ads, or SVGs) to improve normalization performance.
+
 ## Content Types
 
 scrapex automatically classifies content:

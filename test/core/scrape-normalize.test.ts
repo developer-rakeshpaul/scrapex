@@ -28,6 +28,12 @@ describe('scrapeHtml normalization', () => {
     expect(result.normalizedText).toContain('This is the first paragraph.');
     expect(result.normalizedText).not.toContain('Subscribe');
     expect(result.normalizationMeta).toBeDefined();
+    expect(result.normalizationMeta?.blocksTotal).toBeGreaterThan(0);
+    expect(result.normalizationMeta?.blocksAccepted).toBeLessThanOrEqual(
+      result.normalizationMeta?.blocksTotal ?? 0
+    );
+    expect(result.normalizationMeta?.boilerplateRemoved).toBe(true);
     expect(result.normalizedBlocks).toBeDefined();
+    expect(result.normalizedBlocks?.length).toBeGreaterThan(0);
   });
 });

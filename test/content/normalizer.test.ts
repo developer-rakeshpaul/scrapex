@@ -25,7 +25,7 @@ describe('normalizeText', () => {
     ];
 
     const result = await normalizeText(blocks, { maxChars: 50, truncate: 'sentence' });
-    expect(result.text.endsWith('.')).toBe(true);
+    expect(result.text).toBe('This is the first sentence.');
     expect(result.meta.truncated).toBe(true);
   });
 

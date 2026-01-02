@@ -71,6 +71,8 @@ function truncateText(
   let truncated = text.slice(0, maxChars);
 
   if (strategy === 'sentence') {
+    // TODO: Improve sentence detection to handle abbreviations (e.g., "Dr.", "U.S.A.")
+    // Consider using: /[.!?](?:\s+[A-Z]|\s*$)/g to require capital after punctuation
     const sentenceEnd = truncated.lastIndexOf('. ');
     const questionEnd = truncated.lastIndexOf('? ');
     const exclamEnd = truncated.lastIndexOf('! ');
@@ -110,6 +112,7 @@ export async function normalizeText(
     mode = 'full',
     maxChars,
     minChars,
+    maxBlocks,
     truncate = 'sentence',
     removeBoilerplate = true,
     debug = false,
@@ -117,6 +120,13 @@ export async function normalizeText(
 
   const classifier: ContentBlockClassifier | undefined =
     options.blockClassifier ?? (removeBoilerplate ? defaultBlockClassifier : undefined);
+
+  const originalBlocksTotal = blocks.length;
+  let blocksTruncated = false;
+  if (maxBlocks && blocks.length > maxBlocks) {
+    blocks = blocks.slice(0, maxBlocks);
+    blocksTruncated = true;
+  }
 
   let classifiedBlocks: Array<ContentBlock & { score?: number; label?: string }> = [];
 
@@ -181,9 +191,9 @@ export async function normalizeText(
         classifierUsed: false,
         hash: '',
         extractionTimeMs: Date.now() - startTime,
-        blocksTotal: blocks.length,
+        blocksTotal: originalBlocksTotal,
         blocksAccepted: 0,
-        truncated: false,
+        truncated: blocksTruncated,
       },
       ...(debug && { blocks: [] }),
     };
@@ -197,9 +207,9 @@ export async function normalizeText(
     classifierUsed: !!classifier,
     hash: generateHash(normalizedText),
     extractionTimeMs: Date.now() - startTime,
-    blocksTotal: blocks.length,
+    blocksTotal: originalBlocksTotal,
     blocksAccepted: classifiedBlocks.length,
-    truncated,
+    truncated: truncated || blocksTruncated,
   };
 
   return {
