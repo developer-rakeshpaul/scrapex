@@ -43,7 +43,7 @@ export interface HttpLLMConfig<TRequest = unknown, TResponse = unknown, TError =
  * Works with any REST API using native fetch.
  */
 export class HttpLLMProvider<TRequest = unknown, TResponse = unknown, TError = unknown>
-  extends BaseHttpProvider
+  extends BaseHttpProvider<TError>
   implements LLMProvider
 {
   readonly name: string;
@@ -53,7 +53,7 @@ export class HttpLLMProvider<TRequest = unknown, TResponse = unknown, TError = u
   private readonly jsonMode: boolean;
 
   constructor(config: HttpLLMConfig<TRequest, TResponse, TError>) {
-    super(config as unknown as BaseHttpConfig);
+    super(config);
     this.name = 'http-llm';
     this.jsonMode = config.jsonMode ?? false;
 

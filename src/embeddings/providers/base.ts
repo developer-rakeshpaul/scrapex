@@ -131,27 +131,7 @@ export function getDefaultModel(providerType: string): string {
   }
 }
 
-/**
- * Create standard headers for embedding API requests.
- */
-export function createHeaders(
-  apiKey?: string,
-  additionalHeaders?: Record<string, string>
-): Record<string, string> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  if (apiKey) {
-    headers.Authorization = `Bearer ${apiKey}`;
-  }
-
-  if (additionalHeaders) {
-    Object.assign(headers, additionalHeaders);
-  }
-
-  return headers;
-}
+// Note: createHeaders is available from 'src/common/http-base.ts' if needed
 
 /**
  * Handle common API errors and convert to ScrapeError.
@@ -162,18 +142,20 @@ export function handleApiError(error: unknown, providerName: string): never {
   }
 
   if (error instanceof Error) {
+    const lowerMessage = error.message.toLowerCase();
+
     // Check for rate limiting
-    if (error.message.includes('rate limit') || error.message.includes('429')) {
+    if (lowerMessage.includes('rate limit') || lowerMessage.includes('429')) {
       throw new ScrapeError(`${providerName} rate limit exceeded: ${error.message}`, 'BLOCKED');
     }
 
     // Check for auth errors
-    if (error.message.includes('401') || error.message.includes('unauthorized')) {
+    if (lowerMessage.includes('401') || lowerMessage.includes('unauthorized')) {
       throw new ScrapeError(`${providerName} authentication failed: ${error.message}`, 'BLOCKED');
     }
 
     // Check for timeout
-    if (error.message.includes('timeout') || error.name === 'AbortError') {
+    if (lowerMessage.includes('timeout') || error.name === 'AbortError') {
       throw new ScrapeError(`${providerName} request timed out: ${error.message}`, 'TIMEOUT');
     }
 

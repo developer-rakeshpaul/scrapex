@@ -668,7 +668,7 @@ Default redaction patterns cover email, US phone formats, credit cards, SSN, and
 
 ## Data Flow (High Level)
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                        scrape(url, options)                      │
 └─────────────────────────────────────────────────────────────────┘

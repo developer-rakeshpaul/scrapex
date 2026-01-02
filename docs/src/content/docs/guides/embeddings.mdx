@@ -129,11 +129,11 @@ Control what content gets embedded:
 ```typescript
 import { createOpenAIEmbedding } from 'scrapex/embeddings';
 
-const provider = { type: 'custom', provider: createOpenAIEmbedding() };
+const providerConfig = { type: 'custom', provider: createOpenAIEmbedding() };
 
 const result = await scrape(url, {
   embeddings: {
-    provider,
+    provider: providerConfig,
     // Choose input source
     input: {
       type: 'textContent', // Default: main text content
@@ -149,7 +149,7 @@ Use a transform function for dynamic input:
 ```typescript
 const result = await scrape(url, {
   embeddings: {
-    provider,
+    provider: providerConfig,
     input: {
       transform: (data) => `${data.title}\n\n${data.description}\n\n${data.textContent}`,
     },
@@ -164,16 +164,20 @@ For long documents, content is automatically chunked with overlap:
 ```typescript
 const result = await scrape(url, {
   embeddings: {
-    provider, // Using preset from above
+    provider: providerConfig, // Using config from above
     chunking: {
       size: 500,       // Target tokens per chunk (default: 500)
       overlap: 50,     // Overlap tokens between chunks (default: 50)
-      tokenizer: 'heuristic', // 'heuristic' (fast) or 'tiktoken' (accurate)
+      tokenizer: 'heuristic', // 'heuristic' (fast) or custom tokenizer
       maxInputLength: 100000, // Max chars before truncation
     },
   },
 });
 ```
+
+<Aside type="note">
+  `tokenizer: 'tiktoken'` currently falls back to heuristic counting. For accurate token counts, pass a custom tokenizer that wraps a pre-initialized encoder.
+</Aside>
 
 ## Vector Aggregation
 
@@ -182,7 +186,7 @@ Choose how to combine chunk vectors:
 ```typescript
 const result = await scrape(url, {
   embeddings: {
-    provider, // Using preset from above
+    provider: providerConfig, // Using config from above
     output: {
       aggregation: 'average', // Default: average all chunk vectors
       // aggregation: 'max',   // Element-wise maximum
@@ -205,7 +209,7 @@ Automatically redact sensitive data before sending to embedding APIs:
 ```typescript
 const result = await scrape(url, {
   embeddings: {
-    provider, // Using preset from above
+    provider: providerConfig, // Using config from above
     safety: {
       piiRedaction: {
         email: true,      // Redact email addresses
@@ -290,9 +294,81 @@ const result = await scrape(url, {
   Circuit breaker state is per call by default. To persist state across scrapes, pass a shared `resilience.state` with a reused circuit breaker/rate limiter.
 </Aside>
 
+## Security
+
+### SSRF Protection
+
+HTTP embedding providers include built-in SSRF (Server-Side Request Forgery) protection:
+
+- **HTTPS required by default** - HTTP endpoints are rejected unless explicitly allowed
+- **Private IP blocking** - Requests to internal networks (10.x, 172.16.x, 192.168.x, localhost) are blocked
+- **Carrier-Grade NAT** - 100.64.0.0/10 range blocked (shared ISP addresses)
+- **IPv4-mapped IPv6** - Addresses like `::ffff:10.0.0.1` are detected and blocked
+- **DNS resolution validation** - Hostnames are resolved and checked before connection
+
+### Local Server Configuration
+
+When connecting to local embedding servers (Ollama, self-hosted models), use the HTTP config with security overrides:
+
+```typescript
+const result = await scrape(url, {
+  embeddings: {
+    provider: {
+      type: 'http',
+      config: {
+        baseUrl: 'http://localhost:11434/api/embeddings',
+        model: 'nomic-embed-text',
+        requireHttps: false,  // Allow HTTP for local servers
+        allowPrivate: true,   // Allow localhost/private IPs
+      },
+    },
+  },
+});
+```
+
+<Aside type="caution">
+  Only disable HTTPS and allow private IPs when connecting to servers you control. These settings bypass SSRF protection.
+</Aside>
+
+The `createOllamaEmbedding()` preset automatically configures these options for local development.
+
 ## Custom Providers
 
-Implement the `EmbeddingProvider` interface for custom backends:
+Implement the `EmbeddingProvider` interface for custom backends, or use the generic HTTP provider for REST APIs.
+
+### Example: Google Gemini / Vertex AI
+
+Google's embedding API uses a specific structure. You can support it using `requestBuilder` and `responseMapper`:
+
+```typescript
+import { scrape } from 'scrapex';
+
+const result = await scrape(url, {
+  embeddings: {
+    provider: {
+      type: 'http',
+      config: {
+        // Endpoint for Google's batch embeddings
+        baseUrl: `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key=${process.env.GOOGLE_API_KEY}`,
+        model: 'text-embedding-004',
+        // Map scrapex texts to Google's request format
+        requestBuilder: (texts, model) => ({
+          requests: texts.map(text => ({
+            model: `models/${model}`,
+            content: { parts: [{ text }] }
+          }))
+        }),
+        // Map Google's response back to scrapex format
+        responseMapper: (res: any) => res.embeddings.map((e: any) => e.values),
+      },
+    },
+  },
+});
+```
+
+### Implementing the Interface
+
+For more complex logic, implement the interface directly:
 
 ```typescript
 import type { EmbeddingProvider, EmbedRequest, EmbedResponse } from 'scrapex/embeddings';

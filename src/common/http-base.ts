@@ -90,9 +90,12 @@ const PRIVATE_IP_PATTERNS = [
   /^127\./, // 127.0.0.0/8
   /^0\./, // 0.0.0.0/8
   /^169\.254\./, // Link-local
+  /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./, // Carrier-grade NAT 100.64.0.0/10 (RFC 6598)
   /^::1$/, // IPv6 loopback
-  /^(fc|fd)[0-9a-f]{2}:/i, // IPv6 private
+  /^(fc|fd)[0-9a-f]{2}:/i, // IPv6 private (ULA)
   /^fe80:/i, // IPv6 link-local
+  /^fec0:/i, // IPv6 site-local (deprecated but may exist)
+  /^::ffff:(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|0\.)/i, // IPv4-mapped IPv6
   /^localhost$/i,
 ];
 
@@ -201,11 +204,11 @@ export interface FetchResult<T> {
 /**
  * Base HTTP provider with shared security and resilience.
  */
-export abstract class BaseHttpProvider {
+export abstract class BaseHttpProvider<TError = unknown> {
   protected readonly baseUrl: string;
   protected readonly model: string;
   protected readonly headers: Record<string, string>;
-  protected readonly errorMapper?: (response: unknown) => string;
+  protected readonly errorMapper?: (response: TError) => string;
 
   // Security options
   protected readonly requireHttps: boolean;
@@ -223,7 +226,7 @@ export abstract class BaseHttpProvider {
   private rateLimiter?: ResilienceState['rateLimiter'];
   private semaphore?: ResilienceState['semaphore'];
 
-  constructor(config: BaseHttpConfig) {
+  constructor(config: BaseHttpConfig<TError>) {
     this.baseUrl = config.baseUrl.replace(/\/$/, '');
     this.model = config.model;
     this.headers = {
@@ -315,7 +318,12 @@ export abstract class BaseHttpProvider {
 
       // Handle errors
       if (!response.ok) {
-        throw await createHttpError(response, this.constructor.name, this.errorMapper);
+        // Cast is safe: errorMapper receives the parsed JSON body which matches TError at runtime
+        throw await createHttpError(
+          response,
+          this.constructor.name,
+          this.errorMapper as ((body: unknown) => string) | undefined
+        );
       }
 
       const data = (await response.json()) as T;

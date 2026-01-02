@@ -1,10 +1,10 @@
 /**
- * 18-extractor-pipeline-debug.ts
+ * 19-extractor-pipeline-debug.ts
  *
  * Demonstrates extractor ordering (priority), dependency on previous results,
  * and how extractor failures get surfaced via the `error` field.
  *
- * Run: npx tsx examples/18-extractor-pipeline-debug.ts
+ * Run: npx tsx examples/19-extractor-pipeline-debug.ts
  */
 
 import { type Extractor, type ScrapedData, scrapeHtml } from '../src/index.js';
@@ -71,4 +71,3 @@ async function main() {
 }
 
 main().catch(console.error);
-

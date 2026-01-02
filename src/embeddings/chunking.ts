@@ -99,7 +99,8 @@ function findBreakPoint(text: string, targetIndex: number): number {
  */
 export function chunkText(text: string, config?: ChunkingConfig): TextChunk[] {
   const chunkSize = config?.size ?? DEFAULT_CHUNK_SIZE;
-  const overlap = config?.overlap ?? DEFAULT_OVERLAP;
+  const rawOverlap = config?.overlap ?? DEFAULT_OVERLAP;
+  const overlap = Math.min(rawOverlap, chunkSize - 1); // Ensure overlap < size
   const maxInputLength = config?.maxInputLength ?? DEFAULT_MAX_INPUT_LENGTH;
   const tokenizer = createTokenizer(config?.tokenizer);
 

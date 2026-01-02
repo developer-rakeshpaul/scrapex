@@ -53,7 +53,7 @@ export async function generateEmbeddings(
 
   try {
     // Step 1: Create or get provider
-    const provider = await createEmbeddingProvider(options.provider);
+    const provider = createEmbeddingProvider(options.provider);
     const model = getEffectiveModel(options.provider, options.model);
 
     // Step 2: Select input text

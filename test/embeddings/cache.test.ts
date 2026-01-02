@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createNoOpCache,
   generateCacheKey,
@@ -198,23 +198,29 @@ describe('Embedding Cache', () => {
     });
 
     it('should evict expired entries', async () => {
-      const shortTtlCache = new InMemoryEmbeddingCache({ ttlMs: 10 });
+      vi.useFakeTimers();
+
+      const shortTtlCache = new InMemoryEmbeddingCache({ ttlMs: 100 });
       await shortTtlCache.set('key1', successResult);
 
-      // Wait for expiration
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      // Advance time past TTL
+      vi.advanceTimersByTime(150);
 
       const result = await shortTtlCache.get('key1');
       expect(result).toBeUndefined();
+
+      vi.useRealTimers();
     });
 
     it('should evict LRU entries when full', async () => {
+      vi.useFakeTimers();
+
       const smallCache = new InMemoryEmbeddingCache({ maxEntries: 2 });
 
       await smallCache.set('key1', successResult);
-      await new Promise((resolve) => setTimeout(resolve, 5));
+      vi.advanceTimersByTime(10);
       await smallCache.set('key2', successResult);
-      await new Promise((resolve) => setTimeout(resolve, 5));
+      vi.advanceTimersByTime(10);
 
       // Access key1 to make it recently used
       await smallCache.get('key1');
@@ -224,6 +230,8 @@ describe('Embedding Cache', () => {
 
       expect(await smallCache.get('key1')).toBeDefined();
       expect(await smallCache.get('key3')).toBeDefined();
+
+      vi.useRealTimers();
     });
 
     it('should report stats', () => {

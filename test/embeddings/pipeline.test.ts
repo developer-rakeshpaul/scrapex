@@ -65,7 +65,6 @@ describe('Embedding Pipeline', () => {
   });
 
   const mockData: Partial<ScrapedData> = {
-    // ...
     url: 'https://example.com',
     textContent:
       'This is some sample content for testing the embedding pipeline. It needs to be long enough to pass minimum length checks and generate at least one chunk.',

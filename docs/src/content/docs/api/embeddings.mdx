@@ -60,7 +60,9 @@ import { createOpenAIEmbedding } from 'scrapex/embeddings';
 
 const provider = createOpenAIEmbedding({
   apiKey?: string,  // Defaults to OPENAI_API_KEY env var
+  model?: string,   // Default: 'text-embedding-3-small'
   baseUrl?: string, // Custom base URL
+  organization?: string,
 });
 ```
 
@@ -73,6 +75,7 @@ import { createAzureEmbedding } from 'scrapex/embeddings';
 
 const provider = createAzureEmbedding({
   endpoint: string,   // Azure resource endpoint
+  deploymentName: string, // Azure deployment name
   apiVersion: string, // API version (e.g., '2024-02-01')
   apiKey?: string,    // Defaults to AZURE_OPENAI_API_KEY env var
 });
@@ -438,6 +441,36 @@ const result = await scrape(url, {
 });
 ```
 
+**Example: Google Gemini / Vertex AI (Custom HTTP)**
+
+Google's embedding API uses a specific structure. You can support it using `requestBuilder` and `responseMapper`:
+
+```typescript
+import { scrape } from 'scrapex';
+
+const result = await scrape(url, {
+  embeddings: {
+    provider: {
+      type: 'http',
+      config: {
+        // Endpoint for batch embeddings
+        baseUrl: `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key=${process.env.GOOGLE_API_KEY}`,
+        model: 'text-embedding-004',
+        // Map scrapex texts to Google's request format
+        requestBuilder: (texts, model) => ({
+          requests: texts.map(text => ({
+            model: `models/${model}`,
+            content: { parts: [{ text }] }
+          }))
+        }),
+        // Map Google's response back to scrapex format
+        responseMapper: (res: any) => res.embeddings.map((e: any) => e.values),
+      },
+    },
+  },
+});
+```
+
 ### EmbeddingResult
 
 Result type (discriminated union).
@@ -475,7 +508,7 @@ Metadata about embedding generation.
 
 ```typescript
 interface EmbeddingSource {
-  model: string;
+  model?: string;
   chunks: number;
   tokens: number;
   checksum: string;
@@ -534,6 +567,8 @@ interface ChunkingConfig {
 }
 ```
 
+`tokenizer: 'tiktoken'` currently falls back to heuristic counting. For accurate token counts, pass a custom tokenizer function backed by a pre-initialized encoder.
+
 ### OutputConfig
 
 Output configuration.
@@ -578,7 +613,6 @@ interface EmbeddingCacheConfig {
   store?: EmbeddingCache;
   ttlMs?: number;
   maxEntries?: number;
-  encryptAtRest?: boolean;
   cacheKeySalt?: string;
 }
 
@@ -643,7 +677,7 @@ Metrics for observability.
 ```typescript
 interface EmbeddingMetrics {
   provider: string;
-  model: string;
+  model?: string;
   inputTokens: number;
   outputDimensions: number;
   chunks: number;

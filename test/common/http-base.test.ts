@@ -46,6 +46,30 @@ describe('common/http-base', () => {
     it('identifies link-local addresses', () => {
       expect(isPrivateHost('169.254.1.1')).toBe(true);
     });
+
+    it('identifies Carrier-Grade NAT addresses (100.64.0.0/10)', () => {
+      expect(isPrivateHost('100.64.0.1')).toBe(true);
+      expect(isPrivateHost('100.127.255.255')).toBe(true);
+      expect(isPrivateHost('100.100.50.25')).toBe(true);
+      // Outside CGNAT range
+      expect(isPrivateHost('100.63.255.255')).toBe(false);
+      expect(isPrivateHost('100.128.0.0')).toBe(false);
+    });
+
+    it('identifies IPv4-mapped IPv6 addresses', () => {
+      expect(isPrivateHost('::ffff:10.0.0.1')).toBe(true);
+      expect(isPrivateHost('::ffff:192.168.1.1')).toBe(true);
+      expect(isPrivateHost('::ffff:172.16.0.1')).toBe(true);
+      expect(isPrivateHost('::ffff:127.0.0.1')).toBe(true);
+      expect(isPrivateHost('::ffff:0.0.0.0')).toBe(true);
+      // Public IPv4-mapped should be allowed
+      expect(isPrivateHost('::ffff:8.8.8.8')).toBe(false);
+    });
+
+    it('identifies deprecated site-local IPv6 (fec0::/10)', () => {
+      expect(isPrivateHost('fec0::1')).toBe(true);
+      expect(isPrivateHost('FEC0::1')).toBe(true);
+    });
   });
 
   describe('validateUrl', () => {

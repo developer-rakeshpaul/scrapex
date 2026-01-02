@@ -1,5 +1,6 @@
 import { ScrapeError } from '../../core/errors.js';
 import type { EmbeddingProvider, EmbeddingProviderConfig } from '../types.js';
+import { createHttpEmbedding } from './http.js';
 
 // Re-export base utilities that are still used
 export {
@@ -25,12 +26,12 @@ export {
  * Create an embedding provider from configuration.
  * This is the main factory function for creating providers.
  */
-export async function createEmbeddingProvider(
+export function createEmbeddingProvider(
   config: EmbeddingProviderConfig
-): Promise<EmbeddingProvider> {
+): EmbeddingProvider {
   switch (config.type) {
     case 'http': {
-      const { createHttpEmbedding } = await import('./http.js');
+      // Use static import - already imported at top of file
       return createHttpEmbedding(config.config);
     }
 
@@ -57,6 +58,7 @@ export function isEmbeddingProvider(value: unknown): value is EmbeddingProvider 
     typeof value === 'object' &&
     value !== null &&
     'name' in value &&
+    typeof (value as EmbeddingProvider).name === 'string' &&
     'embed' in value &&
     typeof (value as EmbeddingProvider).embed === 'function'
   );

@@ -36,8 +36,8 @@ export interface HttpEmbeddingConfig<TRequest = unknown, TResponse = unknown, TE
  * HTTP-based embedding provider.
  * Works with any REST API using native fetch.
  */
-export class HttpEmbeddingProvider<TRequest = unknown, TResponse = unknown, _TError = unknown>
-  extends BaseHttpProvider
+export class HttpEmbeddingProvider<TRequest = unknown, TResponse = unknown, TError = unknown>
+  extends BaseHttpProvider<TError>
   implements EmbeddingProvider
 {
   readonly name = 'http-embedding';
@@ -45,8 +45,8 @@ export class HttpEmbeddingProvider<TRequest = unknown, TResponse = unknown, _TEr
   private readonly requestBuilder: (texts: string[], model: string) => TRequest;
   private readonly responseMapper: (response: TResponse) => number[][];
 
-  constructor(config: HttpEmbeddingConfig<TRequest, TResponse, _TError>) {
-    super(config as HttpEmbeddingConfig);
+  constructor(config: HttpEmbeddingConfig<TRequest, TResponse, TError>) {
+    super(config);
 
     // Default request builder: OpenAI-compatible format
     this.requestBuilder =

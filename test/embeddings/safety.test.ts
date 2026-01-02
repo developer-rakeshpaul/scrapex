@@ -96,6 +96,7 @@ describe('PII Safety', () => {
       expect(result.text).not.toContain('API_KEY_ABC123XYZ');
       expect(result.text).not.toContain('API_KEY_DEF456');
       expect(result.redactionCount).toBe(2);
+      expect(result.redactionsByType['custom_0']).toBe(2);
     });
   });
 

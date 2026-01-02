@@ -50,6 +50,13 @@ For the Puppeteer example (18), install the optional peer dependency:
 npm install puppeteer
 ```
 
+For the embeddings example (21), you can use Ollama by setting:
+
+```bash
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text npx tsx examples/21-embeddings.ts
+# Optional: OLLAMA_EMBEDDING_URL=http://localhost:11434/api/embeddings
+```
+
 ## Examples Overview
 
 ### Core Scraping
@@ -78,6 +85,13 @@ npm install puppeteer
 |---------|-------------|
 | [11-markdown-parsing.ts](./11-markdown-parsing.ts) | Parse markdown into sections, links, code blocks |
 | [12-github-parsing.ts](./12-github-parsing.ts) | GitHub-specific URL parsing and utilities |
+| [20-rss-parsing.ts](./20-rss-parsing.ts) | Parse RSS/Atom feeds and convert to markdown |
+
+### Embeddings
+
+| Example | Description |
+|---------|-------------|
+| [21-embeddings.ts](./21-embeddings.ts) | Generate embeddings from text or scraped content |
 
 ### Advanced
 
@@ -90,6 +104,8 @@ npm install puppeteer
 | [17-custom-fetcher-retry-cache.ts](./17-custom-fetcher-retry-cache.ts) | Fetch-layer cache + retry/backoff via custom fetcher |
 | [18-puppeteer-fetcher.ts](./18-puppeteer-fetcher.ts) | Scrape JavaScript-rendered pages via Puppeteer fetcher |
 | [19-extractor-pipeline-debug.ts](./19-extractor-pipeline-debug.ts) | Debug extractor ordering, dependencies, and failure handling |
+| [20-rss-parsing.ts](./20-rss-parsing.ts) | Parse RSS/Atom feeds and convert to markdown |
+| [21-embeddings.ts](./21-embeddings.ts) | Generate embeddings from text or scraped content |
 
 ## Practice Sites
 

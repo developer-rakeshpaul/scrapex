@@ -204,6 +204,8 @@ interface CohereEmbeddingResponse {
 export function createCohereEmbedding(options?: {
   apiKey?: string;
   model?: string;
+  /** Input type for embeddings. Use 'search_query' for queries, 'search_document' for documents */
+  inputType?: 'search_document' | 'search_query' | 'classification' | 'clustering';
 }): EmbeddingProvider {
   const apiKey = options?.apiKey ?? process.env.COHERE_API_KEY;
   if (!apiKey) {
@@ -217,7 +219,7 @@ export function createCohereEmbedding(options?: {
     requestBuilder: (texts, model) => ({
       texts,
       model,
-      input_type: 'search_document',
+      input_type: options?.inputType ?? 'search_document',
     }),
     responseMapper: (res) => res.embeddings,
   });

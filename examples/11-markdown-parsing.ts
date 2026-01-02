@@ -1,10 +1,10 @@
 /**
- * 10-markdown-parsing.ts
+ * 11-markdown-parsing.ts
  *
  * Parse markdown content into structured data.
  * Extract sections, links, code blocks, and frontmatter.
  *
- * Run: npx tsx examples/10-markdown-parsing.ts
+ * Run: npx tsx examples/11-markdown-parsing.ts
  */
 
 import { extractListLinks, MarkdownParser, parseByHeadings } from '../src/parsers/index.js';

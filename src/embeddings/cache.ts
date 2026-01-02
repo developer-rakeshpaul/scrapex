@@ -342,9 +342,8 @@ export function validateCachedResult(
   }
 
   if (result.aggregation === 'all') {
-    // Check first vector dimensions (all should match)
     const firstVec = result.vectors[0];
-    if (!firstVec || result.vectors.length === 0) {
+    if (!firstVec) {
       return false;
     }
     return firstVec.length === expectedDimensions;

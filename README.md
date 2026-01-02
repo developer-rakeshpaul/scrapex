@@ -173,14 +173,19 @@ Features include:
 
 See the [Embeddings Guide](https://scrapex.dev/guides/embeddings) for full documentation.
 
+## Breaking Changes (Beta)
+
+- LLM provider classes (e.g., `AnthropicProvider`) were removed. Use preset factories like
+  `createOpenAI`, `createAnthropic`, `createOllama`, and `createLMStudio` instead.
+
 ### Using Anthropic Claude
 
 ```typescript
-import { AnthropicProvider } from 'scrapex/llm';
+import { createAnthropic } from 'scrapex/llm';
 
-const llm = new AnthropicProvider({
+const llm = createAnthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
-  model: 'claude-3-5-haiku-20241022', // or 'claude-sonnet-4-20250514'
+  model: 'claude-3-5-haiku-20241022', // or 'claude-3-5-sonnet-20241022'
 });
 
 const result = await scrape(url, { llm, enhance: ['summarize'] });

@@ -1,10 +1,10 @@
 /**
- * 12-error-handling.ts
+ * 13-error-handling.ts
  *
  * Handle errors gracefully when scraping.
  * Demonstrates ScrapeError, error codes, and retry patterns.
  *
- * Run: npx tsx examples/12-error-handling.ts
+ * Run: npx tsx examples/13-error-handling.ts
  */
 
 import { ScrapeError, scrape } from '../src/index.js';

@@ -1,5 +1,5 @@
 /**
- * 15-offline-crawl.ts
+ * 16-offline-crawl.ts
  *
  * Demonstrates a fully offline crawl using a custom Fetcher and scrapex's built-in
  * link extraction + URL utilities.
@@ -9,7 +9,7 @@
  * - Makes examples deterministic (no network required)
  * - Demonstrates link filtering, normalization, and a simple breadth-first crawl
  *
- * Run: npx tsx examples/15-offline-crawl.ts
+ * Run: npx tsx examples/16-offline-crawl.ts
  */
 
 import {
@@ -196,4 +196,3 @@ async function main() {
 }
 
 main().catch(console.error);
-

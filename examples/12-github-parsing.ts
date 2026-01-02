@@ -1,9 +1,9 @@
 /**
- * 11-github-parsing.ts
+ * 12-github-parsing.ts
  *
  * GitHub-specific utilities for parsing repos.
  *
- * Run: npx tsx examples/11-github-parsing.ts
+ * Run: npx tsx examples/12-github-parsing.ts
  */
 
 import {
@@ -86,9 +86,7 @@ async function main() {
 // Requires GitHub personal access token for full functionality
 import { fetchRepoMeta } from 'scrapex/parsers';
 
-const meta = await fetchRepoMeta('microsoft', 'TypeScript', {
-  token: process.env.GITHUB_TOKEN // optional but recommended
-});
+const meta = await fetchRepoMeta('microsoft', 'TypeScript', process.env.GITHUB_TOKEN);
 
 console.log(meta);
 // {

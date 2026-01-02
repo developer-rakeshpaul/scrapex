@@ -1,10 +1,10 @@
 /**
- * 13-robots-txt.ts
+ * 14-robots-txt.ts
  *
  * Check robots.txt before scraping.
  * Demonstrates respectful scraping practices.
  *
- * Run: npx tsx examples/13-robots-txt.ts
+ * Run: npx tsx examples/14-robots-txt.ts
  */
 
 import { checkRobotsTxt, ScrapeError, scrape } from '../src/index.js';

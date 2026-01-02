@@ -416,10 +416,22 @@ export class RateLimiter {
    * Wait until tokens are available, then acquire.
    */
   async acquire(tokens = 1): Promise<void> {
+    if (this.tryAcquire(tokens)) {
+      return;
+    }
+
+    // Calculate precise wait time for required tokens
+    this.refill();
+    const tokensNeeded = tokens - this.tokens;
+    const waitMs = Math.ceil((tokensNeeded / this.refillRate) * 1000);
+
+    if (waitMs > 0) {
+      await sleep(waitMs);
+    }
+
+    // After waiting, acquire should succeed (but retry if timing drift)
     while (!this.tryAcquire(tokens)) {
-      // Calculate wait time for next token
-      const waitMs = (tokens / this.refillRate) * 1000;
-      await sleep(Math.min(waitMs, 1000)); // Cap at 1 second
+      await sleep(Math.ceil((1 / this.refillRate) * 1000));
     }
   }
 
