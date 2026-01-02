@@ -1,5 +1,5 @@
 import type { CheerioAPI } from 'cheerio';
-import type { ContentBlock, NormalizeOptions, NormalizationMeta } from '../content/types.js';
+import type { ContentBlock, NormalizationMeta, NormalizeOptions } from '../content/types.js';
 import type { EmbeddingOptions, EmbeddingResult } from '../embeddings/types.js';
 
 /**

@@ -5,6 +5,24 @@
  * extensible pipeline, and pluggable parsers.
  */
 
+export type {
+  BlockType,
+  ClassifierContext,
+  ClassifierResult,
+  ContentBlock,
+  ContentBlockClassifier,
+  NormalizationMeta,
+  NormalizeOptions,
+  NormalizeResult,
+  TruncateStrategy,
+} from './content/index.js';
+// Content normalization
+export {
+  combineClassifiers,
+  defaultBlockClassifier,
+  normalizeText,
+  parseBlocks,
+} from './content/index.js';
 // Core types and utilities
 export type {
   CompletionOptions,
@@ -31,24 +49,6 @@ export {
   scrape,
   scrapeHtml,
 } from './core/index.js';
-// Content normalization
-export {
-  combineClassifiers,
-  defaultBlockClassifier,
-  parseBlocks,
-  normalizeText,
-} from './content/index.js';
-export type {
-  BlockType,
-  ClassifierContext,
-  ClassifierResult,
-  ContentBlock,
-  ContentBlockClassifier,
-  NormalizeOptions,
-  NormalizeResult,
-  NormalizationMeta,
-  TruncateStrategy,
-} from './content/index.js';
 export type {
   ChunkingConfig,
   // Cache

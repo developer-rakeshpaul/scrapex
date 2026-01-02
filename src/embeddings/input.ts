@@ -55,7 +55,7 @@ export function selectInput(
  */
 function selectTextContent(data: Partial<ScrapedData>): string | undefined {
   if (data.textContent) {
-      return cleanText(data.textContent);
+    return cleanText(data.textContent);
   }
 
   // Fallback chain: content (markdown) -> excerpt -> description

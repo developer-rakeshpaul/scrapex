@@ -1,5 +1,5 @@
-export { parseBlocks, DEFAULT_DROP_SELECTORS } from './blocks.js';
-export { defaultBlockClassifier, combineClassifiers } from './classifier.js';
+export { DEFAULT_DROP_SELECTORS, parseBlocks } from './blocks.js';
+export { combineClassifiers, defaultBlockClassifier } from './classifier.js';
 export { normalizeText } from './normalizer.js';
 export type {
   BlockType,
@@ -7,8 +7,8 @@ export type {
   ClassifierResult,
   ContentBlock,
   ContentBlockClassifier,
+  NormalizationMeta,
   NormalizeOptions,
   NormalizeResult,
-  NormalizationMeta,
   TruncateStrategy,
 } from './types.js';

@@ -1,8 +1,4 @@
-import type {
-  ClassifierResult,
-  ContentBlock,
-  ContentBlockClassifier,
-} from './types.js';
+import type { ClassifierResult, ContentBlock, ContentBlockClassifier } from './types.js';
 
 /**
  * Default site-agnostic block classifier.
@@ -98,7 +94,11 @@ export function combineClassifiers(
     return {
       accept: true,
       score: avgScore,
-      label: results.map((result) => result.label).filter(Boolean).join('+') || 'content',
+      label:
+        results
+          .map((result) => result.label)
+          .filter(Boolean)
+          .join('+') || 'content',
     };
   };
 }

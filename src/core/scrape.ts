@@ -1,8 +1,8 @@
+import { normalizeText, parseBlocks } from '@/content/index.js';
 import { generateEmbeddings } from '@/embeddings/pipeline.js';
 import { createDefaultExtractors, sortExtractors } from '@/extractors/index.js';
 import { checkRobotsTxt, defaultFetcher } from '@/fetchers/index.js';
 import { enhance, extract } from '@/llm/enhancer.js';
-import { normalizeText, parseBlocks } from '@/content/index.js';
 import { extractDomain, isValidUrl, normalizeUrl } from '@/utils/url.js';
 import { createExtractionContext, mergeResults, preloadJsdom } from './context.js';
 import { ScrapeError } from './errors.js';

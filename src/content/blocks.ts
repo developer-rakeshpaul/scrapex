@@ -25,7 +25,7 @@ const BLOCK_TYPE_SELECTORS: Record<string, BlockType> = {
   '.legal, .disclaimer, .terms, .copyright': 'legal',
   'blockquote, q': 'quote',
   'pre, code': 'code',
-  'table': 'table',
+  table: 'table',
   'ul, ol, dl, li, dt, dd': 'list',
   'figure, img, video, audio, picture': 'media',
   figcaption: 'paragraph',

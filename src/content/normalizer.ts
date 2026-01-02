@@ -1,13 +1,13 @@
 import { createHash } from 'node:crypto';
+import { defaultBlockClassifier } from './classifier.js';
 import type {
   ClassifierContext,
   ContentBlock,
   ContentBlockClassifier,
+  NormalizationMeta,
   NormalizeOptions,
   NormalizeResult,
-  NormalizationMeta,
 } from './types.js';
-import { defaultBlockClassifier } from './classifier.js';
 
 /**
  * Normalize text with optional HTML entity decoding and Unicode normalization.
@@ -30,9 +30,7 @@ function normalizeString(
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
       .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number.parseInt(code, 10)))
-      .replace(/&#x([0-9a-f]+);/gi, (_, code) =>
-        String.fromCharCode(Number.parseInt(code, 16))
-      );
+      .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(Number.parseInt(code, 16)));
   }
 
   // Strip markdown links, keep text
