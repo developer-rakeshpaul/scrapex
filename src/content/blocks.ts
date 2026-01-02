@@ -107,8 +107,9 @@ export function parseBlocks(
     }
 
     // Avoid duplicates from nested elements by preferring the most granular blocks
+    // Include li, dt, dd so list containers (ul, ol, dl) are skipped in favor of their items
     const hasBlockChildren =
-      $el.find('p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, pre, table').length > 0;
+      $el.find('p, h1, h2, h3, h4, h5, h6, ul, ol, li, dt, dd, blockquote, pre, table').length > 0;
     if (hasBlockChildren) {
       return; // Skip containers, process children instead
     }

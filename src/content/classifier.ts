@@ -35,16 +35,18 @@ export const defaultBlockClassifier: ContentBlockClassifier = (
     return { accept: false, label: 'boilerplate' };
   }
 
-  // Very short fragments (likely UI elements or captions)
-  const isShort = text.length < 20;
-  const endsWithPunct = /[.!?]\s*$/.test(text);
-  if (isShort && block.type !== 'heading' && block.type !== 'list' && !endsWithPunct) {
-    return { accept: false, label: 'too-short' };
-  }
-
-  // Media credits/captions
+  // Media credits/captions (check before too-short to get correct label)
   if (/\b(photo by|image:|credit:|source:)\b/i.test(lowerText) && text.length < 120) {
     return { accept: false, label: 'media-credit' };
+  }
+
+  // Very short fragments (likely UI elements or captions)
+  // Exempt headings, lists, quotes, and code which are meaningful at any length
+  const isShort = text.length < 20;
+  const endsWithPunct = /[.!?]\s*$/.test(text);
+  const exemptTypes = ['heading', 'list', 'quote', 'code'];
+  if (isShort && !exemptTypes.includes(block.type) && !endsWithPunct) {
+    return { accept: false, label: 'too-short' };
   }
 
   // Calculate relevance score based on block characteristics
