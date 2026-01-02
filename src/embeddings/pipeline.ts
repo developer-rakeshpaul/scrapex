@@ -1,5 +1,5 @@
-import type { ScrapedData } from '../core/types.js';
 import { ScrapeError } from '../core/errors.js';
+import type { ScrapedData } from '../core/types.js';
 import { aggregateVectors, getDimensions } from './aggregation.js';
 import { generateCacheKey, generateChecksum, getDefaultCache } from './cache.js';
 import { chunkText, estimateTokens } from './chunking.js';
@@ -178,7 +178,11 @@ export async function generateEmbeddings(
             });
           },
           options.resilience,
-          { circuitBreaker: circuitBreaker ?? undefined, rateLimiter: undefined, semaphore: undefined },
+          {
+            circuitBreaker: circuitBreaker ?? undefined,
+            rateLimiter: undefined,
+            semaphore: undefined,
+          },
           {
             onRetry: () => {
               retryCount++;

@@ -365,7 +365,7 @@ console.log(result.data.items);
 
 // Paginate through feeds with rel="next" links (Atom)
 for await (const page of paginateFeed('https://example.com/atom')) {
-  console.log(`Page with ${page.data.items.length} items`);
+  console.log(`Page with ${page.items.length} items`);
 }
 ```
 
@@ -516,7 +516,7 @@ const result = await scrape('https://example.com/path', {
 | `MetaExtractor` | 100 | OG, Twitter, meta tags |
 | `JsonLdExtractor` | 80 | JSON-LD structured data |
 | `ContentExtractor` | 50 | Readability + Turndown |
-| `FaviconExtractor` | 40 | Favicon discovery |
+| `FaviconExtractor` | 70 | Favicon discovery |
 | `LinksExtractor` | 30 | Content link extraction |
 
 ## Configuration

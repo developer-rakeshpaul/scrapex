@@ -55,21 +55,31 @@ export function createExtractionContext(
 }
 
 /**
- * Merge partial results into the context
+ * Merge partial results into the context.
+ * Only merges non-undefined values to prevent later extractors from
+ * overwriting earlier results with undefined.
  */
 export function mergeResults(
   context: ExtractionContext,
   extracted: Partial<ScrapedData>
 ): ExtractionContext {
+  // Filter out undefined values to prevent overwriting
+  const filtered: Partial<ScrapedData> = {};
+  for (const [key, value] of Object.entries(extracted)) {
+    if (value !== undefined) {
+      (filtered as Record<string, unknown>)[key] = value;
+    }
+  }
+
   return {
     ...context,
     results: {
       ...context.results,
-      ...extracted,
+      ...filtered,
       // Merge custom fields if both exist
       custom:
-        extracted.custom || context.results.custom
-          ? { ...context.results.custom, ...extracted.custom }
+        filtered.custom || context.results.custom
+          ? { ...(context.results.custom || {}), ...(filtered.custom || {}) }
           : undefined,
     },
   };

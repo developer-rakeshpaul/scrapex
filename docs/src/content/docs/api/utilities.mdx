@@ -1,9 +1,9 @@
 ---
 title: Utilities
-description: API reference for URL, text, and feed utility functions.
+description: API reference for URL and feed utility functions.
 ---
 
-scrapex provides utility functions for common operations.
+scrapex provides utility functions for URL handling and feed parsing helpers.
 
 ## URL Utilities
 
@@ -15,6 +15,8 @@ Check if a string is a valid URL.
 function isValidUrl(url: string): boolean
 ```
 
+Only `http://` and `https://` URLs are considered valid.
+
 #### Example
 
 ```typescript
@@ -24,6 +26,7 @@ isValidUrl('https://example.com');     // true
 isValidUrl('http://localhost:3000');   // true
 isValidUrl('not-a-url');               // false
 isValidUrl('');                        // false
+isValidUrl('ftp://example.com');       // false
 ```
 
 ### extractDomain()
@@ -54,8 +57,9 @@ function normalizeUrl(url: string): string
 ```
 
 Normalization includes:
-- Removing common tracking parameters
-- Removing trailing slashes (except root)
+- Lowercasing the URL
+- Removing default ports (80 for http, 443 for https)
+- Removing common tracking parameters (utm_*, fbclid, etc.)
 
 #### Example
 
@@ -63,13 +67,13 @@ Normalization includes:
 import { normalizeUrl } from 'scrapex';
 
 normalizeUrl('HTTPS://Example.COM/');
-// 'HTTPS://Example.COM/'
+// 'https://example.com/'
 
 normalizeUrl('https://example.com:443/page');
-// 'https://example.com:443/page'
+// 'https://example.com/page'
 
 normalizeUrl('https://example.com?b=2&a=1&utm_source=site');
-// 'https://example.com?b=2&a=1'
+// 'https://example.com/?b=2&a=1'
 ```
 
 ### resolveUrl()
@@ -92,29 +96,87 @@ resolveUrl('/about', 'https://example.com/blog/post');
 // 'https://example.com/about'
 
 resolveUrl('https://other.com', 'https://example.com');
-// 'https://other.com'
+// 'https://other.com/'
 ```
 
 ### isExternalUrl()
 
-Check if a URL is external relative to a base URL.
+Check if a URL is external relative to a base domain.
 
 ```typescript
-function isExternalUrl(url: string, baseUrl: string): boolean
+function isExternalUrl(url: string, baseDomain: string): boolean
 ```
 
 #### Example
 
 ```typescript
-import { isExternalUrl } from 'scrapex';
+import { extractDomain, isExternalUrl } from 'scrapex';
 
-isExternalUrl('https://other.com', 'https://example.com');
+const baseDomain = extractDomain('https://example.com');
+
+isExternalUrl('https://other.com', baseDomain);
 // true
 
-isExternalUrl('https://example.com/page', 'https://example.com');
+isExternalUrl('https://example.com/page', baseDomain);
 // false
 
-isExternalUrl('/page', 'https://example.com');
+isExternalUrl('/page', baseDomain);
+// false
+```
+
+### getProtocol()
+
+Extract the protocol from a URL.
+
+```typescript
+function getProtocol(url: string): string
+```
+
+#### Example
+
+```typescript
+import { getProtocol } from 'scrapex';
+
+getProtocol('https://example.com/path');
+// 'https:'
+```
+
+### getPath()
+
+Extract the pathname from a URL.
+
+```typescript
+function getPath(url: string): string
+```
+
+#### Example
+
+```typescript
+import { getPath } from 'scrapex';
+
+getPath('https://example.com/docs/intro?ref=nav');
+// '/docs/intro'
+```
+
+### matchesUrlPattern()
+
+Check if a URL matches a pattern (supports `*` wildcards).
+
+```typescript
+function matchesUrlPattern(url: string, pattern: string): boolean
+```
+
+The `*` wildcard matches across path segments (for example, `https://example.com/docs/*` matches `https://example.com/docs/a/b/c`).
+
+#### Example
+
+```typescript
+import { matchesUrlPattern } from 'scrapex';
+
+matchesUrlPattern('https://example.com/docs/a', 'https://example.com/docs/*');
+// true
+
+matchesUrlPattern('https://example.com/blog', 'https://example.com/docs/*');
 // false
 ```
 
@@ -266,123 +328,6 @@ import { paginateFeed } from 'scrapex';
 for await (const page of paginateFeed(url, { maxPages: 5 })) {
   console.log(`Page with ${page.items.length} items`);
 }
-```
-
-## Text Utilities
-
-### truncateText()
-
-Truncate text to a maximum length with ellipsis.
-
-```typescript
-function truncateText(text: string, maxLength: number): string
-```
-
-#### Example
-
-```typescript
-import { truncateText } from 'scrapex';
-
-truncateText('Hello, World!', 8);
-// 'Hello...'
-
-truncateText('Short', 10);
-// 'Short'
-```
-
-### cleanText()
-
-Clean and normalize text content.
-
-```typescript
-function cleanText(text: string): string
-```
-
-Cleaning includes:
-- Trimming whitespace
-- Collapsing multiple spaces
-- Removing control characters
-
-#### Example
-
-```typescript
-import { cleanText } from 'scrapex';
-
-cleanText('  Hello   World  \n\n  Test  ');
-// 'Hello World Test'
-```
-
-### extractText()
-
-Extract visible text from HTML.
-
-```typescript
-function extractText(html: string): string
-```
-
-#### Example
-
-```typescript
-import { extractText } from 'scrapex';
-
-extractText('<p>Hello <strong>World</strong></p>');
-// 'Hello World'
-
-extractText('<div><script>alert("x")</script>Text</div>');
-// 'Text'
-```
-
-## Error Utilities
-
-### ScrapeError
-
-Custom error class for scraping failures.
-
-```typescript
-class ScrapeError extends Error {
-  constructor(code: ErrorCode, message: string, url?: string);
-
-  readonly code: ErrorCode;
-  readonly url?: string;
-  readonly statusCode?: number;
-}
-
-type ErrorCode =
-  | 'FETCH_ERROR'
-  | 'TIMEOUT'
-  | 'HTTP_ERROR'
-  | 'PARSE_ERROR'
-  | 'ROBOTS_BLOCKED'
-  | 'INVALID_URL'
-  | 'CONTENT_TOO_LARGE';
-```
-
-#### Example
-
-```typescript
-import { ScrapeError, scrape } from 'scrapex';
-
-try {
-  await scrape(url);
-} catch (error) {
-  if (error instanceof ScrapeError) {
-    console.log(`Error: ${error.code} - ${error.message}`);
-    console.log(`URL: ${error.url}`);
-  }
-}
-```
-
-### createScrapeError()
-
-Factory function for creating ScrapeError instances.
-
-```typescript
-function createScrapeError(
-  code: ErrorCode,
-  message: string,
-  url?: string,
-  statusCode?: number
-): ScrapeError
 ```
 
 ## See Also

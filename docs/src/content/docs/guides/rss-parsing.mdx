@@ -109,7 +109,7 @@ import { fetchFeed, feedToMarkdown, feedToText } from 'scrapex';
 
 const result = await fetchFeed('https://example.com/feed.xml');
 
-// Markdown format (structured)
+// Markdown format (includes feed title and structure)
 const markdown = feedToMarkdown(result.data, { maxItems: 5 });
 // # My Blog
 //
@@ -119,12 +119,21 @@ const markdown = feedToMarkdown(result.data, { maxItems: 5 });
 // Article description...
 // [Read more](https://example.com/article)
 
-// Plain text (lower tokens)
+// Plain text (items only, lower tokens)
 const text = feedToText(result.data, { maxItems: 5 });
+// Article Title
+//
+// Article description...
+//
+// ---
+//
+// Second Article
+//
+// Second article description...
 ```
 
 <Aside type="tip">
-  Use `feedToMarkdown()` when structure matters (headings, links). Use `feedToText()` for lower token counts.
+  Use `feedToMarkdown()` when structure matters (headings, links, feed title). Use `feedToText()` for lower token counts (items only, no feed title).
 </Aside>
 
 ## Pagination

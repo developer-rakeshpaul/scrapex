@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Broken Feed</title>
+    <link>https://example.com</link>
+    <item>
+      <title></title>
+      <link></link>
+      <pubDate>not-a-date</pubDate>
+      <description>Missing link and title</description>
+    </item>
+    <item>
+      <guid>https://example.com/guid-only</guid>
+      <description>Guid fallback</description>
+    </item>
+  </channel>
+</rss>

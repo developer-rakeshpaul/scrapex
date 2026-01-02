@@ -185,7 +185,7 @@ async function scrapeWithFallback(url: string) {
 Validate URLs before scraping:
 
 ```typescript
-import { isValidUrl, scrape, ScrapeError } from 'scrapex';
+import { checkRobotsTxt, isValidUrl, scrape, ScrapeError } from 'scrapex';
 
 async function validateAndScrape(url: string) {
   if (!isValidUrl(url)) {
@@ -193,9 +193,20 @@ async function validateAndScrape(url: string) {
   }
 
   // Optionally check robots.txt first
-  const robotsCheck = await checkRobotsTxt(url);
-  if (!robotsCheck.allowed) {
-    throw new ScrapeError('Blocked by robots.txt', 'ROBOTS_BLOCKED');
+  try {
+    const robotsCheck = await checkRobotsTxt(url);
+    if (!robotsCheck.allowed) {
+      throw new ScrapeError('Blocked by robots.txt', 'ROBOTS_BLOCKED');
+    }
+  } catch (error) {
+    // Re-throw explicit blocks; only be permissive for infrastructure failures
+    if (error instanceof ScrapeError && error.code === 'ROBOTS_BLOCKED') {
+      throw error;
+    }
+    // If robots.txt check fails, you can either:
+    // 1. Proceed with scraping (permissive)
+    // 2. Fail the request (strict)
+    console.warn('Failed to check robots.txt, proceeding anyway:', error);
   }
 
   return await scrape(url);
