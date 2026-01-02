@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Dirty Feed &amp; Stuff</title>
+    <description><![CDATA[Contains <b>HTML</b> and stuff]]></description>
+    <link>/relative/feed/link</link>
+    <item>
+      <title><![CDATA[CDATA <em>Title</em>]]></title>
+      <link>/relative/article/1</link>
+      <pubDate>2024-09-06</pubDate>
+      <description>Check this &lt;a href="/internal"&gt;link&lt;/a&gt; out.</description>
+      <content:encoded><![CDATA[<p>Full content with <strong>bold</strong> text.</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

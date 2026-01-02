@@ -178,7 +178,11 @@ export async function generateEmbeddings(
             });
           },
           options.resilience,
-          { circuitBreaker: circuitBreaker ?? undefined, rateLimiter: undefined, semaphore: undefined },
+          {
+            circuitBreaker: circuitBreaker ?? undefined,
+            rateLimiter: undefined,
+            semaphore: undefined,
+          },
           {
             onRetry: () => {
               retryCount++;

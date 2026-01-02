@@ -256,7 +256,33 @@ export async function scrapeHtml(
     error: context.results.error,
   };
 
-  // Embedding Generation
+  // LLM Enhancement
+  if (options.llm && options.enhance && options.enhance.length > 0) {
+    try {
+      const enhanced = await enhance(intermediateResult, options.llm, options.enhance);
+      Object.assign(intermediateResult, enhanced);
+    } catch (error) {
+      console.error('LLM enhancement failed:', error);
+      intermediateResult.error = intermediateResult.error
+        ? `${intermediateResult.error}; LLM: ${error instanceof Error ? error.message : String(error)}`
+        : `LLM: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+
+  // LLM Extraction
+  if (options.llm && options.extract) {
+    try {
+      const extracted = await extract(intermediateResult, options.llm, options.extract);
+      intermediateResult.extracted = extracted as Record<string, unknown>;
+    } catch (error) {
+      console.error('LLM extraction failed:', error);
+      intermediateResult.error = intermediateResult.error
+        ? `${intermediateResult.error}; LLM extraction: ${error instanceof Error ? error.message : String(error)}`
+        : `LLM extraction: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+
+  // Embedding Generation (after LLM enhancement so summary/entities are available)
   // Note: generateEmbeddings never throws - it returns EmbeddingSkipped on errors
   if (options.embeddings) {
     intermediateResult.embeddings = await generateEmbeddings(

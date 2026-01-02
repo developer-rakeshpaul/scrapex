@@ -185,7 +185,7 @@ async function scrapeWithFallback(url: string) {
 Validate URLs before scraping:
 
 ```typescript
-import { isValidUrl, scrape, ScrapeError } from 'scrapex';
+import { checkRobotsTxt, isValidUrl, scrape, ScrapeError } from 'scrapex';
 
 async function validateAndScrape(url: string) {
   if (!isValidUrl(url)) {

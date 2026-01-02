@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+  <channel>
+    <title>My Podcast</title>
+    <link>https://example.com</link>
+    <item>
+      <title>Episode 1</title>
+      <link>https://example.com/ep1</link>
+      <itunes:duration>45:30</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:episode>1</itunes:episode>
+      <itunes:season>1</itunes:season>
+      <enclosure url="https://example.com/ep1.mp3" type="audio/mpeg" length="12345678"/>
+    </item>
+  </channel>
+</rss>

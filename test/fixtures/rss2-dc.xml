@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="https://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>My Blog</title>
+    <description>A blog about technology</description>
+    <link>https://example.com</link>
+    <copyright>Copyright 2024</copyright>
+    <item>
+      <title>Article Title</title>
+      <link>https://example.com/article</link>
+      <pubDate>Fri, 06 Sep 2024 16:45:00 GMT</pubDate>
+      <dc:creator>Jane Roe</dc:creator>
+      <dc:subject>Data</dc:subject>
+      <category>Tech</category>
+      <category>News</category>
+      <description>Article description text</description>
+    </item>
+    <item>
+      <title>Second Article</title>
+      <link>https://example.com/article2</link>
+      <pubDate>Thu, 05 Sep 2024 10:00:00 GMT</pubDate>
+      <description>Second article description</description>
+    </item>
+  </channel>
+</rss>
