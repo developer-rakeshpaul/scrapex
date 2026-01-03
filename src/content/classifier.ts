@@ -2,7 +2,21 @@ import type { ClassifierResult, ContentBlock, ContentBlockClassifier } from './t
 
 /**
  * Default site-agnostic block classifier.
- * Filters navigation, footers, boilerplate, and short fragments.
+ *
+ * Filters out common boilerplate content including:
+ * - Navigation and footer blocks
+ * - Legal/promotional content
+ * - Boilerplate phrases (subscribe, share, comments, etc.)
+ * - Media credits and captions
+ * - Very short fragments (< 20 chars without punctuation)
+ *
+ * Assigns relevance scores based on block type:
+ * - Headings: 0.7-0.9 (by level)
+ * - Paragraphs: 0.5-0.9 (by length)
+ * - Quotes/Code: 0.7
+ *
+ * @param block - Content block to classify
+ * @returns Classification result with accept/reject decision and score
  */
 export const defaultBlockClassifier: ContentBlockClassifier = (
   block: ContentBlock
@@ -71,8 +85,22 @@ export const defaultBlockClassifier: ContentBlockClassifier = (
 };
 
 /**
- * Create a classifier that combines multiple classifiers.
- * First classifier to reject wins; scores are averaged.
+ * Create a classifier that combines multiple classifiers with AND semantics.
+ *
+ * All classifiers must accept for the block to be accepted.
+ * First classifier to reject wins (early exit).
+ * Scores from all accepting classifiers are averaged.
+ *
+ * @param classifiers - Classifiers to combine
+ * @returns Combined classifier function
+ *
+ * @example
+ * ```ts
+ * const myClassifier = combineClassifiers(
+ *   defaultBlockClassifier,
+ *   (block) => ({ accept: !block.text.includes('ad'), label: 'no-ads' })
+ * );
+ * ```
  */
 export function combineClassifiers(
   ...classifiers: ContentBlockClassifier[]

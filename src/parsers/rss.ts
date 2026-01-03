@@ -279,6 +279,10 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
     return Object.keys(fields).length > 0 ? fields : undefined;
   }
 
+  /**
+   * Safely find text or attribute value from an element using a selector.
+   * Supports `selector@attr` syntax for attribute extraction.
+   */
   private safeFindText($el: cheerio.Cheerio<Element>, selector: string): string {
     try {
       const { tagSelector, attr } = this.parseSelectorAndAttr(selector);
@@ -292,6 +296,10 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
     }
   }
 
+  /**
+   * Parse a selector string that may include an attribute suffix.
+   * Format: `selector@attr` extracts the `attr` attribute from matched elements.
+   */
   private parseSelectorAndAttr(selector: string): { tagSelector: string; attr?: string } {
     const atIndex = selector.lastIndexOf('@');
     if (atIndex <= 0 || atIndex === selector.length - 1) {
@@ -453,12 +461,33 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
 
 /**
  * Normalize a feed item into clean, embedding-ready text.
- * Prefers item.content over item.description.
+ *
+ * Extracts and normalizes content from RSS/Atom feed items,
+ * preferring `item.content` over `item.description`. Falls back
+ * to plain text extraction if HTML parsing yields no blocks.
+ *
+ * @param item - Feed item to normalize
+ * @param options - Normalization options (mode, maxChars, removeBoilerplate, etc.)
+ * @returns Normalized text result with metadata
+ * @throws TypeError if item parameter is null or undefined
+ *
+ * @example
+ * ```ts
+ * const normalized = await normalizeFeedItem(item, {
+ *   mode: 'full',
+ *   removeBoilerplate: true,
+ *   maxChars: 5000,
+ * });
+ * console.log(normalized.text);
+ * ```
  */
 export async function normalizeFeedItem(
   item: FeedItem,
   options: NormalizeOptions = {}
 ): Promise<NormalizeResult> {
+  if (!item) {
+    throw new TypeError('item parameter is required');
+  }
   const html = item.content || item.description || '';
   const $ = cheerio.load(html);
   let blocks: ContentBlock[] = parseBlocks($, {

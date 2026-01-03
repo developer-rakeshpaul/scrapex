@@ -10,7 +10,14 @@ import type {
 } from './types.js';
 
 /**
- * Normalize text with optional HTML entity decoding and Unicode normalization.
+ * Normalize a text string with configurable transformations.
+ *
+ * Applies HTML entity decoding, markdown link stripping, Unicode normalization,
+ * whitespace collapsing, and line break handling based on options.
+ *
+ * @param text - Raw text to normalize
+ * @param options - Normalization options
+ * @returns Cleaned and normalized text string
  */
 function normalizeString(
   text: string,
@@ -57,7 +64,17 @@ function normalizeString(
 }
 
 /**
- * Truncate text at natural boundaries.
+ * Truncate text at natural boundaries based on strategy.
+ *
+ * Strategies:
+ * - `sentence`: Truncate at last sentence boundary (. ! ?) if within 50% of maxChars
+ * - `word`: Truncate at last word boundary if within 80% of maxChars
+ * - `char`: Hard truncate at maxChars (no boundary detection)
+ *
+ * @param text - Text to truncate
+ * @param maxChars - Maximum character limit
+ * @param strategy - Truncation strategy
+ * @returns Truncated text and whether truncation occurred
  */
 function truncateText(
   text: string,
@@ -100,7 +117,25 @@ function generateHash(text: string): string {
 }
 
 /**
- * Normalize content blocks into clean text.
+ * Normalize content blocks into clean, embedding-ready text.
+ *
+ * Applies block classification (optional), text normalization, truncation,
+ * and generates metadata including character count, token estimate, and content hash.
+ *
+ * @param blocks - Content blocks to normalize
+ * @param options - Normalization options (mode, maxChars, classifier, etc.)
+ * @param url - Source URL for classifier context
+ * @returns Normalized text, metadata, and optionally classified blocks (when debug: true)
+ *
+ * @example
+ * ```ts
+ * const result = await normalizeText(blocks, {
+ *   mode: 'summary',
+ *   maxChars: 2000,
+ *   removeBoilerplate: true,
+ * });
+ * console.log(result.text, result.meta.tokenEstimate);
+ * ```
  */
 export async function normalizeText(
   blocks: ContentBlock[],
