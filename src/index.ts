@@ -118,7 +118,7 @@ export {
   type RobotsCheckResult,
 } from './fetchers/index.js';
 // Parsers
-export { RSSParser } from './parsers/index.js';
+export { normalizeFeedItem, RSSParser } from './parsers/index.js';
 // Utilities (URL + Feed)
 export {
   discoverFeeds,

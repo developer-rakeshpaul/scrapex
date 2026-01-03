@@ -7,11 +7,12 @@
  */
 
 import {
-  RSSParser,
   discoverFeeds,
   feedToMarkdown,
   fetchFeed,
   filterByDate,
+  normalizeFeedItem,
+  RSSParser,
 } from '../src/index.js';
 
 const SAMPLE_RSS = `<?xml version="1.0" encoding="UTF-8"?>
@@ -59,6 +60,15 @@ async function main() {
     publishedAt: parsed.data.items[0]?.publishedAt,
     enclosure: parsed.data.items[0]?.enclosure?.url,
   });
+
+  if (parsed.data.items[0]) {
+    const normalized = await normalizeFeedItem(parsed.data.items[0], {
+      removeBoilerplate: true,
+      mode: 'full',
+    });
+    console.log('\n--- Normalized First Item ---');
+    console.log(normalized.text);
+  }
 
   console.log('\n--- Markdown Preview ---');
   console.log(feedToMarkdown(parsed.data, { maxItems: 2 }));

@@ -40,7 +40,17 @@ const BLOCK_TYPE_SELECTORS: Record<string, BlockType> = {
 };
 
 /**
- * Parse HTML into content blocks.
+ * Parse HTML into content blocks for normalization.
+ *
+ * Extracts block-level elements (headings, paragraphs, lists, etc.) from HTML,
+ * classifying each by type and preserving structural context.
+ *
+ * @param $ - Cheerio instance with loaded HTML
+ * @param options - Parsing options
+ * @param options.dropSelectors - Additional CSS selectors to remove before parsing
+ * @param options.maxBlocks - Maximum blocks to extract (default: 2000)
+ * @param options.includeHtml - Include raw HTML in block output (default: false)
+ * @returns Array of classified content blocks
  */
 export function parseBlocks(
   $: CheerioAPI,

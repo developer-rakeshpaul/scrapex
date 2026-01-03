@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0"
+  xmlns:media="http://search.yahoo.com/mrss/"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>Media RSS Test Feed</title>
+  <link>https://example.com</link>
+  <description>Testing Media RSS namespace parsing with media:thumbnail and media:content</description>
+  <language>en-us</language>
+  <pubDate>Fri, 03 Jan 2026 12:00:00 +0000</pubDate>
+  <lastBuildDate>Fri, 03 Jan 2026 12:00:00 +0000</lastBuildDate>
+
+  <!-- Item with media:thumbnail -->
+  <item>
+    <title>Article with Media Thumbnail</title>
+    <link>https://example.com/article-1</link>
+    <guid>https://example.com/article-1</guid>
+    <pubDate>Fri, 03 Jan 2026 10:00:00 +0000</pubDate>
+    <description>This article has a media:thumbnail element.</description>
+    <media:thumbnail url="https://example.com/images/thumbnail-1.jpg" width="150" height="150" />
+    <dc:creator>John Doe</dc:creator>
+  </item>
+
+  <!-- Item with media:content -->
+  <item>
+    <title>Article with Media Content</title>
+    <link>https://example.com/article-2</link>
+    <guid>https://example.com/article-2</guid>
+    <pubDate>Fri, 03 Jan 2026 09:00:00 +0000</pubDate>
+    <description>This article has a media:content element with an image.</description>
+    <media:content url="https://example.com/images/full-image-2.jpg" type="image/jpeg" width="1200" height="800" />
+    <dc:creator>Jane Smith</dc:creator>
+  </item>
+
+  <!-- Item with both media:thumbnail and media:content -->
+  <item>
+    <title>Article with Both Media Elements</title>
+    <link>https://example.com/article-3</link>
+    <guid>https://example.com/article-3</guid>
+    <pubDate>Fri, 03 Jan 2026 08:00:00 +0000</pubDate>
+    <description>This article has both media:thumbnail and media:content elements.</description>
+    <content:encoded><![CDATA[<p>Full article content with <strong>HTML</strong> formatting.</p>]]></content:encoded>
+    <media:thumbnail url="https://example.com/images/thumb-3.jpg" />
+    <media:content url="https://example.com/images/hero-3.jpg" type="image/jpeg" medium="image">
+      <media:title>Hero Image</media:title>
+      <media:description>The main image for this article</media:description>
+    </media:content>
+    <dc:creator>Bob Wilson</dc:creator>
+  </item>
+
+  <!-- Item with media:group containing multiple media elements -->
+  <item>
+    <title>Article with Media Group</title>
+    <link>https://example.com/article-4</link>
+    <guid>https://example.com/article-4</guid>
+    <pubDate>Fri, 03 Jan 2026 07:00:00 +0000</pubDate>
+    <description>This article uses media:group for multiple media items.</description>
+    <media:group>
+      <media:content url="https://example.com/video/clip.mp4" type="video/mp4" medium="video" />
+      <media:thumbnail url="https://example.com/images/video-thumb.jpg" width="320" height="180" />
+    </media:group>
+  </item>
+
+  <!-- Item with no media elements (standard RSS) -->
+  <item>
+    <title>Standard RSS Item Without Media</title>
+    <link>https://example.com/article-5</link>
+    <guid>https://example.com/article-5</guid>
+    <pubDate>Fri, 03 Jan 2026 06:00:00 +0000</pubDate>
+    <description>This is a standard RSS item without any media namespace elements.</description>
+    <enclosure url="https://example.com/audio/podcast.mp3" length="12345678" type="audio/mpeg" />
+  </item>
+
+</channel>
+</rss>

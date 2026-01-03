@@ -14,6 +14,7 @@ import {
 // Read fixtures
 const fixturesDir = path.join(__dirname, '../fixtures');
 const rss2Content = fs.readFileSync(path.join(fixturesDir, 'rss2-basic.xml'), 'utf-8');
+const rss2MediaContent = fs.readFileSync(path.join(fixturesDir, 'rss2-media.xml'), 'utf-8');
 const atomContent = fs.readFileSync(path.join(fixturesDir, 'atom-basic.xml'), 'utf-8');
 const atomUnsafeContent = fs.readFileSync(path.join(fixturesDir, 'atom-unsafe-links.xml'), 'utf-8');
 const rss1Content = fs.readFileSync(path.join(fixturesDir, 'rss1-basic.xml'), 'utf-8');
@@ -168,6 +169,69 @@ describe('RSSParser', () => {
       duration: '10:00',
       explicit: 'no',
     });
+  });
+
+  it('should extract media namespace custom fields with escaped selectors', () => {
+    // Using escaped colons (required) for namespace selectors
+    const parser = new RSSParser({
+      customFields: {
+        // Escaped colons required for namespace prefixes
+        creator: 'dc\\:creator',
+      },
+    });
+
+    const result = parser.parse(rss2MediaContent, 'https://example.com/feed.xml');
+    const { data } = result;
+
+    expect(data.format).toBe('rss2');
+    expect(data.title).toBe('Media RSS Test Feed');
+    expect(data.items).toHaveLength(5);
+
+    // dc:creator has text content, so it works with escaped selector
+    const item1 = data.items[0];
+    expect(item1.title).toBe('Article with Media Thumbnail');
+    expect(item1.customFields?.creator).toBe('John Doe');
+  });
+
+  it('should extract url attribute from media namespace elements using @attr syntax', () => {
+    // media:thumbnail and media:content store URLs in 'url' attribute.
+    // Use selector@attr syntax to extract attribute values.
+    const parser = new RSSParser({
+      customFields: {
+        // selector@attr syntax: 'media\\:thumbnail@url' extracts the url attribute
+        imageUrl: 'media\\:thumbnail@url',
+        mediaContent: 'media\\:content@url',
+        creator: 'dc\\:creator',
+      },
+    });
+
+    const result = parser.parse(rss2MediaContent, 'https://example.com/feed.xml');
+    const { data } = result;
+
+    expect(data.items).toHaveLength(5);
+
+    // Item 1: has media:thumbnail with url attribute
+    const item1 = data.items[0];
+    expect(item1.title).toBe('Article with Media Thumbnail');
+    expect(item1.customFields?.imageUrl).toBe('https://example.com/images/thumbnail-1.jpg');
+    expect(item1.customFields?.creator).toBe('John Doe');
+
+    // Item 2: has media:content with url attribute
+    const item2 = data.items[1];
+    expect(item2.title).toBe('Article with Media Content');
+    expect(item2.customFields?.mediaContent).toBe('https://example.com/images/full-image-2.jpg');
+
+    // Item 3: has both media:thumbnail and media:content
+    const item3 = data.items[2];
+    expect(item3.title).toBe('Article with Both Media Elements');
+    expect(item3.customFields?.imageUrl).toBe('https://example.com/images/thumb-3.jpg');
+    expect(item3.customFields?.mediaContent).toBe('https://example.com/images/hero-3.jpg');
+
+    // Item 5: standard RSS item without media elements
+    const item5 = data.items[4];
+    expect(item5.title).toBe('Standard RSS Item Without Media');
+    expect(item5.customFields?.imageUrl).toBeUndefined();
+    expect(item5.customFields?.mediaContent).toBeUndefined();
   });
 });
 
