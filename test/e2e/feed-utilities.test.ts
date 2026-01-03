@@ -9,7 +9,14 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { discoverFeeds, feedToMarkdown, feedToText, filterByDate, RSSParser } from '@/index.js';
+import {
+  discoverFeeds,
+  feedToMarkdown,
+  feedToText,
+  filterByDate,
+  normalizeFeedItem,
+  RSSParser,
+} from '@/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.resolve(__dirname, '../fixtures');
@@ -21,6 +28,7 @@ const RSS1_FEED = readFileSync(path.join(fixturesDir, 'rss1-rdf.xml'), 'utf8');
 const HTML_WITH_FEEDS = readFileSync(path.join(fixturesDir, 'feeds.html'), 'utf8');
 const PODCAST_FEED = readFileSync(path.join(fixturesDir, 'podcast-itunes.xml'), 'utf8');
 const RSS2_MALFORMED = readFileSync(path.join(fixturesDir, 'rss2-malformed.xml'), 'utf8');
+const RSS2_MEDIA = readFileSync(path.join(fixturesDir, 'rss2-media.xml'), 'utf8');
 
 describe('Feed Utilities (from docs)', () => {
   describe('RSSParser - Real World Scenarios', () => {
@@ -179,6 +187,25 @@ describe('Feed Utilities (from docs)', () => {
     });
   });
 
+  describe('normalizeFeedItem() - Guide examples', () => {
+    it('normalizes item HTML into clean text', async () => {
+      const parser = new RSSParser();
+      const result = parser.parse(RSS2_FEED, 'https://example.com/feed.xml');
+      const item = result.data.items[0];
+
+      expect(item).toBeDefined();
+
+      const normalized = await normalizeFeedItem(item!, {
+        mode: 'full',
+        removeBoilerplate: true,
+      });
+
+      expect(normalized.text).toContain('Article description');
+      expect(normalized.meta.blocksTotal).toBeGreaterThan(0);
+      expect(normalized.meta.blocksAccepted).toBeGreaterThan(0);
+    });
+  });
+
   describe('Custom Fields (Podcasts)', () => {
     it('extracts custom namespace fields', () => {
       const parser = new RSSParser({
@@ -194,6 +221,21 @@ describe('Feed Utilities (from docs)', () => {
       const episode = result.data.items[0];
       expect(episode?.title).toBe('Episode 1');
       expect(episode?.customFields?.duration).toBe('45:30');
+    });
+  });
+
+  describe('Custom Fields (Media RSS)', () => {
+    it('extracts namespaced attributes via selector@attr', () => {
+      const parser = new RSSParser({
+        customFields: {
+          thumbnail: 'media\\:thumbnail@url',
+          contentUrl: 'media\\:content@url',
+        },
+      });
+      const result = parser.parse(RSS2_MEDIA, 'https://example.com/media.xml');
+      const item = result.data.items[0];
+      expect(item?.customFields?.thumbnail).toBe('https://example.com/images/thumbnail-1.jpg');
+      expect(item?.customFields?.contentUrl).toBeUndefined();
     });
   });
 

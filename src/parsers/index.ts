@@ -17,7 +17,7 @@ export {
 } from './markdown.js';
 export type { RSSParserOptions } from './rss.js';
 // RSS parser (pure parsing, no I/O)
-export { RSSParser } from './rss.js';
+export { normalizeFeedItem, RSSParser } from './rss.js';
 
 export type {
   CodeBlock,

@@ -136,6 +136,28 @@ const text = feedToText(result.data, { maxItems: 5 });
   Use `feedToMarkdown()` when structure matters (headings, links, feed title). Use `feedToText()` for lower token counts (items only, no feed title).
 </Aside>
 
+## Normalize Feed Items
+
+Normalize item HTML into clean, embedding-ready text:
+
+```typescript
+import { RSSParser, normalizeFeedItem } from 'scrapex';
+
+const parser = new RSSParser();
+const result = parser.parse(feedXml, 'https://example.com/feed.xml');
+
+const item = result.data.items[0];
+if (item) {
+  const normalized = await normalizeFeedItem(item, {
+    mode: 'full',
+    removeBoilerplate: true,
+  });
+
+  console.log(normalized.text);
+  console.log(normalized.meta);
+}
+```
+
 ## Pagination
 
 Some Atom feeds support pagination via `rel="next"` links (RFC 5005):
@@ -161,6 +183,7 @@ const parser = new RSSParser({
   customFields: {
     duration: 'itunes\\:duration',
     explicit: 'itunes\\:explicit',
+    thumbnailUrl: 'media\\:thumbnail@url',
     episode: 'itunes\\:episode',
     season: 'itunes\\:season',
   },
@@ -176,7 +199,8 @@ for (const episode of result.data.items) {
 ```
 
 <Aside type="note">
-  Note the escaped colons (`\\:`) in namespace selectors. This is required for Cheerio's CSS selector syntax.
+  Note the escaped colons (`\\:`) in namespace selectors. This is required for Cheerio's CSS selector syntax
+  when targeting namespaced elements.
 </Aside>
 
 ## Enclosures (Media)

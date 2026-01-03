@@ -1,5 +1,7 @@
 import * as cheerio from 'cheerio';
 import type { Element } from 'domhandler';
+import { normalizeText, parseBlocks } from '../content/index.js';
+import type { ContentBlock, NormalizeOptions, NormalizeResult } from '../content/types.js';
 import type {
   FeedEnclosure,
   FeedItem,
@@ -13,6 +15,7 @@ export interface RSSParserOptions {
   /**
    * Map of custom field names to CSS selectors or XML tag names.
    * Useful for extracting podcast/media namespace fields.
+   * Use `selector@attr` to extract attribute values (e.g. `media\\:thumbnail@url`).
    * @example { duration: "itunes\:duration", rating: "media\:rating" }
    */
   customFields?: Record<string, string>;
@@ -267,13 +270,41 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
 
     const fields: Record<string, string> = {};
     for (const [key, selector] of Object.entries(this.customFields)) {
-      const value = $el.find(selector).text().trim();
+      const value = this.safeFindText($el, selector);
       if (value) {
         fields[key] = value;
       }
     }
 
     return Object.keys(fields).length > 0 ? fields : undefined;
+  }
+
+  private safeFindText($el: cheerio.Cheerio<Element>, selector: string): string {
+    try {
+      const { tagSelector, attr } = this.parseSelectorAndAttr(selector);
+      const $found = $el.find(tagSelector);
+      if (attr) {
+        return ($found.attr(attr) || '').trim();
+      }
+      return $found.text().trim();
+    } catch (_error) {
+      return '';
+    }
+  }
+
+  private parseSelectorAndAttr(selector: string): { tagSelector: string; attr?: string } {
+    const atIndex = selector.lastIndexOf('@');
+    if (atIndex <= 0 || atIndex === selector.length - 1) {
+      return { tagSelector: selector };
+    }
+
+    const tagSelector = selector.slice(0, atIndex);
+    const attr = selector.slice(atIndex + 1);
+    if (!/^[A-Za-z_][\w:-]*$/.test(attr)) {
+      return { tagSelector: selector };
+    }
+
+    return { tagSelector, attr };
   }
 
   /**
@@ -418,4 +449,35 @@ export class RSSParser implements SourceParser<ParsedFeed, FeedMeta> {
     const num = parseInt(value, 10);
     return Number.isNaN(num) ? undefined : num;
   }
+}
+
+/**
+ * Normalize a feed item into clean, embedding-ready text.
+ * Prefers item.content over item.description.
+ */
+export async function normalizeFeedItem(
+  item: FeedItem,
+  options: NormalizeOptions = {}
+): Promise<NormalizeResult> {
+  const html = item.content || item.description || '';
+  const $ = cheerio.load(html);
+  let blocks: ContentBlock[] = parseBlocks($, {
+    dropSelectors: options.dropSelectors,
+    maxBlocks: options.maxBlocks,
+    includeHtml: options.includeHtml,
+  });
+
+  if (blocks.length === 0) {
+    const fallbackText = $.root().text().trim();
+    if (fallbackText) {
+      blocks = [
+        {
+          type: 'paragraph',
+          text: fallbackText,
+        },
+      ];
+    }
+  }
+
+  return normalizeText(blocks, options, item.link || undefined);
 }

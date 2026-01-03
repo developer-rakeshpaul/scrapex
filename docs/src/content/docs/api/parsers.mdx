@@ -17,8 +17,24 @@ class RSSParser {
 }
 
 interface RSSParserOptions {
+  /** Use `selector@attr` for attribute values (e.g. `media\\:thumbnail@url`). */
   customFields?: Record<string, string>;
 }
+```
+
+### normalizeFeedItem
+
+Normalize a `FeedItem` into clean, embedding-ready text.
+
+```typescript
+import { normalizeFeedItem } from 'scrapex';
+
+const normalized = await normalizeFeedItem(item, {
+  mode: 'full',
+  removeBoilerplate: true,
+});
+
+console.log(normalized.text);
 ```
 
 ### ParsedFeed
