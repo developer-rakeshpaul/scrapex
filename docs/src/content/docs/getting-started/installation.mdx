@@ -3,28 +3,24 @@ title: Installation
 description: How to install scrapex and its optional dependencies.
 ---
 
-import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
-
-<Aside type="caution" title="Alpha Release">
-  scrapex v1.0.0 is currently in beta. The API is stable but minor changes may occur before the stable release.
-</Aside>
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## Install scrapex
 
 <Tabs>
   <TabItem label="npm">
     ```bash
-    npm install scrapex@beta
+    npm install scrapex
     ```
   </TabItem>
   <TabItem label="yarn">
     ```bash
-    yarn add scrapex@beta
+    yarn add scrapex
     ```
   </TabItem>
   <TabItem label="pnpm">
     ```bash
-    pnpm add scrapex@beta
+    pnpm add scrapex
     ```
   </TabItem>
 </Tabs>
@@ -51,6 +47,14 @@ Install the SDK for your preferred LLM provider:
   </TabItem>
 </Tabs>
 
+### Local Embeddings
+
+For zero-cost local embeddings with Transformers.js:
+
+```bash
+npm install @huggingface/transformers onnxruntime-node
+```
+
 ### JavaScript-Rendered Pages
 
 For pages that require JavaScript execution:
@@ -70,13 +74,16 @@ scrapex provides multiple entry points:
 
 ```typescript
 // Main entry - scraping functions and utilities
-import { scrape, scrapeHtml } from 'scrapex';
+import { scrape, scrapeHtml, normalizeText, parseBlocks } from 'scrapex';
 
 // LLM providers and helpers
 import { createOpenAI, createAnthropic } from 'scrapex/llm';
 
-// Markdown parsers
-import { MarkdownParser } from 'scrapex/parsers';
+// Embedding providers
+import { createOpenAIEmbedding, createTransformersEmbedding } from 'scrapex/embeddings';
+
+// Parsers (Markdown, RSS)
+import { MarkdownParser, RSSParser } from 'scrapex/parsers';
 ```
 
 ## Verify Installation
