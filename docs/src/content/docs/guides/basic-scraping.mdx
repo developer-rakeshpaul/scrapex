@@ -81,9 +81,18 @@ const result = await scrape(url, {
 
 console.log(result.normalizedText);
 console.log(result.normalizationMeta);
+console.log(result.normalizedBlocks); // Debug: see classified blocks
 ```
 
 Note: For large pages, consider using `dropSelectors` to remove heavy DOM regions (nav, footer, ads, or SVGs) to improve normalization performance.
+
+### Normalization Tips
+
+- Use `mode: 'summary'` when you want the most relevant blocks by score (useful for short previews).
+- Set `maxChars` with `truncate: 'sentence'` to keep readable summaries.
+- Use `dropSelectors` to remove large non-content elements before parsing (nav, footer, ads, or SVGs).
+- Pass `languageHint` when you already know the page language to improve metadata.
+- Use `debug: true` to inspect `normalizedBlocks` and tune custom classifiers.
 
 ## Content Types
 

@@ -1,5 +1,5 @@
 /**
- * scrapex v2.0
+ * scrapex
  *
  * Modern web scraper with LLM-enhanced extraction,
  * extensible pipeline, and pluggable parsers.
