@@ -20,7 +20,9 @@ export default defineConfig({
   minify: false,
   target: 'node20',
   outDir: 'dist',
-  external: ['@anthropic-ai/sdk', 'openai', 'puppeteer'],
+  deps: {
+    neverBundle: ['@anthropic-ai/sdk', 'openai', 'puppeteer'],
+  },
   alias: {
     '@': resolve(__dirname, 'src'),
   },
