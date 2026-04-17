@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-04-17
+
+### Changed
+
+- Bumped dependencies: `cheerio` ^1.2.0, `jsdom` ^29.0.2, `zod` ^4.3.6,
+  `turndown` ^7.2.4, `unist-util-visit` ^5.1.0, `mdast-util-from-markdown` ^2.0.3
+- Bumped dev dependencies: `@biomejs/biome` ^2.4.12, `@types/jsdom` ^28.0.1,
+  `@types/node` ^24.12.2, `lefthook` ^2.1.6, `tsdown` ^0.21.9,
+  `typescript` ^6.0.3, `vitest` ^4.1.4
+
+### Fixed
+
+- Replaced deprecated tsdown `external` option with `deps.neverBundle`
+  to remove build-time warning.
+
 ## [1.0.0] - 2025-01-08
 
 First stable release of scrapex.
